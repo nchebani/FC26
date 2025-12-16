@@ -54,7 +54,6 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #ffffff05; }
 .stat-label { font-size: 0.75rem; color: var(--muted); }
 .stat-value { font-size: 0.85rem; font-weight: 600; }
-.form-score { background: var(--purple); color: white; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; }
 
 .form-container { display: flex; gap: 4px; justify-content: center; }
 .dot { width: 9px; height: 9px; border-radius: 50%; }
@@ -85,7 +84,6 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 <div id="loginOverlay">
     <i class="fas fa-shield-halved" style="font-size: 3rem; color: var(--purple); margin-bottom: 10px;"></i>
     <h2 style="margin:0">FC26 ELITE</h2>
-    <p style="color:var(--muted); font-size:0.8rem">Authentification Live Cloud</p>
     <div class="login-grid">
         <div class="user-btn admin-lock" onclick="checkPin()"><i class="fas fa-user-crown" style="color:var(--gold)"></i>ADMIN</div>
         <div class="user-btn" onclick="login('BVI')"><i class="fas fa-user"></i>BVI</div>
@@ -137,11 +135,10 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 const FB_URL = "https://fc26-e596e-default-rtdb.europe-west1.firebasedatabase.app/data.json";
 const ADMIN_PIN = "1234";
 const TEAMS = ["Real Madrid", "Man City", "Barcelone", "Bayern Munich", "Liverpool", "PSG", "Arsenal", "Inter Milan", "Milan AC", "Atletico", "Leverkusen", "Dortmund", "Juventus", "Naples", "Chelsea", "Aston Villa"];
-const KEY = "fc26_pro_final_v15";
 
 let currentUser = localStorage.getItem("fc26_user") || null;
 let state = { season: 1, players: [], currentDay: [], archives: [] };
-let isTyping = false; // Empêche l'effacement pendant l'écriture
+let isInteracting = false; // EMPÊCHE LE REFRESH PENDANT L'ANALYSE
 
 const qs = (s) => document.querySelector(s);
 const isAdmin = () => currentUser === 'ADMIN';
@@ -156,7 +153,7 @@ async function pushData() {
 }
 
 async function pullData() {
-    if (isTyping) return; // Bloque la mise à jour si on remplit un score
+    if (isInteracting) return; // BLOQUE SI ON UTILISE L'IA OU TAPE UN SCORE
     try {
         const res = await fetch(FB_URL);
         const data = await res.json();
@@ -191,11 +188,10 @@ if(currentUser) login(currentUser);
 
 function save() { 
     if(isAdmin()) pushData(); 
-    localStorage.setItem(KEY, JSON.stringify(state)); 
     render(); 
 }
 
-// --- LOGIQUE METIER ---
+// --- LOGIQUE MÉTIER ---
 function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
 function getAllTimeStats() {
     let stats = {}; if(!state.archives) return stats;
@@ -229,11 +225,6 @@ function getForm(name) {
     });
     return history;
 }
-function getFormScore(name) {
-    const form = getForm(name); if(form.length === 0) return 0;
-    let score = 0; form.forEach(f => { if(f==='win') score+=2; if(f==='draw') score+=1; });
-    return ((score / (form.length * 2)) * 10).toFixed(1);
-}
 function getPrediction() {
     const allTime = getAllTimeStats(); if (Object.keys(allTime).length === 0) return { name: "N/A", proba: 0 };
     let best = Object.keys(allTime).reduce((a, b) => (allTime[a]?.pts||0) > (allTime[b]?.pts||0) ? a : b);
@@ -244,16 +235,14 @@ function getTactic(playerName) {
     const stats = getAllTimeStats()[playerName] || {gf:0, ga:0, games:1};
     const avgGf = stats.gf / stats.games; const avgGa = stats.ga / stats.games;
     if(avgGf > 2.5) return { form: "4-3-3 OFFENSIF", style: "Construction Rapide", def: "Pressing Constant", width: "65 / 70", role: "Faux 9 / Ailiers Intérieurs" };
-    if(avgGa < 1.5) return { form: "5-2-1-2", style: "Contre-Attaque", def: "Équilibré / Reculer", width: "40 / 30", role: "Piston Offensif" };
+    if(avgGa < 1.5) return { form: "5-2-1-2", style: "Contre-Attaque", def: "Reculer", width: "40 / 30", role: "Piston Offensif" };
     return { form: "4-2-3-1 (2)", style: "Équilibré", def: "Équilibré", width: "50 / 50", role: "MOC Libre / Pivot" };
 }
 
 // --- RENDU UI ---
 function render() {
-    if(!currentUser) return;
     const tab = qs("nav button.active").dataset.tab;
-    const app = qs("#app");
-    app.innerHTML = "";
+    const app = qs("#app"); app.innerHTML = "";
 
     if (tab === "dashboard") {
         const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
@@ -266,14 +255,14 @@ function render() {
         const allTime = getAllTimeStats(); const pred = getPrediction(); const seasonRecord = getSeasonRecord();
         const playersByGoals = Object.keys(allTime).sort((a,b) => allTime[b].gf - allTime[a].gf);
         const playersByDef = Object.keys(allTime).sort((a,b) => (allTime[a].ga/allTime[a].games) - (allTime[b].ga/allTime[b].games));
-        app.innerHTML = `<h3>🧠 Analyse & Note IA</h3><div class="card predict-card"><div style="color:var(--purple); font-size:0.7rem; font-weight:bold">FAVORI HISTORIQUE 🔥</div><div style="font-size:1.8rem; font-weight:700; margin:10px 0">${pred.name}</div><div style="display:flex; align-items:center; gap:10px"><div style="flex:1; height:8px; background:#000; border-radius:10px; overflow:hidden"><div style="width:${pred.proba}%; height:100%; background:var(--purple)"></div></div><span style="font-weight:bold; color:var(--purple)">${pred.proba}%</span></div></div><div class="card"><div style="color:var(--blue); font-weight:bold; margin-bottom:15px; font-size:0.9rem">📋 CONSEIL TACTIQUE FC26</div><select id="tacticPlayer" class="team-select" style="width:100%" onchange="renderTacticAdvice()"><option value="">Sélectionner un joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div><div class="card"><div style="color:var(--purple); font-weight:bold; margin-bottom:15px; font-size:0.9rem">⚔️ COMPARATEUR DE DUEL</div><div style="display:flex; gap:10px; align-items:center"><select id="duel1" class="team-select" style="flex:1" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><span style="font-size:0.7rem; opacity:0.5">VS</span><select id="duel2" class="team-select" style="flex:1" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div><div class="card"><div style="color:var(--gold); font-weight:bold; margin-bottom:15px; font-size:0.9rem">🏆 PANTHÉON</div><div class="stat-row"><span class="stat-label">⚽ MEILLEUR BUTEUR ALL-TIME</span><span class="stat-value">${playersByGoals[0] || '-'} (${allTime[playersByGoals[0]]?.gf || 0} buts)</span></div><div class="stat-row"><span class="stat-label">🛡️ MEILLEURE DÉFENSE (MOY.)</span><span class="stat-value">${playersByDef[0] || '-'}</span></div><div class="stat-row"><span class="stat-label">🔥 RECORD BUTS / SAISON</span><span class="stat-value">${seasonRecord.name} (${seasonRecord.goals} en ${seasonRecord.season})</span></div></div>`;
+        app.innerHTML = `<h3>🧠 Analyse IA</h3><div class="card predict-card"><div style="color:var(--purple); font-size:0.7rem; font-weight:bold">FAVORI HISTORIQUE 🔥</div><div style="font-size:1.8rem; font-weight:700; margin:10px 0">${pred.name}</div><div style="display:flex; align-items:center; gap:10px"><div style="flex:1; height:8px; background:#000; border-radius:10px; overflow:hidden"><div style="width:${pred.proba}%; height:100%; background:var(--purple)"></div></div><span style="font-weight:bold; color:var(--purple)">${pred.proba}%</span></div></div><div class="card"><div style="color:var(--blue); font-weight:bold; margin-bottom:15px; font-size:0.9rem">📋 CONSEIL TACTIQUE</div><select id="tacticPlayer" class="team-select" style="width:100%" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderTacticAdvice()"><option value="">Sélectionner un joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div><div class="card"><div style="color:var(--purple); font-weight:bold; margin-bottom:15px; font-size:0.9rem">⚔️ COMPARATEUR DE DUEL</div><div style="display:flex; gap:10px; align-items:center"><select id="duel1" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div><div class="card"><div style="color:var(--gold); font-weight:bold; margin-bottom:15px; font-size:0.9rem">🏆 PANTHÉON</div><div class="stat-row"><span class="stat-label">⚽ BUTEUR ALL-TIME</span><span class="stat-value">${playersByGoals[0] || '-'} (${allTime[playersByGoals[0]]?.gf || 0} buts)</span></div><div class="stat-row"><span class="stat-label">🛡️ MEILLEURE DÉFENSE</span><span class="stat-value">${playersByDef[0] || '-'}</span></div><div class="stat-row"><span class="stat-label">🔥 RECORD / SAISON</span><span class="stat-value">${seasonRecord.name} (${seasonRecord.goals} en ${seasonRecord.season})</span></div></div>`;
     }
 
     if (tab === "matches") {
         if (!state.currentDay || state.currentDay.length === 0) {
             app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE ⚽</button>` : `<p style="color:var(--muted)">Attente de l'Admin...</p>`}</div>`;
         } else {
-            app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => `<div class="match-card"><div class="team-row"><span>${m.p1}</span><select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isTyping=true" onblur="isTyping=false"></div><div class="team-row"><span>${m.p2}</span><select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isTyping=true" onblur="isTyping=false"></div>${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div>` : ''}</div>`).join('')}</div>`;
+            app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => `<div class="match-card"><div class="team-row"><span>${m.p1}</span><select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false"></div><div class="team-row"><span>${m.p2}</span><select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false"></div>${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div>` : ''}</div>`).join('')}</div>`;
         }
     }
 
@@ -285,52 +274,33 @@ function render() {
         app.innerHTML = `<h3>🏆 Historique</h3>`;
         if(!state.archives) return;
         const grouped = {}; state.archives.forEach(d => { if(!grouped[d[0].seasonRef]) grouped[d[0].seasonRef] = []; grouped[d[0].seasonRef].push(d); });
-        Object.keys(grouped).reverse().forEach(s => { app.innerHTML += `<div class="card"><div style="border-bottom:1px solid var(--gold); padding-bottom:10px; margin-bottom:10px; color:var(--gold); font-weight:bold">🎖️ SAISON ${s}</div>${grouped[s].map((day, di) => `<details style="margin-bottom:8px"><summary style="font-size:0.8rem; color:var(--blue); cursor:pointer">Journée ${di+1} (${day[0].date})</summary><div style="padding:10px; font-size:0.7rem; border-left:2px solid #333; margin-top:5px">${day.map(m => `<div>⚽ ${m.p1} (${m.team1}) <b>${m.s1}-${m.s2}</b> ${m.p2} (${m.team2})</div>`).join('')}</div></details>`).join('')}</div>`; });
+        Object.keys(grouped).reverse().forEach(s => { app.innerHTML += `<div class="card"><div style="border-bottom:1px solid var(--gold); padding-bottom:10px; margin-bottom:10px; color:var(--gold); font-weight:bold">🎖️ SAISON ${s}</div>${grouped[s].map((day, di) => `<details style="margin-bottom:8px"><summary style="font-size:0.8rem; color:var(--blue); cursor:pointer">Journée ${di+1} (${day[0].date})</summary><div style="padding:10px; font-size:0.7rem; border-left:2px solid #333; margin-top:5px">${day.map(m => `<div>⚽ ${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2}</div>`).join('')}</div></details>`).join('')}</div>`; });
     }
 }
 
 // --- ACTIONS ---
-function renderTacticAdvice() { const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) { res.innerHTML = ""; return; } const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Attaque: <b>${t.style}</b></div><div class="tactic-item">Défense: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div></div>`; }
-function renderDuelAnalysis() { const p1 = qs("#duel1").value, p2 = qs("#duel2").value; const stats = getAllTimeStats(); if(!p1 || !p2 || p1 === p2) return; const s1 = stats[p1] || {pts:0, games:1}, s2 = stats[p2] || {pts:0, games:1}; const r = ((s1.pts/s1.games) / ((s1.pts/s1.games)+(s2.pts/s2.games)||1)) * 100; qs("#duelResult").innerHTML = `<div class="duel-bar-container"><div class="duel-bar-left" style="width:${r}%"></div><div class="duel-bar-right" style="width:${100-r}%"></div></div>`; }
+function renderTacticAdvice() { 
+    isInteracting = true; // BLOQUE LE REFRESH
+    const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) { res.innerHTML = ""; return; } 
+    const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Défense: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; 
+}
+
+function renderDuelAnalysis() { 
+    isInteracting = true;
+    const p1 = qs("#duel1").value, p2 = qs("#duel2").value; const stats = getAllTimeStats(); if(!p1 || !p2 || p1 === p2) return; 
+    const s1 = stats[p1] || {pts:0, games:1}, s2 = stats[p2] || {pts:0, games:1}; const r = ((s1.pts/s1.games) / ((s1.pts/s1.games)+(s2.pts/s2.games)||1)) * 100; 
+    qs("#duelResult").innerHTML = `<div class="duel-bar-container"><div class="duel-bar-left" style="width:${r}%"></div><div class="duel-bar-right" style="width:${100-r}%"></div></div><button class="btn-primary" style="font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button>`; 
+}
+
 function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0}); save();}} }
 function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
-
-function startDay(){ 
-    if(isAdmin() && state.players.length >= 2){ 
-        state.currentDay=[]; 
-        for(let i=0; i<state.players.length; i++){
-            for(let j=i+1; j<state.players.length; j++){
-                state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"});
-            }
-        }
-        save(); 
-    }
-}
-
-function validateMatch(i){ 
-    if(isAdmin()){ 
-        const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value); 
-        if(isNaN(s1)||isNaN(s2)) return; 
-        const m=state.currentDay[i]; 
-        const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2); 
-        p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1; 
-        if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;} 
-        m.s1=s1; m.s2=s2; m.done=true; 
-        m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value; 
-        if(state.currentDay.every(x=>x.done)){
-            if(!state.archives) state.archives=[]; 
-            state.archives.push([...state.currentDay]); 
-            state.currentDay=[];
-        } 
-        isTyping = false;
-        save(); 
-    } 
-}
+function startDay(){ if(isAdmin() && state.players.length >= 2){ state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
+function validateMatch(i){ if(isAdmin()){ const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value); if(isNaN(s1)||isNaN(s2)) return; const m=state.currentDay[i]; const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2); p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1; if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;} m.s1=s1; m.s2=s2; m.done=true; m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value; if(state.currentDay.every(x=>x.done)){ if(!state.archives) state.archives=[]; state.archives.push([...state.currentDay]); state.currentDay=[]; } isInteracting = false; save(); } }
 function finishSeason(){ if(isAdmin()){ const s=[...state.players].sort((a,b)=>b.points-a.points); if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winSeason").innerText=state.season; qs("#winnerModal").style.display="flex";} } }
 function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0;}); qs("#winnerModal").style.display="none"; save(); }
 function exportPDF(){ html2pdf().from(qs('#pdf-area')).set({filename:`FC26_S${state.season}.pdf`, html2canvas:{scale:2, backgroundColor:'#05070a'}}).save(); }
 
-document.querySelectorAll("nav button").forEach(btn => { btn.onclick = () => { document.querySelectorAll("nav button").forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }; });
+document.querySelectorAll("nav button").forEach(btn => { btn.onclick = () => { isInteracting = false; document.querySelectorAll("nav button").forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }; });
 
 pullData();
 </script>
