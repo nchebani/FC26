@@ -18,7 +18,6 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
 
-/* Notification Toast */
 #syncNotify { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--purple); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; z-index: 2000; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; }
 
 #loginOverlay, #pinOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
@@ -134,43 +133,25 @@ let currentUser = localStorage.getItem("fc26_user") || null;
 let state = { season: 1, players: [], currentDay: [], archives: [] };
 let isInteracting = false; 
 
-// AUDIO CONTEXT POUR LE SON
 const notifySound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
-
 const qs = (s) => document.querySelector(s);
 const isAdmin = () => currentUser === 'ADMIN';
 
-// SYNC ENGINE
-async function pushData() {
-    if (!isAdmin()) return;
-    try { await fetch(FB_URL, { method: 'PUT', body: JSON.stringify(state) }); } catch (e) {}
-}
-
+async function pushData() { if (isAdmin()) { try { await fetch(FB_URL, { method: 'PUT', body: JSON.stringify(state) }); } catch (e) {} } }
 async function pullData() {
     if (isInteracting) return; 
     try {
         const res = await fetch(FB_URL);
         const data = await res.json();
-        // SI LES DONNEES ONT CHANGEES SUR LE CLOUD
         if (data && JSON.stringify(data) !== JSON.stringify(state)) { 
-            state = data; 
-            render(); 
-            showNotify();
-            qs('#seasonBadge').innerText = `SAISON ${state.season}`; 
+            state = data; render(); showNotify(); qs('#seasonBadge').innerText = `SAISON ${state.season}`; 
         }
     } catch (e) {}
 }
 
-function showNotify() {
-    const n = qs("#syncNotify");
-    n.style.display = "block";
-    notifySound.play().catch(e => console.log("Audio blocké par navigateur"));
-    setTimeout(() => { n.style.display = "none"; }, 3000);
-}
-
+function showNotify() { const n = qs("#syncNotify"); n.style.display = "block"; notifySound.play().catch(e => {}); setTimeout(() => { n.style.display = "none"; }, 3000); }
 setInterval(pullData, 5000);
 
-// AUTH
 function checkPin() { qs('#pinOverlay').style.display = 'flex'; qs('#pinCode').focus(); }
 function validatePin() { if(qs('#pinCode').value === ADMIN_PIN) { qs('#pinOverlay').style.display = 'none'; login('ADMIN'); } else { alert("PIN Incorrect"); } }
 function login(user) { currentUser = user; localStorage.setItem("fc26_user", user); qs('#loginOverlay').style.display = 'none'; qs('#userDisplay').innerText = user; pullData(); }
@@ -178,7 +159,6 @@ function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
 function save() { if(isAdmin()) pushData(); render(); }
 
-// LOGIC DATA
 function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
 function getAllTimeStats() {
     let stats = {}; if(!state.archives) return stats;
@@ -226,7 +206,6 @@ function getTactic(playerName) {
     return { form: "4-2-3-1 (2)", style: "Équilibré", def: "Équilibré", width: "50 / 50", role: "MOC Libre / Pivot" };
 }
 
-// RENDER
 function render() {
     const tab = qs("nav button.active").dataset.tab;
     const app = qs("#app"); app.innerHTML = "";
@@ -260,26 +239,36 @@ function render() {
     if (tab === "archives") {
         app.innerHTML = `<h3>🏆 Historique</h3>`;
         if(!state.archives) return;
-        const grouped = {}; state.archives.forEach(d => { if(!grouped[d[0].seasonRef]) grouped[d[0].seasonRef] = []; grouped[d[0].seasonRef].push(d); });
-        Object.keys(grouped).reverse().forEach(s => { app.innerHTML += `<div class="card"><div style="color:var(--gold); font-weight:bold; margin-bottom:10px">SAISON ${s}</div>${grouped[s].map((day, di) => `<details style="margin-bottom:8px"><summary style="color:var(--blue)">Journée ${di+1} (${day[0].date})</summary><div style="font-size:0.7rem; padding:5px">${day.map(m => `<div>${m.p1} (${m.team1}) <b>${m.s1}-${m.s2}</b> ${m.p2} (${m.team2})</div>`).join('')}</div></details>`).join('')}</div>`; });
+        const grouped = {}; 
+        state.archives.forEach(d => { 
+            const sRef = d[0].seasonRef;
+            if(!grouped[sRef]) grouped[sRef] = []; 
+            grouped[sRef].push(d); 
+        });
+        
+        Object.keys(grouped).sort((a,b) => b-a).forEach(s => { 
+            app.innerHTML += `<div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                    <div style="color:var(--gold); font-weight:bold">SAISON ${s}</div>
+                    ${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}
+                </div>
+                ${grouped[s].map((day, di) => `<details style="margin-bottom:8px"><summary style="color:var(--blue)">Journée ${di+1} (${day[0].date})</summary><div style="font-size:0.7rem; padding:5px">${day.map(m => `<div>${m.p1} (${m.team1}) <b>${m.s1}-${m.s2}</b> ${m.p2} (${m.team2})</div>`).join('')}</div></details>`).join('')}
+            </div>`; 
+        });
     }
 }
 
-// INTERACTIONS
-function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons et le palmarès ? Les joueurs seront conservés.")){ state.season = 1; state.archives = []; state.currentDay = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); alert("Réinitialisation réussie !"); } }
-function renderTacticAdvice() { 
-    isInteracting = true;
-    const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) { res.innerHTML = ""; return; } 
-    const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; 
+// FONCTION POUR SUPPRIMER UNE SAISON PRECISE
+function deleteSeason(sNum) {
+    if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} du palmarès ?`)) {
+        state.archives = state.archives.filter(day => day[0].seasonRef != sNum);
+        save();
+    }
 }
 
-function renderDuelAnalysis() { 
-    isInteracting = true;
-    const p1 = qs("#duel1").value, p2 = qs("#duel2").value; const stats = getAllTimeStats(); if(!p1 || !p2 || p1 === p2) return; 
-    const s1 = stats[p1] || {pts:0, games:1}, s2 = stats[p2] || {pts:0, games:1}; const r = ((s1.pts/s1.games) / ((s1.pts/s1.games)+(s2.pts/s2.games)||1)) * 100; 
-    qs("#duelResult").innerHTML = `<div class="duel-bar-container"><div class="duel-bar-left" style="width:${r}%"></div><div class="duel-bar-right" style="width:${100-r}%"></div></div><button class="btn-primary" style="font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button>`; 
-}
-
+function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
+function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; }
+function renderDuelAnalysis() { isInteracting = true; const p1 = qs("#duel1").value, p2 = qs("#duel2").value; const stats = getAllTimeStats(); if(!p1 || !p2 || p1 === p2) return; const s1 = stats[p1] || {pts:0, games:1}, s2 = stats[p2] || {pts:0, games:1}; const r = ((s1.pts/s1.games) / ((s1.pts/s1.games)+(s2.pts/s2.games)||1)) * 100; qs("#duelResult").innerHTML = `<div class="duel-bar-container"><div class="duel-bar-left" style="width:${r}%"></div><div class="duel-bar-right" style="width:${100-r}%"></div></div><button class="btn-primary" style="font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button>`; }
 function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0}); save();}} }
 function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
 function startDay(){ if(isAdmin() && state.players.length >= 2){ state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
@@ -289,7 +278,6 @@ function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0; p.
 function exportPDF(){ html2pdf().from(qs('#pdf-area')).set({filename:`FC26_S${state.season}.pdf`, html2canvas:{scale:2, backgroundColor:'#05070a'}}).save(); }
 
 document.querySelectorAll("nav button").forEach(btn => { btn.onclick = () => { isInteracting = false; document.querySelectorAll("nav button").forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }; });
-
 pullData();
 </script>
 </body>
