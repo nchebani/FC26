@@ -18,15 +18,15 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
 
-/* Écran de Sécurité & PIN */
+/* Notification Toast */
+#syncNotify { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--purple); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; z-index: 2000; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; }
+
 #loginOverlay, #pinOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
 #pinOverlay { display: none; background: rgba(5, 7, 10, 0.98); }
 .login-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 400px; margin-top: 30px; }
 .user-btn { background: var(--card); border: 1px solid var(--border); color: white; padding: 20px; border-radius: 15px; cursor: pointer; text-align: center; transition: 0.3s; }
 .user-btn:hover { border-color: var(--purple); transform: translateY(-5px); }
-.user-btn i { font-size: 1.5rem; display: block; margin-bottom: 10px; }
 .admin-lock { border-color: var(--gold); }
-
 .pin-input { background: #000; border: 2px solid var(--border); color: var(--gold); font-size: 2rem; width: 150px; text-align: center; border-radius: 12px; margin: 20px 0; letter-spacing: 10px; padding: 10px; }
 
 header { background: #010409; padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; }
@@ -40,7 +40,6 @@ nav button.active { color: var(--accent); }
 main { padding: 15px; max-width: 600px; margin: auto; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative; }
 
-/* Styles IA & Stats */
 .awards-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
 .award-card { min-width: 130px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
 .award-winner { font-size: 0.8rem; font-weight: bold; color: var(--gold); display: block; margin-top: 5px; }
@@ -81,6 +80,8 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 </head>
 <body>
 
+<div id="syncNotify"><i class="fas fa-sync-alt fa-spin"></i> Mise à jour Live...</div>
+
 <div id="loginOverlay">
     <i class="fas fa-shield-halved" style="font-size: 3rem; color: var(--purple); margin-bottom: 10px;"></i>
     <h2 style="margin:0">FC26 ELITE</h2>
@@ -94,21 +95,15 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 </div>
 
 <div id="pinOverlay">
-    <i class="fas fa-lock" style="font-size: 2rem; color: var(--gold);"></i>
-    <h3>Code Admin</h3>
     <input type="password" id="pinCode" class="pin-input" maxlength="4" placeholder="••••">
-    <div style="display:flex; gap:10px; width: 150px;">
-        <button class="btn-primary" onclick="validatePin()">OK</button>
-        <button class="btn-primary" style="background:var(--danger)" onclick="qs('#pinOverlay').style.display='none'">X</button>
-    </div>
+    <button class="btn-primary" onclick="validatePin()">OK</button>
 </div>
 
 <div id="winnerModal">
     <div style="background: var(--card); padding: 40px; border-radius: 30px; border: 2px solid var(--gold);">
         <i class="fas fa-trophy" style="font-size: 4rem; color: var(--gold); margin-bottom: 20px;"></i>
         <h1 id="winnerName">-</h1>
-        <p>CHAMPION SAISON <span id="winSeason">1</span> 🏆</p>
-        <button class="btn-primary" onclick="closeWinner()" style="margin-top:20px">NOUVELLE SAISON 🔥</button>
+        <button class="btn-primary" onclick="closeWinner()">NOUVELLE SAISON 🔥</button>
     </div>
 </div>
 
@@ -131,67 +126,54 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 </nav>
 
 <script>
-// --- CONFIGURATION CLOUD ---
 const FB_URL = "https://fc26-e596e-default-rtdb.europe-west1.firebasedatabase.app/data.json";
 const ADMIN_PIN = "1234";
 const TEAMS = ["Real Madrid", "Man City", "Barcelone", "Bayern Munich", "Liverpool", "PSG", "Arsenal", "Inter Milan", "Milan AC", "Atletico", "Leverkusen", "Dortmund", "Juventus", "Naples", "Chelsea", "Aston Villa"];
 
 let currentUser = localStorage.getItem("fc26_user") || null;
 let state = { season: 1, players: [], currentDay: [], archives: [] };
-let isInteracting = false; // EMPÊCHE LE REFRESH PENDANT L'ANALYSE
+let isInteracting = false; 
 
 const qs = (s) => document.querySelector(s);
 const isAdmin = () => currentUser === 'ADMIN';
 
-// --- SYNC ENGINE ---
+// SYNC ENGINE AVEC NOTIFICATION
 async function pushData() {
     if (!isAdmin()) return;
-    try {
-        await fetch(FB_URL, { method: 'PUT', body: JSON.stringify(state) });
-        qs("#syncStatus").style.color = "var(--accent)";
-    } catch (e) { console.error("Cloud Error", e); }
+    try { await fetch(FB_URL, { method: 'PUT', body: JSON.stringify(state) }); } catch (e) {}
 }
 
 async function pullData() {
-    if (isInteracting) return; // BLOQUE SI ON UTILISE L'IA OU TAPE UN SCORE
+    if (isInteracting) return; 
     try {
         const res = await fetch(FB_URL);
         const data = await res.json();
-        if (data) {
-            state = data;
-            render();
-            qs('#seasonBadge').innerText = `SAISON ${state.season}`;
-            qs("#syncStatus").style.color = "var(--accent)";
+        if (data && JSON.stringify(data) !== JSON.stringify(state)) { 
+            state = data; 
+            render(); 
+            showNotify();
+            qs('#seasonBadge').innerText = `SAISON ${state.season}`; 
         }
-    } catch (e) { qs("#syncStatus").style.color = "var(--danger)"; }
+    } catch (e) {}
+}
+
+function showNotify() {
+    const n = qs("#syncNotify");
+    n.style.display = "block";
+    setTimeout(() => { n.style.display = "none"; }, 3000);
 }
 
 setInterval(pullData, 5000);
 
-// --- AUTH ---
+// AUTH
 function checkPin() { qs('#pinOverlay').style.display = 'flex'; qs('#pinCode').focus(); }
-function validatePin() {
-    if(qs('#pinCode').value === ADMIN_PIN) {
-        qs('#pinOverlay').style.display = 'none';
-        login('ADMIN');
-    } else { alert("PIN Incorrect"); qs('#pinCode').value = ""; }
-}
-function login(user) {
-    currentUser = user;
-    localStorage.setItem("fc26_user", user);
-    qs('#loginOverlay').style.display = 'none';
-    qs('#userDisplay').innerText = user;
-    pullData();
-}
+function validatePin() { if(qs('#pinCode').value === ADMIN_PIN) { qs('#pinOverlay').style.display = 'none'; login('ADMIN'); } else { alert("PIN Incorrect"); } }
+function login(user) { currentUser = user; localStorage.setItem("fc26_user", user); qs('#loginOverlay').style.display = 'none'; qs('#userDisplay').innerText = user; pullData(); }
 function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
+function save() { if(isAdmin()) pushData(); render(); }
 
-function save() { 
-    if(isAdmin()) pushData(); 
-    render(); 
-}
-
-// --- LOGIQUE MÉTIER ---
+// LOGIC DATA
 function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
 function getAllTimeStats() {
     let stats = {}; if(!state.archives) return stats;
@@ -239,7 +221,7 @@ function getTactic(playerName) {
     return { form: "4-2-3-1 (2)", style: "Équilibré", def: "Équilibré", width: "50 / 50", role: "MOC Libre / Pivot" };
 }
 
-// --- RENDU UI ---
+// RENDER
 function render() {
     const tab = qs("nav button.active").dataset.tab;
     const app = qs("#app"); app.innerHTML = "";
@@ -248,41 +230,41 @@ function render() {
         const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
         const pichichi = [...state.players].sort((a,b) => b.gf - a.gf)[0];
         const defense = [...state.players].sort((a,b) => a.ga - b.ga)[0];
-        app.innerHTML = `<div id="pdf-area"><div class="awards-scroll"><div class="award-card">⚽ <div class="award-winner">${pichichi?.name || '-'}</div><div style="font-size:0.5rem; color:var(--muted)">PICHICHI</div></div><div class="award-card">🛡️ <div class="award-winner">${defense?.name || '-'}</div><div style="font-size:0.5rem; color:var(--muted)">LE ROC</div></div><div class="award-card">💎 <div class="award-winner">${sorted[0] ? calculateValue(sorted[0]) : '0'}M</div><div style="font-size:0.5rem; color:var(--muted)">VALEUR TOP</div></div></div><div style="display:flex; justify-content:space-between; margin:15px 0"><h3 style="margin:0">Classement S${state.season}</h3><button class="btn-primary" style="width:auto; padding:5px 15px; font-size:0.7rem" onclick="exportPDF()">PDF</button></div><div class="card"><table><thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">DB</th><th class="col-center">Forme</th></tr></thead><tbody>${sorted.map(p => `<tr><td class="col-player"><strong>${p.name}</strong></td><td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td><td class="col-center">${p.gf-p.ga > 0 ? '+':''}${p.gf-p.ga}</td><td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td></tr>`).join('')}</tbody></table></div></div>${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:10px" onclick="finishSeason()">TERMINER LA SAISON</button>` : ''}`;
+        app.innerHTML = `<div id="pdf-area"><div class="awards-scroll"><div class="award-card">⚽ <div class="award-winner">${pichichi?.name || '-'}</div><div style="font-size:0.5rem">PICHICHI</div></div><div class="award-card">🛡️ <div class="award-winner">${defense?.name || '-'}</div><div style="font-size:0.5rem">LE ROC</div></div><div class="award-card">💎 <div class="award-winner">${sorted[0] ? calculateValue(sorted[0]) : '0'}M</div><div style="font-size:0.5rem">VALEUR TOP</div></div></div><div style="display:flex; justify-content:space-between; margin:15px 0"><h3>Classement S${state.season}</h3><button class="btn-primary" style="width:auto; padding:5px 15px; font-size:0.7rem" onclick="exportPDF()">PDF</button></div><div class="card"><table><thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">DB</th><th class="col-center">Forme</th></tr></thead><tbody>${sorted.map(p => `<tr><td class="col-player"><strong>${p.name}</strong></td><td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td><td class="col-center">${p.gf-p.ga > 0 ? '+':''}${p.gf-p.ga}</td><td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td></tr>`).join('')}</tbody></table></div></div>${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:10px" onclick="finishSeason()">TERMINER LA SAISON</button>` : ''}`;
     }
 
     if (tab === "analysis") {
         const allTime = getAllTimeStats(); const pred = getPrediction(); const seasonRecord = getSeasonRecord();
         const playersByGoals = Object.keys(allTime).sort((a,b) => allTime[b].gf - allTime[a].gf);
         const playersByDef = Object.keys(allTime).sort((a,b) => (allTime[a].ga/allTime[a].games) - (allTime[b].ga/allTime[b].games));
-        app.innerHTML = `<h3>🧠 Analyse IA</h3><div class="card predict-card"><div style="color:var(--purple); font-size:0.7rem; font-weight:bold">FAVORI HISTORIQUE 🔥</div><div style="font-size:1.8rem; font-weight:700; margin:10px 0">${pred.name}</div><div style="display:flex; align-items:center; gap:10px"><div style="flex:1; height:8px; background:#000; border-radius:10px; overflow:hidden"><div style="width:${pred.proba}%; height:100%; background:var(--purple)"></div></div><span style="font-weight:bold; color:var(--purple)">${pred.proba}%</span></div></div><div class="card"><div style="color:var(--blue); font-weight:bold; margin-bottom:15px; font-size:0.9rem">📋 CONSEIL TACTIQUE</div><select id="tacticPlayer" class="team-select" style="width:100%" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderTacticAdvice()"><option value="">Sélectionner un joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div><div class="card"><div style="color:var(--purple); font-weight:bold; margin-bottom:15px; font-size:0.9rem">⚔️ COMPARATEUR DE DUEL</div><div style="display:flex; gap:10px; align-items:center"><select id="duel1" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div><div class="card"><div style="color:var(--gold); font-weight:bold; margin-bottom:15px; font-size:0.9rem">🏆 PANTHÉON</div><div class="stat-row"><span class="stat-label">⚽ BUTEUR ALL-TIME</span><span class="stat-value">${playersByGoals[0] || '-'} (${allTime[playersByGoals[0]]?.gf || 0} buts)</span></div><div class="stat-row"><span class="stat-label">🛡️ MEILLEURE DÉFENSE</span><span class="stat-value">${playersByDef[0] || '-'}</span></div><div class="stat-row"><span class="stat-label">🔥 RECORD / SAISON</span><span class="stat-value">${seasonRecord.name} (${seasonRecord.goals} en ${seasonRecord.season})</span></div></div>`;
+        app.innerHTML = `<h3>🧠 Analyse IA</h3><div class="card predict-card"><div style="color:var(--purple); font-size:0.7rem">FAVORI HISTORIQUE 🔥</div><div style="font-size:1.8rem; font-weight:700; margin:10px 0">${pred.name}</div><div style="display:flex; align-items:center; gap:10px"><div style="flex:1; height:8px; background:#000; border-radius:10px; overflow:hidden"><div style="width:${pred.proba}%; height:100%; background:var(--purple)"></div></div><span>${pred.proba}%</span></div></div><div class="card"><strong>📋 CONSEIL TACTIQUE</strong><select id="tacticPlayer" class="team-select" style="width:100%; margin-top:10px" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderTacticAdvice()"><option value="">Sélectionner un joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div><div class="card"><strong>⚔️ COMPARATEUR</strong><div style="display:flex; gap:10px; margin-top:10px"><select id="duel1" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div><div class="card"><strong>🏆 PANTHÉON</strong><div class="stat-row"><span class="stat-label">⚽ BUTEUR ALL-TIME</span><span class="stat-value">${playersByGoals[0] || '-'} (${allTime[playersByGoals[0]]?.gf || 0} buts)</span></div><div class="stat-row"><span class="stat-label">🛡️ MEILLEURE DÉFENSE</span><span class="stat-value">${playersByDef[0] || '-'}</span></div><div class="stat-row"><span class="stat-label">🔥 RECORD / SAISON</span><span class="stat-value">${seasonRecord.name} (${seasonRecord.goals})</span></div></div>`;
     }
 
     if (tab === "matches") {
         if (!state.currentDay || state.currentDay.length === 0) {
-            app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE ⚽</button>` : `<p style="color:var(--muted)">Attente de l'Admin...</p>`}</div>`;
+            app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE ⚽</button>` : `<p>Attente de l'Admin...</p>`}</div>`;
         } else {
             app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => `<div class="match-card"><div class="team-row"><span>${m.p1}</span><select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false"></div><div class="team-row"><span>${m.p2}</span><select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false"></div>${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div>` : ''}</div>`).join('')}</div>`;
         }
     }
 
     if (tab === "players") {
-        app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card" style="border:1px dashed var(--gold)"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><span>${p.name}</span>${isAdmin() ? `<button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger)"><i class="fas fa-trash"></i></button>` : ''}</div>`).join('')}`;
+        app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><span>${p.name}</span>${isAdmin() ? `<button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger)"><i class="fas fa-trash"></i></button>` : ''}</div>`).join('')}`;
     }
 
     if (tab === "archives") {
         app.innerHTML = `<h3>🏆 Historique</h3>`;
         if(!state.archives) return;
         const grouped = {}; state.archives.forEach(d => { if(!grouped[d[0].seasonRef]) grouped[d[0].seasonRef] = []; grouped[d[0].seasonRef].push(d); });
-        Object.keys(grouped).reverse().forEach(s => { app.innerHTML += `<div class="card"><div style="border-bottom:1px solid var(--gold); padding-bottom:10px; margin-bottom:10px; color:var(--gold); font-weight:bold">🎖️ SAISON ${s}</div>${grouped[s].map((day, di) => `<details style="margin-bottom:8px"><summary style="font-size:0.8rem; color:var(--blue); cursor:pointer">Journée ${di+1} (${day[0].date})</summary><div style="padding:10px; font-size:0.7rem; border-left:2px solid #333; margin-top:5px">${day.map(m => `<div>⚽ ${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2}</div>`).join('')}</div></details>`).join('')}</div>`; });
+        Object.keys(grouped).reverse().forEach(s => { app.innerHTML += `<div class="card"><div style="color:var(--gold); font-weight:bold; margin-bottom:10px">SAISON ${s}</div>${grouped[s].map((day, di) => `<details style="margin-bottom:8px"><summary style="color:var(--blue)">Journée ${di+1} (${day[0].date})</summary><div style="font-size:0.7rem; padding:5px">${day.map(m => `<div>${m.p1} (${m.team1}) <b>${m.s1}-${m.s2}</b> ${m.p2} (${m.team2})</div>`).join('')}</div></details>`).join('')}</div>`; });
     }
 }
 
-// --- ACTIONS ---
+// INTERACTIONS
 function renderTacticAdvice() { 
-    isInteracting = true; // BLOQUE LE REFRESH
+    isInteracting = true;
     const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) { res.innerHTML = ""; return; } 
-    const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Défense: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; 
+    const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; 
 }
 
 function renderDuelAnalysis() { 
@@ -296,7 +278,7 @@ function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){st
 function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
 function startDay(){ if(isAdmin() && state.players.length >= 2){ state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
 function validateMatch(i){ if(isAdmin()){ const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value); if(isNaN(s1)||isNaN(s2)) return; const m=state.currentDay[i]; const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2); p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1; if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;} m.s1=s1; m.s2=s2; m.done=true; m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value; if(state.currentDay.every(x=>x.done)){ if(!state.archives) state.archives=[]; state.archives.push([...state.currentDay]); state.currentDay=[]; } isInteracting = false; save(); } }
-function finishSeason(){ if(isAdmin()){ const s=[...state.players].sort((a,b)=>b.points-a.points); if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winSeason").innerText=state.season; qs("#winnerModal").style.display="flex";} } }
+function finishSeason(){ if(isAdmin()){ const s=[...state.players].sort((a,b)=>b.points-a.points); if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";} } }
 function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0;}); qs("#winnerModal").style.display="none"; save(); }
 function exportPDF(){ html2pdf().from(qs('#pdf-area')).set({filename:`FC26_S${state.season}.pdf`, html2canvas:{scale:2, backgroundColor:'#05070a'}}).save(); }
 
