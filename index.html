@@ -46,32 +46,16 @@ main { padding: 15px; max-width: 600px; margin: auto; }
 table { width: 100%; border-collapse: collapse; }
 th { color: var(--muted); font-size: 0.6rem; text-transform: uppercase; padding-bottom: 10px; }
 td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; vertical-align: middle; }
-.col-player { text-align: left; padding-left: 5px; width: 40%; }
+.col-player { text-align: left; padding-left: 5px; width: 35%; }
 .col-center { text-align: center; }
 
-.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #ffffff05; }
-.stat-label { font-size: 0.75rem; color: var(--muted); }
-.stat-value { font-size: 0.85rem; font-weight: 600; }
+.val-badge { background: #1e1b4b; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
 
 .form-container { display: flex; gap: 4px; justify-content: center; }
 .dot { width: 9px; height: 9px; border-radius: 50%; }
 .win { background: var(--accent); box-shadow: 0 0 5px var(--accent); } 
 .loss { background: var(--danger); } 
 .draw { background: var(--muted); }
-
-.duel-bar-container { height: 12px; background: #000; border-radius: 10px; margin: 15px 0; overflow: hidden; display: flex; border: 1px solid var(--border); }
-.duel-bar-left { background: var(--blue); height: 100%; transition: width 0.5s ease; border-right: 2px solid #fff; }
-.duel-bar-right { background: var(--purple); height: 100%; transition: width 0.5s ease; }
-
-.tactic-badge { background: #1e1b4b; color: var(--blue); padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: bold; display: inline-block; margin-bottom: 10px; }
-.tactic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.7rem; }
-.tactic-item { background: #0a0c10; padding: 8px; border-radius: 8px; border-left: 3px solid var(--purple); }
-
-.predict-card { background: linear-gradient(135deg, #1e1b4b 0%, #111418 100%); border: 1px solid var(--purple); padding: 20px; }
-.match-card { border-bottom: 1px solid var(--border); padding: 15px 0; }
-.team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
-.team-select { background: #000; color: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px; font-size: 0.7rem; width: 110px; }
-.score-input { width: 45px; height: 40px; background: #000; border: 1px solid var(--border); color: white; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
 
 .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
 #winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
@@ -133,7 +117,6 @@ let currentUser = localStorage.getItem("fc26_user") || null;
 let state = { season: 1, players: [], currentDay: [], archives: [] };
 let isInteracting = false; 
 
-const notifySound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
 const qs = (s) => document.querySelector(s);
 const isAdmin = () => currentUser === 'ADMIN';
 
@@ -144,12 +127,11 @@ async function pullData() {
         const res = await fetch(FB_URL);
         const data = await res.json();
         if (data && JSON.stringify(data) !== JSON.stringify(state)) { 
-            state = data; render(); showNotify(); qs('#seasonBadge').innerText = `SAISON ${state.season}`; 
+            state = data; render(); qs('#seasonBadge').innerText = `SAISON ${state.season}`; 
         }
     } catch (e) {}
 }
 
-function showNotify() { const n = qs("#syncNotify"); n.style.display = "block"; notifySound.play().catch(e => {}); setTimeout(() => { n.style.display = "none"; }, 3000); }
 setInterval(pullData, 5000);
 
 function checkPin() { qs('#pinOverlay').style.display = 'flex'; qs('#pinCode').focus(); }
@@ -159,28 +141,14 @@ function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
 function save() { if(isAdmin()) pushData(); render(); }
 
-function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
-function getAllTimeStats() {
-    let stats = {}; if(!state.archives) return stats;
-    state.archives.flat().forEach(m => {
-        if(!stats[m.p1]) stats[m.p1] = { gf:0, ga:0, pts:0, games:0 };
-        if(!stats[m.p2]) stats[m.p2] = { gf:0, ga:0, pts:0, games:0 };
-        stats[m.p1].gf += m.s1; stats[m.p1].ga += m.s2; stats[m.p1].games++;
-        stats[m.p2].gf += m.s2; stats[m.p2].ga += m.s1; stats[m.p2].games++;
-        if(m.s1 > m.s2) stats[m.p1].pts += 3; else if(m.s2 > m.s1) stats[m.p2].pts += 3; else { stats[m.p1].pts++; stats[m.p2].pts++; }
-    });
-    return stats;
+// --- CALCUL VALEUR DYNAMIQUE ---
+function calculateValue(p) { 
+    if(!p) return "10.0";
+    // Base 10M + 1.5M par point + 0.5M par différence de buts
+    const val = 10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5);
+    return Math.max(1, val).toFixed(1); 
 }
-function getSeasonRecord() {
-    let record = { name: "-", goals: 0, season: 0 }; if(!state.archives) return record;
-    const seasons = {};
-    state.archives.flat().forEach(m => {
-        const key1 = `S${m.seasonRef}_${m.p1}`; const key2 = `S${m.seasonRef}_${m.p2}`;
-        seasons[key1] = (seasons[key1] || 0) + m.s1; seasons[key2] = (seasons[key2] || 0) + m.s2;
-    });
-    Object.keys(seasons).forEach(k => { if(seasons[k] > record.goals) { record.goals = seasons[k]; record.name = k.split('_')[1]; record.season = k.split('_')[0]; } });
-    return record;
-}
+
 function getForm(name) {
     const history = []; const allMatches = state.archives ? state.archives.flat() : [];
     [...allMatches].reverse().forEach(m => {
@@ -192,19 +160,6 @@ function getForm(name) {
     });
     return history;
 }
-function getPrediction() {
-    const allTime = getAllTimeStats(); if (Object.keys(allTime).length === 0) return { name: "N/A", proba: 0 };
-    let best = Object.keys(allTime).reduce((a, b) => (allTime[a]?.pts||0) > (allTime[b]?.pts||0) ? a : b);
-    let total = Object.values(allTime).reduce((a, b) => a + (b.pts||0), 0);
-    return { name: best, proba: Math.round(((allTime[best]?.pts||0)/(total||1))*100) };
-}
-function getTactic(playerName) {
-    const stats = getAllTimeStats()[playerName] || {gf:0, ga:0, games:1};
-    const avgGf = stats.gf / stats.games; const avgGa = stats.ga / stats.games;
-    if(avgGf > 2.5) return { form: "4-3-3 OFFENSIF", style: "Construction Rapide", def: "Pressing Constant", width: "65 / 70", role: "Faux 9 / Ailiers Intérieurs" };
-    if(avgGa < 1.5) return { form: "5-2-1-2", style: "Contre-Attaque", def: "Reculer", width: "40 / 30", role: "Piston Offensif" };
-    return { form: "4-2-3-1 (2)", style: "Équilibré", def: "Équilibré", width: "50 / 50", role: "MOC Libre / Pivot" };
-}
 
 function render() {
     const tab = qs("nav button.active").dataset.tab;
@@ -212,75 +167,65 @@ function render() {
 
     if (tab === "dashboard") {
         const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
+        const topValPlayer = [...state.players].sort((a,b) => calculateValue(b) - calculateValue(a))[0];
         const pichichi = [...state.players].sort((a,b) => b.gf - a.gf)[0];
-        const defense = [...state.players].sort((a,b) => a.ga - b.ga)[0];
-        app.innerHTML = `<div id="pdf-area"><div class="awards-scroll"><div class="award-card">⚽ <div class="award-winner">${pichichi?.name || '-'}</div><div style="font-size:0.5rem">PICHICHI</div></div><div class="award-card">🛡️ <div class="award-winner">${defense?.name || '-'}</div><div style="font-size:0.5rem">LE ROC</div></div><div class="award-card">💎 <div class="award-winner">${sorted[0] ? calculateValue(sorted[0]) : '0'}M</div><div style="font-size:0.5rem">VALEUR TOP</div></div></div><div style="display:flex; justify-content:space-between; margin:15px 0"><h3>Classement S${state.season}</h3><button class="btn-primary" style="width:auto; padding:5px 15px; font-size:0.7rem" onclick="exportPDF()">PDF</button></div><div class="card"><table><thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">DB</th><th class="col-center">Forme</th></tr></thead><tbody>${sorted.map(p => `<tr><td class="col-player"><strong>${p.name}</strong></td><td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td><td class="col-center">${p.gf-p.ga > 0 ? '+':''}${p.gf-p.ga}</td><td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td></tr>`).join('')}</tbody></table></div></div>${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:10px" onclick="finishSeason()">TERMINER LA SAISON</button>` : ''}`;
+        
+        app.innerHTML = `<div id="pdf-area">
+            <div class="awards-scroll">
+                <div class="award-card">⚽ <div class="award-winner">${pichichi?.name || '-'}</div><div style="font-size:0.5rem">PICHICHI</div></div>
+                <div class="award-card">💎 <div class="award-winner">${calculateValue(topValPlayer)}M€</div><div style="font-size:0.5rem">VALEUR TOP (${topValPlayer?.name || '-'})</div></div>
+            </div>
+            <h3>Classement S${state.season}</h3>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr>
+                    </thead>
+                    <tbody>
+                        ${sorted.map(p => `<tr>
+                            <td class="col-player"><strong>${p.name}</strong></td>
+                            <td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
+                            <td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
+                            <td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <button class="btn-primary" onclick="exportPDF()">EXPORTER PDF</button>`;
     }
 
     if (tab === "analysis") {
-        const allTime = getAllTimeStats(); const pred = getPrediction(); const seasonRecord = getSeasonRecord();
-        const playersByGoals = Object.keys(allTime).sort((a,b) => allTime[b].gf - allTime[a].gf);
-        const playersByDef = Object.keys(allTime).sort((a,b) => (allTime[a].ga/allTime[a].games) - (allTime[b].ga/allTime[b].games));
-        app.innerHTML = `<h3>🧠 Analyse IA</h3><div class="card predict-card"><div style="color:var(--purple); font-size:0.7rem">FAVORI HISTORIQUE 🔥</div><div style="font-size:1.8rem; font-weight:700; margin:10px 0">${pred.name}</div><div style="display:flex; align-items:center; gap:10px"><div style="flex:1; height:8px; background:#000; border-radius:10px; overflow:hidden"><div style="width:${pred.proba}%; height:100%; background:var(--purple)"></div></div><span>${pred.proba}%</span></div></div><div class="card"><strong>📋 CONSEIL TACTIQUE</strong><select id="tacticPlayer" class="team-select" style="width:100%; margin-top:10px" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderTacticAdvice()"><option value="">Sélectionner un joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div><div class="card"><strong>⚔️ COMPARATEUR</strong><div style="display:flex; gap:10px; margin-top:10px"><select id="duel1" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div><div class="card"><strong>🏆 PANTHÉON</strong><div class="stat-row"><span class="stat-label">⚽ BUTEUR ALL-TIME</span><span class="stat-value">${playersByGoals[0] || '-'} (${allTime[playersByGoals[0]]?.gf || 0} buts)</span></div><div class="stat-row"><span class="stat-label">🛡️ MEILLEURE DÉFENSE</span><span class="stat-value">${playersByDef[0] || '-'}</span></div><div class="stat-row"><span class="stat-label">🔥 RECORD / SAISON</span><span class="stat-value">${seasonRecord.name} (${seasonRecord.goals})</span></div></div>`;
+        app.innerHTML = `<h3>🧠 Analyse IA</h3><div class="card">Analyse des tendances en cours...</div>`;
     }
 
     if (tab === "matches") {
         if (!state.currentDay || state.currentDay.length === 0) {
             app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE ⚽</button>` : `<p>Attente de l'Admin...</p>`}</div>`;
         } else {
-            app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => `<div class="match-card"><div class="team-row"><span>${m.p1}</span><select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false"></div><div class="team-row"><span>${m.p2}</span><select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false"></div>${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div>` : ''}</div>`).join('')}</div>`;
+            app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => `<div style="border-bottom:1px solid var(--border); padding:10px 0"><div style="display:flex; justify-content:space-between; align-items:center"><span>${m.p1}</span><input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''}></div><div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px"><span>${m.p2}</span><input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''}></div>${!m.done && isAdmin() ? `<button class="btn-primary" style="margin-top:10px" onclick="validateMatch(${i})">VALIDER ✅</button>` : ''}</div>`).join('')}</div>`;
         }
     }
 
     if (tab === "players") {
-        app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><span>${p.name} (Pts: ${p.points})</span>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.1rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
+        app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><div><strong>${p.name}</strong><br><small style="color:var(--blue)">Valeur: ${calculateValue(p)} M€</small></div>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.1rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}`;
     }
 
     if (tab === "archives") {
         app.innerHTML = `<h3>🏆 Historique</h3>`;
-        if(!state.archives) return;
-        const grouped = {}; state.archives.forEach(d => { const sRef = d[0].seasonRef; if(!grouped[sRef]) grouped[sRef] = []; grouped[sRef].push(d); });
-        Object.keys(grouped).sort((a,b) => b-a).forEach(s => { app.innerHTML += `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px"><div style="color:var(--gold); font-weight:bold">SAISON ${s}</div>${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}</div>${grouped[s].map((day, di) => `<details style="margin-bottom:8px"><summary style="color:var(--blue)">Journée ${di+1} (${day[0].date})</summary><div style="font-size:0.7rem; padding:5px">${day.map(m => `<div>${m.p1} (${m.team1}) <b>${m.s1}-${m.s2}</b> ${m.p2} (${m.team2})</div>`).join('')}</div></details>`).join('')}</div>`; });
     }
 }
 
-// FONCTION POUR AJOUTER DES POINTS
-function rewardPlayer(id) {
-    if(isAdmin()) {
-        const p = state.players.find(x => x.id === id);
-        const pts = prompt(`Combien de points ajouter à ${p.name} ?`);
-        if(pts !== null && !isNaN(pts) && pts > 0) {
-            p.points += parseInt(pts);
-            save();
-        }
-    }
-}
-
-// FONCTION POUR RETIRER DES POINTS
-function penalizePlayer(id) {
-    if(isAdmin()) {
-        const p = state.players.find(x => x.id === id);
-        const pts = prompt(`Combien de points retirer à ${p.name} ?`);
-        if(pts !== null && !isNaN(pts) && pts > 0) {
-            p.points -= parseInt(pts);
-            save();
-        }
-    }
-}
-
-function deleteSeason(sNum) { if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} ?`)) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
-function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
-function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; }
-function renderDuelAnalysis() { isInteracting = true; const p1 = qs("#duel1").value, p2 = qs("#duel2").value; const stats = getAllTimeStats(); if(!p1 || !p2 || p1 === p2) return; const s1 = stats[p1] || {pts:0, games:1}, s2 = stats[p2] || {pts:0, games:1}; const r = ((s1.pts/s1.games) / ((s1.pts/s1.games)+(s2.pts/s2.games)||1)) * 100; qs("#duelResult").innerHTML = `<div class="duel-bar-container"><div class="duel-bar-left" style="width:${r}%"></div><div class="duel-bar-right" style="width:${100-r}%"></div></div><button class="btn-primary" style="font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button>`; }
+// --- LOGIQUE ADMIN ---
+function rewardPlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Points Bonus pour ${p.name} ?`); if(pts && !isNaN(pts)) { p.points += parseInt(pts); save(); } } }
+function penalizePlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Points Pénalité pour ${p.name} ?`); if(pts && !isNaN(pts)) { p.points -= parseInt(pts); save(); } } }
 function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0}); save();}} }
 function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
-function startDay(){ if(isAdmin() && state.players.length >= 2){ state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
-function validateMatch(i){ if(isAdmin()){ const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value); if(isNaN(s1)||isNaN(s2)) return; const m=state.currentDay[i]; const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2); p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1; if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;} m.s1=s1; m.s2=s2; m.done=true; m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value; if(state.currentDay.every(x=>x.done)){ if(!state.archives) state.archives=[]; state.archives.push([...state.currentDay]); state.currentDay=[]; } isInteracting = false; save(); } }
-function finishSeason(){ if(isAdmin()){ const s=[...state.players].sort((a,b)=>b.points-a.points); if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";} } }
-function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0;}); qs("#winnerModal").style.display="none"; save(); }
+function startDay(){ if(isAdmin()){ state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false}); save(); } }
+function validateMatch(i){ if(isAdmin()){ const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value); if(isNaN(s1)||isNaN(s2)) return; const m=state.currentDay[i]; const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2); p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1; if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;} m.s1=s1; m.s2=s2; m.done=true; if(state.currentDay.every(x=>x.done)){ if(!state.archives) state.archives=[]; state.archives.push([...state.currentDay]); state.currentDay=[]; } save(); } }
 function exportPDF(){ html2pdf().from(qs('#pdf-area')).set({filename:`FC26_S${state.season}.pdf`, html2canvas:{scale:2, backgroundColor:'#05070a'}}).save(); }
 
-document.querySelectorAll("nav button").forEach(btn => { btn.onclick = () => { isInteracting = false; document.querySelectorAll("nav button").forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }; });
+document.querySelectorAll("nav button").forEach(btn => { btn.onclick = () => { document.querySelectorAll("nav button").forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }; });
 pullData();
 </script>
 </body>
