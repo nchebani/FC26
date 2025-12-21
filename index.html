@@ -49,6 +49,9 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .col-player { text-align: left; padding-left: 5px; width: 40%; }
 .col-center { text-align: center; }
 
+/* Nouveau style pour le badge de valeur */
+.val-badge { background: #1e1b4b; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
+
 .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #ffffff05; }
 .stat-label { font-size: 0.75rem; color: var(--muted); }
 .stat-value { font-size: 0.85rem; font-weight: 600; }
@@ -159,7 +162,9 @@ function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
 function save() { if(isAdmin()) pushData(); render(); }
 
+// --- CALCUL VALEUR MARCHANDE ---
 function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
+
 function getAllTimeStats() {
     let stats = {}; if(!state.archives) return stats;
     state.archives.flat().forEach(m => {
@@ -213,8 +218,9 @@ function render() {
     if (tab === "dashboard") {
         const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
         const pichichi = [...state.players].sort((a,b) => b.gf - a.gf)[0];
-        const defense = [...state.players].sort((a,b) => a.ga - b.ga)[0];
-        app.innerHTML = `<div id="pdf-area"><div class="awards-scroll"><div class="award-card">⚽ <div class="award-winner">${pichichi?.name || '-'}</div><div style="font-size:0.5rem">PICHICHI</div></div><div class="award-card">🛡️ <div class="award-winner">${defense?.name || '-'}</div><div style="font-size:0.5rem">LE ROC</div></div><div class="award-card">💎 <div class="award-winner">${sorted[0] ? calculateValue(sorted[0]) : '0'}M</div><div style="font-size:0.5rem">VALEUR TOP</div></div></div><div style="display:flex; justify-content:space-between; margin:15px 0"><h3>Classement S${state.season}</h3><button class="btn-primary" style="width:auto; padding:5px 15px; font-size:0.7rem" onclick="exportPDF()">PDF</button></div><div class="card"><table><thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">DB</th><th class="col-center">Forme</th></tr></thead><tbody>${sorted.map(p => `<tr><td class="col-player"><strong>${p.name}</strong></td><td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td><td class="col-center">${p.gf-p.ga > 0 ? '+':''}${p.gf-p.ga}</td><td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td></tr>`).join('')}</tbody></table></div></div>${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:10px" onclick="finishSeason()">TERMINER LA SAISON</button>` : ''}`;
+        const topValPlayer = sorted.length ? [...state.players].sort((a,b) => calculateValue(b) - calculateValue(a))[0] : null;
+        
+        app.innerHTML = `<div id="pdf-area"><div class="awards-scroll"><div class="award-card">⚽ <div class="award-winner">${pichichi?.name || '-'}</div><div style="font-size:0.5rem">PICHICHI</div></div><div class="award-card">💎 <div class="award-winner">${topValPlayer ? calculateValue(topValPlayer) : '0'}M</div><div style="font-size:0.5rem">VALEUR TOP</div></div></div><div style="display:flex; justify-content:space-between; margin:15px 0"><h3>Classement S${state.season}</h3><button class="btn-primary" style="width:auto; padding:5px 15px; font-size:0.7rem" onclick="exportPDF()">PDF</button></div><div class="card"><table><thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr></thead><tbody>${sorted.map(p => `<tr><td class="col-player"><strong>${p.name}</strong></td><td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td><td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td><td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td></tr>`).join('')}</tbody></table></div></div>${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:10px" onclick="finishSeason()">TERMINER LA SAISON</button>` : ''}`;
     }
 
     if (tab === "analysis") {
@@ -233,7 +239,7 @@ function render() {
     }
 
     if (tab === "players") {
-        app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><span>${p.name} (Pts: ${p.points})</span>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.1rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
+        app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><div><strong>${p.name}</strong><br><small style="color:var(--blue)">${calculateValue(p)} M€</small></div>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.1rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
     }
 
     if (tab === "archives") {
@@ -244,30 +250,8 @@ function render() {
     }
 }
 
-// FONCTION POUR AJOUTER DES POINTS
-function rewardPlayer(id) {
-    if(isAdmin()) {
-        const p = state.players.find(x => x.id === id);
-        const pts = prompt(`Combien de points ajouter à ${p.name} ?`);
-        if(pts !== null && !isNaN(pts) && pts > 0) {
-            p.points += parseInt(pts);
-            save();
-        }
-    }
-}
-
-// FONCTION POUR RETIRER DES POINTS
-function penalizePlayer(id) {
-    if(isAdmin()) {
-        const p = state.players.find(x => x.id === id);
-        const pts = prompt(`Combien de points retirer à ${p.name} ?`);
-        if(pts !== null && !isNaN(pts) && pts > 0) {
-            p.points -= parseInt(pts);
-            save();
-        }
-    }
-}
-
+function rewardPlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points ajouter à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points += parseInt(pts); save(); } } }
+function penalizePlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points retirer à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points -= parseInt(pts); save(); } } }
 function deleteSeason(sNum) { if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} ?`)) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
 function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
 function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; }
