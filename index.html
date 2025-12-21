@@ -233,7 +233,7 @@ function render() {
     }
 
     if (tab === "players") {
-        app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><span>${p.name} (Pts: ${p.points})</span>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
+        app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><span>${p.name} (Pts: ${p.points})</span>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.1rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
     }
 
     if (tab === "archives") {
@@ -244,11 +244,23 @@ function render() {
     }
 }
 
-// NOUVELLE FONCTION POUR RETIRER DES POINTS
+// FONCTION POUR AJOUTER DES POINTS
+function rewardPlayer(id) {
+    if(isAdmin()) {
+        const p = state.players.find(x => x.id === id);
+        const pts = prompt(`Combien de points ajouter à ${p.name} ?`);
+        if(pts !== null && !isNaN(pts) && pts > 0) {
+            p.points += parseInt(pts);
+            save();
+        }
+    }
+}
+
+// FONCTION POUR RETIRER DES POINTS
 function penalizePlayer(id) {
     if(isAdmin()) {
         const p = state.players.find(x => x.id === id);
-        const pts = prompt(`Combien de points retirer à ${p.name} ? (Entrez un nombre positif)`);
+        const pts = prompt(`Combien de points retirer à ${p.name} ?`);
         if(pts !== null && !isNaN(pts) && pts > 0) {
             p.points -= parseInt(pts);
             save();
