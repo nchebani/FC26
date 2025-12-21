@@ -233,39 +233,30 @@ function render() {
     }
 
     if (tab === "players") {
-        app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><span>${p.name}</span>${isAdmin() ? `<button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger)"><i class="fas fa-trash"></i></button>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
+        app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><span>${p.name} (Pts: ${p.points})</span>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
     }
 
     if (tab === "archives") {
         app.innerHTML = `<h3>🏆 Historique</h3>`;
         if(!state.archives) return;
-        const grouped = {}; 
-        state.archives.forEach(d => { 
-            const sRef = d[0].seasonRef;
-            if(!grouped[sRef]) grouped[sRef] = []; 
-            grouped[sRef].push(d); 
-        });
-        
-        Object.keys(grouped).sort((a,b) => b-a).forEach(s => { 
-            app.innerHTML += `<div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-                    <div style="color:var(--gold); font-weight:bold">SAISON ${s}</div>
-                    ${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}
-                </div>
-                ${grouped[s].map((day, di) => `<details style="margin-bottom:8px"><summary style="color:var(--blue)">Journée ${di+1} (${day[0].date})</summary><div style="font-size:0.7rem; padding:5px">${day.map(m => `<div>${m.p1} (${m.team1}) <b>${m.s1}-${m.s2}</b> ${m.p2} (${m.team2})</div>`).join('')}</div></details>`).join('')}
-            </div>`; 
-        });
+        const grouped = {}; state.archives.forEach(d => { const sRef = d[0].seasonRef; if(!grouped[sRef]) grouped[sRef] = []; grouped[sRef].push(d); });
+        Object.keys(grouped).sort((a,b) => b-a).forEach(s => { app.innerHTML += `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px"><div style="color:var(--gold); font-weight:bold">SAISON ${s}</div>${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}</div>${grouped[s].map((day, di) => `<details style="margin-bottom:8px"><summary style="color:var(--blue)">Journée ${di+1} (${day[0].date})</summary><div style="font-size:0.7rem; padding:5px">${day.map(m => `<div>${m.p1} (${m.team1}) <b>${m.s1}-${m.s2}</b> ${m.p2} (${m.team2})</div>`).join('')}</div></details>`).join('')}</div>`; });
     }
 }
 
-// FONCTION POUR SUPPRIMER UNE SAISON PRECISE
-function deleteSeason(sNum) {
-    if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} du palmarès ?`)) {
-        state.archives = state.archives.filter(day => day[0].seasonRef != sNum);
-        save();
+// NOUVELLE FONCTION POUR RETIRER DES POINTS
+function penalizePlayer(id) {
+    if(isAdmin()) {
+        const p = state.players.find(x => x.id === id);
+        const pts = prompt(`Combien de points retirer à ${p.name} ? (Entrez un nombre positif)`);
+        if(pts !== null && !isNaN(pts) && pts > 0) {
+            p.points -= parseInt(pts);
+            save();
+        }
     }
 }
 
+function deleteSeason(sNum) { if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} ?`)) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
 function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
 function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; }
 function renderDuelAnalysis() { isInteracting = true; const p1 = qs("#duel1").value, p2 = qs("#duel2").value; const stats = getAllTimeStats(); if(!p1 || !p2 || p1 === p2) return; const s1 = stats[p1] || {pts:0, games:1}, s2 = stats[p2] || {pts:0, games:1}; const r = ((s1.pts/s1.games) / ((s1.pts/s1.games)+(s2.pts/s2.games)||1)) * 100; qs("#duelResult").innerHTML = `<div class="duel-bar-container"><div class="duel-bar-left" style="width:${r}%"></div><div class="duel-bar-right" style="width:${100-r}%"></div></div><button class="btn-primary" style="font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button>`; }
