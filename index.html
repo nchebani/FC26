@@ -167,6 +167,20 @@ function save() { if(isAdmin()) pushData(); render(); }
 // --- CALCULS ---
 function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
 
+function getSeasonWinner(sNum) {
+    if(!state.archives) return "Inconnu";
+    let pts = {};
+    state.archives.flat().filter(m => m.seasonRef == sNum).forEach(m => {
+        if(!pts[m.p1]) pts[m.p1] = 0;
+        if(!pts[m.p2]) pts[m.p2] = 0;
+        if(m.s1 > m.s2) pts[m.p1] += 3;
+        else if(m.s2 > m.s1) pts[m.p2] += 3;
+        else { pts[m.p1] += 1; pts[m.p2] += 1; }
+    });
+    let winner = Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b, "-");
+    return winner;
+}
+
 function getAllTimeStats() {
     let stats = {}; if(!state.archives) return stats;
     state.archives.flat().forEach(m => {
@@ -280,9 +294,10 @@ function render() {
         });
         
         Object.keys(grouped).sort((a,b) => b-a).forEach(s => { 
+            const sWinner = getSeasonWinner(s);
             app.innerHTML += `<div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-                    <div style="color:var(--gold); font-weight:bold">SAISON ${s}</div>
+                    <div style="color:var(--gold); font-weight:bold">SAISON ${s} <span style="color:var(--text); font-size:0.7rem; margin-left:10px">(Vainqueur: ${sWinner})</span></div>
                     ${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}
                 </div>
                 ${grouped[s].map((item, di) => `
