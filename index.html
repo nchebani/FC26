@@ -305,9 +305,13 @@ function render() {
                         <summary style="color:var(--blue)">Journée ${di+1} (${item.day[0].date})</summary>
                         <div style="font-size:0.75rem; padding:10px">
                             ${item.day.map((m, mIdx) => `
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px">
-                                    <span>${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2}</span>
-                                    ${isAdmin() ? `<button class="btn-edit" onclick="editOldMatch(${item.idx}, ${mIdx})">Modifier</button>` : ''}
+                                <div style="display:flex; flex-direction:column; gap:2px; margin-bottom:12px; border-bottom:1px solid #333; padding-bottom:8px">
+                                    <div style="display:flex; justify-content:space-between; align-items:center">
+                                        <span style="font-weight:bold">${m.p1} <span style="color:var(--muted); font-size:0.6rem; font-weight:normal">(${m.team1 || '?'})</span></span>
+                                        <b style="font-size:1rem; color:var(--blue)">${m.s1} - ${m.s2}</b>
+                                        <span style="font-weight:bold; text-align:right"><span style="color:var(--muted); font-size:0.6rem; font-weight:normal">(${m.team2 || '?'})</span> ${m.p2}</span>
+                                    </div>
+                                    ${isAdmin() ? `<div style="text-align:center; margin-top:5px"><button class="btn-edit" onclick="editOldMatch(${item.idx}, ${mIdx})">Modifier Score</button></div>` : ''}
                                 </div>
                                 <div id="edit_${item.idx}_${mIdx}"></div>
                             `).join('')}
@@ -337,7 +341,6 @@ function saveOldMatch(dayIdx, mIdx) {
     const s1 = parseInt(qs("#ns1").value);
     const s2 = parseInt(qs("#ns2").value);
     if(confirm(`Modifier ce score en ${s1}-${s2} ? Les points des joueurs seront recalculés.`)) {
-        // Soustraire les anciens points
         const m = state.archives[dayIdx][mIdx];
         const p1 = state.players.find(p => p.name === m.p1);
         const p2 = state.players.find(p => p.name === m.p2);
@@ -347,7 +350,6 @@ function saveOldMatch(dayIdx, mIdx) {
             p2.gf -= m.s2; p2.ga -= m.s1;
             if(m.s1 > m.s2) p1.points -= 3; else if(m.s2 > m.s1) p2.points -= 3; else {p1.points -= 1; p2.points -= 1;}
             
-            // Ajouter les nouveaux points
             p1.gf += s1; p1.ga += s2;
             p2.gf += s2; p2.ga += s1;
             if(s1 > s2) p1.points += 3; else if(s2 > s1) p2.points += 3; else {p1.points += 1; p2.points += 1;}
