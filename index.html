@@ -49,7 +49,6 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .col-player { text-align: left; padding-left: 5px; width: 40%; }
 .col-center { text-align: center; }
 
-/* Badge Valeur */
 .val-badge { background: #1e1b4b; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
 
 .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #ffffff05; }
@@ -77,6 +76,9 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .score-input { width: 45px; height: 40px; background: #000; border: 1px solid var(--border); color: white; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
 
 .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
+.btn-edit { background: none; border: 1px solid var(--blue); color: var(--blue); padding: 4px 8px; border-radius: 6px; font-size: 0.6rem; cursor: pointer; }
+.edit-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px dashed var(--blue); text-align: center; }
+
 #winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
 </style>
 </head>
@@ -162,7 +164,7 @@ function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
 function save() { if(isAdmin()) pushData(); render(); }
 
-// --- MODIF : CALCUL VALEUR ---
+// --- CALCULS ---
 function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
 
 function getAllTimeStats() {
@@ -269,10 +271,76 @@ function render() {
     }
 
     if (tab === "archives") {
-        app.innerHTML = `<h3>🏆 Historique</h3>`;
+        app.innerHTML = `<h3>🏆 Historique & Modifs</h3>`;
         if(!state.archives) return;
-        const grouped = {}; state.archives.forEach(d => { const sRef = d[0].seasonRef; if(!grouped[sRef]) grouped[sRef] = []; grouped[sRef].push(d); });
-        Object.keys(grouped).sort((a,b) => b-a).forEach(s => { app.innerHTML += `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px"><div style="color:var(--gold); font-weight:bold">SAISON ${s}</div>${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}</div>${grouped[s].map((day, di) => `<details style="margin-bottom:8px"><summary style="color:var(--blue)">Journée ${di+1} (${day[0].date})</summary><div style="font-size:0.7rem; padding:5px">${day.map(m => `<div>${m.p1} (${m.team1}) <b>${m.s1}-${m.s2}</b> ${m.p2} (${m.team2})</div>`).join('')}</div></details>`).join('')}</div>`; });
+        const grouped = {}; state.archives.forEach((d, globalIdx) => { 
+            const sRef = d[0].seasonRef; 
+            if(!grouped[sRef]) grouped[sRef] = []; 
+            grouped[sRef].push({day: d, idx: globalIdx}); 
+        });
+        
+        Object.keys(grouped).sort((a,b) => b-a).forEach(s => { 
+            app.innerHTML += `<div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                    <div style="color:var(--gold); font-weight:bold">SAISON ${s}</div>
+                    ${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}
+                </div>
+                ${grouped[s].map((item, di) => `
+                    <details style="margin-bottom:8px">
+                        <summary style="color:var(--blue)">Journée ${di+1} (${item.day[0].date})</summary>
+                        <div style="font-size:0.75rem; padding:10px">
+                            ${item.day.map((m, mIdx) => `
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px">
+                                    <span>${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2}</span>
+                                    ${isAdmin() ? `<button class="btn-edit" onclick="editOldMatch(${item.idx}, ${mIdx})">Modifier</button>` : ''}
+                                </div>
+                                <div id="edit_${item.idx}_${mIdx}"></div>
+                            `).join('')}
+                        </div>
+                    </details>`).join('')}
+            </div>`; 
+        });
+    }
+}
+
+// --- FONCTIONS DE MODIFICATION ---
+function editOldMatch(dayIdx, mIdx) {
+    isInteracting = true;
+    const m = state.archives[dayIdx][mIdx];
+    qs(`#edit_${dayIdx}_${mIdx}`).innerHTML = `
+        <div class="edit-box">
+            <input type="number" id="ns1" class="score-input" value="${m.s1}" style="width:50px"> - 
+            <input type="number" id="ns2" class="score-input" value="${m.s2}" style="width:50px">
+            <div style="margin-top:10px; display:flex; gap:10px; justify-content:center">
+                <button class="btn-primary" style="padding:5px 15px; font-size:0.7rem" onclick="saveOldMatch(${dayIdx}, ${mIdx})">CONFIRMER ✅</button>
+                <button class="btn-primary" style="background:var(--danger); padding:5px 15px; font-size:0.7rem" onclick="render()">ANNULER</button>
+            </div>
+        </div>`;
+}
+
+function saveOldMatch(dayIdx, mIdx) {
+    const s1 = parseInt(qs("#ns1").value);
+    const s2 = parseInt(qs("#ns2").value);
+    if(confirm(`Modifier ce score en ${s1}-${s2} ? Les points des joueurs seront recalculés.`)) {
+        // Soustraire les anciens points
+        const m = state.archives[dayIdx][mIdx];
+        const p1 = state.players.find(p => p.name === m.p1);
+        const p2 = state.players.find(p => p.name === m.p2);
+        
+        if(p1 && p2) {
+            p1.gf -= m.s1; p1.ga -= m.s2;
+            p2.gf -= m.s2; p2.ga -= m.s1;
+            if(m.s1 > m.s2) p1.points -= 3; else if(m.s2 > m.s1) p2.points -= 3; else {p1.points -= 1; p2.points -= 1;}
+            
+            // Ajouter les nouveaux points
+            p1.gf += s1; p1.ga += s2;
+            p2.gf += s2; p2.ga += s1;
+            if(s1 > s2) p1.points += 3; else if(s2 > s1) p2.points += 3; else {p1.points += 1; p2.points += 1;}
+        }
+        
+        m.s1 = s1; m.s2 = s2;
+        isInteracting = false;
+        save();
     }
 }
 
