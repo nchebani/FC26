@@ -50,7 +50,6 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .col-center { text-align: center; }
 
 .val-badge { background: #1e1b4b; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
-
 .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #ffffff05; }
 .stat-label { font-size: 0.75rem; color: var(--muted); }
 .stat-value { font-size: 0.85rem; font-weight: 600; }
@@ -107,7 +106,8 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
     <div style="background: var(--card); padding: 40px; border-radius: 30px; border: 2px solid var(--gold);">
         <i class="fas fa-trophy" style="font-size: 4rem; color: var(--gold); margin-bottom: 20px;"></i>
         <h1 id="winnerName">-</h1>
-        <button class="btn-primary" onclick="closeWinner()">NOUVELLE SAISON 🔥</button>
+        <p style="color:var(--gold); font-weight:bold; margin-bottom:20px;">CHAMPION DE LA SAISON</p>
+        <button class="btn-primary" onclick="closeWinner()">DÉMARRER LA SUITE 🔥</button>
     </div>
 </div>
 
@@ -135,7 +135,8 @@ const ADMIN_PIN = "1234";
 const TEAMS = ["Real Madrid", "Man City", "Barcelone", "Bayern Munich", "Liverpool", "PSG", "Arsenal", "Inter Milan", "Milan AC", "Atletico", "Leverkusen", "Dortmund", "Juventus", "Naples", "Chelsea", "Aston Villa"];
 
 let currentUser = localStorage.getItem("fc26_user") || null;
-let state = { season: 1, players: [], currentDay: [], archives: [] };
+// Ajout de hallOfFame dans le state initial
+let state = { season: 1, players: [], currentDay: [], archives: [], hallOfFame: [] };
 let isInteracting = false; 
 
 const notifySound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
@@ -271,7 +272,19 @@ function render() {
     }
 
     if (tab === "archives") {
-        app.innerHTML = `<h3>🏆 Historique & Modifs</h3>`;
+        app.innerHTML = `<h3>🏆 Historique</h3>`;
+
+        // --- NOUVEAU : AFFICHAGE DU HALL OF FAME ---
+        if(state.hallOfFame && state.hallOfFame.length > 0) {
+            app.innerHTML += `<div class="card" style="border-color:var(--gold); background: linear-gradient(135deg, #111418 0%, #1a1505 100%);">
+                <div style="color:var(--gold); font-weight:700; margin-bottom:10px;"><i class="fas fa-trophy"></i> TABLEAU D'HONNEUR</div>
+                ${state.hallOfFame.slice().reverse().map(h => `<div style="display:flex; justify-content:space-between; font-size:0.8rem; padding:4px 0; border-bottom:1px solid #ffffff05">
+                    <span style="color:var(--muted)">Saison ${h.season}</span>
+                    <span style="font-weight:600; color:var(--text)">${h.winner}</span>
+                </div>`).join('')}
+            </div>`;
+        }
+
         if(!state.archives) return;
         const grouped = {}; state.archives.forEach((d, globalIdx) => { 
             const sRef = d[0].seasonRef; 
@@ -282,8 +295,7 @@ function render() {
         Object.keys(grouped).sort((a,b) => b-a).forEach(s => { 
             app.innerHTML += `<div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-                    <div style="color:var(--gold); font-weight:bold">SAISON ${s}</div>
-                    ${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}
+                    <div style="color:var(--gold); font-weight:bold">DÉTAIL SAISON ${s}</div>
                 </div>
                 ${grouped[s].map((item, di) => `
                     <details style="margin-bottom:8px">
@@ -303,7 +315,7 @@ function render() {
     }
 }
 
-// --- FONCTIONS DE MODIFICATION ---
+// --- LOGIQUE DE MODIFICATION ---
 function editOldMatch(dayIdx, mIdx) {
     isInteracting = true;
     const m = state.archives[dayIdx][mIdx];
@@ -312,49 +324,56 @@ function editOldMatch(dayIdx, mIdx) {
             <input type="number" id="ns1" class="score-input" value="${m.s1}" style="width:50px"> - 
             <input type="number" id="ns2" class="score-input" value="${m.s2}" style="width:50px">
             <div style="margin-top:10px; display:flex; gap:10px; justify-content:center">
-                <button class="btn-primary" style="padding:5px 15px; font-size:0.7rem" onclick="saveOldMatch(${dayIdx}, ${mIdx})">CONFIRMER ✅</button>
-                <button class="btn-primary" style="background:var(--danger); padding:5px 15px; font-size:0.7rem" onclick="render()">ANNULER</button>
+                <button class="btn-primary" style="padding:5px 15px; font-size:0.7rem" onclick="saveOldMatch(${dayIdx}, ${mIdx})">OK ✅</button>
+                <button class="btn-primary" style="background:var(--danger); padding:5px 15px; font-size:0.7rem" onclick="render()">X</button>
             </div>
         </div>`;
 }
 
 function saveOldMatch(dayIdx, mIdx) {
-    const s1 = parseInt(qs("#ns1").value);
-    const s2 = parseInt(qs("#ns2").value);
-    if(confirm(`Modifier ce score en ${s1}-${s2} ? Les points des joueurs seront recalculés.`)) {
-        // Soustraire les anciens points
+    const s1 = parseInt(qs("#ns1").value), s2 = parseInt(qs("#ns2").value);
+    if(confirm(`Modifier ce score ?`)) {
         const m = state.archives[dayIdx][mIdx];
-        const p1 = state.players.find(p => p.name === m.p1);
-        const p2 = state.players.find(p => p.name === m.p2);
-        
+        const p1 = state.players.find(p => p.name === m.p1), p2 = state.players.find(p => p.name === m.p2);
         if(p1 && p2) {
-            p1.gf -= m.s1; p1.ga -= m.s2;
-            p2.gf -= m.s2; p2.ga -= m.s1;
+            p1.gf -= m.s1; p1.ga -= m.s2; p2.gf -= m.s2; p2.ga -= m.s1;
             if(m.s1 > m.s2) p1.points -= 3; else if(m.s2 > m.s1) p2.points -= 3; else {p1.points -= 1; p2.points -= 1;}
-            
-            // Ajouter les nouveaux points
-            p1.gf += s1; p1.ga += s2;
-            p2.gf += s2; p2.ga += s1;
+            p1.gf += s1; p1.ga += s2; p2.gf += s2; p2.ga += s1;
             if(s1 > s2) p1.points += 3; else if(s2 > s1) p2.points += 3; else {p1.points += 1; p2.points += 1;}
         }
-        
-        m.s1 = s1; m.s2 = s2;
-        isInteracting = false;
-        save();
+        m.s1 = s1; m.s2 = s2; isInteracting = false; save();
     }
 }
 
 function rewardPlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points ajouter à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points += parseInt(pts); save(); } } }
 function penalizePlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points retirer à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points -= parseInt(pts); save(); } } }
-function deleteSeason(sNum) { if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} ?`)) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
-function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
-function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; }
-function renderDuelAnalysis() { isInteracting = true; const p1 = qs("#duel1").value, p2 = qs("#duel2").value; const stats = getAllTimeStats(); if(!p1 || !p2 || p1 === p2) return; const s1 = stats[p1] || {pts:0, games:1}, s2 = stats[p2] || {pts:0, games:1}; const r = ((s1.pts/s1.games) / ((s1.pts/s1.games)+(s2.pts/s2.games)||1)) * 100; qs("#duelResult").innerHTML = `<div class="duel-bar-container"><div class="duel-bar-left" style="width:${r}%"></div><div class="duel-bar-right" style="width:${100-r}%"></div></div><button class="btn-primary" style="font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button>`; }
+function deleteSeason(sNum) { if(isAdmin() && confirm(`Supprimer Saison ${sNum} ?`)) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
+function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser TOUTES les données ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.hallOfFame = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
+function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">OK</button></div>`; }
+function renderDuelAnalysis() { isInteracting = true; const p1 = qs("#duel1").value, p2 = qs("#duel2").value; const stats = getAllTimeStats(); if(!p1 || !p2 || p1 === p2) return; const s1 = stats[p1] || {pts:0, games:1}, s2 = stats[p2] || {pts:0, games:1}; const r = ((s1.pts/s1.games) / ((s1.pts/s1.games)+(s2.pts/s2.games)||1)) * 100; qs("#duelResult").innerHTML = `<div class="duel-bar-container"><div class="duel-bar-left" style="width:${r}%"></div><div class="duel-bar-right" style="width:${100-r}%"></div></div><button class="btn-primary" style="font-size:0.6rem" onclick="isInteracting=false; render()">OK</button>`; }
 function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0}); save();}} }
 function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
 function startDay(){ if(isAdmin() && state.players.length >= 2){ state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
 function validateMatch(i){ if(isAdmin()){ const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value); if(isNaN(s1)||isNaN(s2)) return; const m=state.currentDay[i]; const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2); p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1; if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;} m.s1=s1; m.s2=s2; m.done=true; m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value; if(state.currentDay.every(x=>x.done)){ if(!state.archives) state.archives=[]; state.archives.push([...state.currentDay]); state.currentDay=[]; } isInteracting = false; save(); } }
-function finishSeason(){ if(isAdmin()){ const s=[...state.players].sort((a,b)=>b.points-a.points); if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";} } }
+
+// --- LOGIQUE FIN DE SAISON (MODIFIÉE POUR HALL OF FAME) ---
+function finishSeason(){ 
+    if(isAdmin()){ 
+        const s=[...state.players].sort((a,b)=>b.points-a.points || (b.gf-b.ga)-(a.gf-a.ga)); 
+        if(s.length){
+            const winner = s[0].name;
+            qs("#winnerName").innerText=winner; 
+            qs("#winnerModal").style.display="flex";
+            
+            // On ajoute au Hall of Fame si pas déjà fait pour cette saison
+            if(!state.hallOfFame) state.hallOfFame = [];
+            if(!state.hallOfFame.find(h => h.season === state.season)) {
+                state.hallOfFame.push({ season: state.season, winner: winner });
+            }
+        } 
+    } 
+}
+
 function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0;}); qs("#winnerModal").style.display="none"; save(); }
 function exportPDF(){ html2pdf().from(qs('#pdf-area')).set({filename:`FC26_S${state.season}.pdf`, html2canvas:{scale:2, backgroundColor:'#05070a'}}).save(); }
 
