@@ -249,7 +249,6 @@ if(avgGa < 1.5) return { form: "5-2-1-2", style: "Contre-Attaque", def: "Reculer
 return { form: "4-2-3-1 (2)", style: "Équilibré", def: "Équilibré", width: "50 / 50", role: "MOC Libre / Pivot" };
 }
 
-// LOGIQUE BRIEFING IA AVANCÉE
 function getMatchBriefing(p1Name, p2Name) {
 const allMatches = state.archives ? state.archives.flat() : [];
 const stats = getAllTimeStats();
@@ -266,7 +265,7 @@ headToHead.p1Goals += m.s2; headToHead.p2Goals += m.s1;
 });
 
 const totalGames = headToHead.p1Wins + headToHead.p2Wins + headToHead.draws;
-if(totalGames === 0) return "Aucun duel historique enregistré. Premier round psychologique !";
+if(totalGames === 0) return { analysis: "Aucun duel historique enregistré.", advice: "Premier round psychologique !" };
 
 let analysis = "";
 if(headToHead.p1Wins > headToHead.p2Wins) {
@@ -277,7 +276,6 @@ analysis = `**${p2Name}** a l'ascendant psychologique (${headToHead.p2Wins} vict
 analysis = "Équilibre parfait entre ces deux rivaux. ";
 }
 
-// Conseil Tactique Dynamique
 let advice = "";
 const p1Stats = stats[p1Name] || {gf:0, ga:0, games:1};
 const p2Stats = stats[p2Name] || {gf:0, ga:0, games:1};
