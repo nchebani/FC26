@@ -76,6 +76,7 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .score-input { width: 45px; height: 40px; background: #000; border: 1px solid var(--border); color: white; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
 
 .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
+.btn-rotation { background: var(--purple); margin-top: 10px; }
 .btn-edit { background: none; border: 1px solid var(--blue); color: var(--blue); padding: 4px 8px; border-radius: 6px; font-size: 0.6rem; cursor: pointer; }
 .edit-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px dashed var(--blue); text-align: center; }
 
@@ -135,7 +136,7 @@ const ADMIN_PIN = "1234";
 const TEAMS = ["Real Madrid", "Man City", "Barcelone", "Bayern Munich", "Liverpool", "PSG", "Arsenal", "Inter Milan", "Milan AC", "Atletico", "Leverkusen", "Dortmund", "Juventus", "Naples", "Chelsea", "Aston Villa"];
 
 let currentUser = localStorage.getItem("fc26_user") || null;
-let state = { season: 1, players: [], currentDay: [], archives: [] };
+let state = { season: 1, players: [], currentDay: [], archives: [], rotationQueue: [] };
 let isInteracting = false; 
 
 const notifySound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
@@ -274,9 +275,14 @@ function render() {
 
     if (tab === "matches") {
         if (!state.currentDay || state.currentDay.length === 0) {
-            app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE ⚽</button>` : `<p>Attente de l'Admin...</p>`}</div>`;
+            let rotationBtn = (isAdmin() && state.players.length === 3) ? `<button class="btn-primary btn-rotation" onclick="startWinnerStays()">MODE 3 JOUEURS (WINNER STAYS) 🔄</button>` : '';
+            app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE CLASSIQUE ⚽</button> ${rotationBtn}` : `<p>Attente de l'Admin...</p>`}</div>`;
         } else {
             app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => `<div class="match-card"><div class="team-row"><span>${m.p1}</span><select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false"></div><div class="team-row"><span>${m.p2}</span><select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false"></div>${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div>` : ''}</div>`).join('')}</div>`;
+            
+            if(state.rotationQueue && state.rotationQueue.length > 0) {
+                app.innerHTML += `<div class="card" style="border: 1px dashed var(--purple); text-align:center"><small style="color:var(--muted)">PROCHAIN MATCH : LE GAGNANT CONTRE</small><br><strong>${state.rotationQueue[0]}</strong></div>`;
+            }
         }
     }
 
@@ -322,6 +328,35 @@ function render() {
     }
 }
 
+// --- LOGIQUE WINNER STAYS (3 JOUEURS) ---
+function startWinnerStays() {
+    if(isAdmin() && state.players.length === 3) {
+        const names = state.players.map(p => p.name);
+        state.rotationQueue = [names[2]]; // Le 3eme attend
+        state.currentDay = [{
+            p1: names[0], p2: names[1], s1: null, s2: null, done: false,
+            seasonRef: state.season, date: new Date().toLocaleDateString('fr-FR'),
+            team1: "Real Madrid", team2: "Man City"
+        }];
+        save();
+    }
+}
+
+function handleRotation(lastMatch) {
+    const winner = lastMatch.s1 > lastMatch.s2 ? lastMatch.p1 : (lastMatch.s2 > lastMatch.s1 ? lastMatch.p2 : lastMatch.p1);
+    const loser = winner === lastMatch.p1 ? lastMatch.p2 : lastMatch.p1;
+    const waiting = state.rotationQueue.shift(); // Celui qui attendait entre
+    
+    state.rotationQueue.push(loser); // Le perdant va dans la file
+    
+    // Créer le nouveau match
+    state.currentDay.push({
+        p1: winner, p2: waiting, s1: null, s2: null, done: false,
+        seasonRef: state.season, date: new Date().toLocaleDateString('fr-FR'),
+        team1: "Real Madrid", team2: "Man City"
+    });
+}
+
 // --- FONCTIONS DE MODIFICATION ---
 function editOldMatch(dayIdx, mIdx) {
     isInteracting = true;
@@ -364,15 +399,43 @@ function saveOldMatch(dayIdx, mIdx) {
 function rewardPlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points ajouter à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points += parseInt(pts); save(); } } }
 function penalizePlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points retirer à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points -= parseInt(pts); save(); } } }
 function deleteSeason(sNum) { if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} ?`)) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
-function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
+function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.rotationQueue = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
 function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; }
 function renderDuelAnalysis() { isInteracting = true; const p1 = qs("#duel1").value, p2 = qs("#duel2").value; const stats = getAllTimeStats(); if(!p1 || !p2 || p1 === p2) return; const s1 = stats[p1] || {pts:0, games:1}, s2 = stats[p2] || {pts:0, games:1}; const r = ((s1.pts/s1.games) / ((s1.pts/s1.games)+(s2.pts/s2.games)||1)) * 100; qs("#duelResult").innerHTML = `<div class="duel-bar-container"><div class="duel-bar-left" style="width:${r}%"></div><div class="duel-bar-right" style="width:${100-r}%"></div></div><button class="btn-primary" style="font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button>`; }
 function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0}); save();}} }
 function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
-function startDay(){ if(isAdmin() && state.players.length >= 2){ state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
-function validateMatch(i){ if(isAdmin()){ const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value); if(isNaN(s1)||isNaN(s2)) return; const m=state.currentDay[i]; const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2); p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1; if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;} m.s1=s1; m.s2=s2; m.done=true; m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value; if(state.currentDay.every(x=>x.done)){ if(!state.archives) state.archives=[]; state.archives.push([...state.currentDay]); state.currentDay=[]; } isInteracting = false; save(); } }
+
+function startDay(){ if(isAdmin() && state.players.length >= 2){ state.rotationQueue = []; state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
+
+function validateMatch(i){ 
+    if(isAdmin()){ 
+        const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value); 
+        if(isNaN(s1)||isNaN(s2)) return; 
+        const m=state.currentDay[i]; 
+        const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2); 
+        p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1; 
+        if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;} 
+        m.s1=s1; m.s2=s2; m.done=true; 
+        m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value; 
+
+        // Si on est en mode Rotation (Winner Stays)
+        if(state.rotationQueue && state.rotationQueue.length > 0) {
+            handleRotation(m);
+        }
+
+        // Si tous les matchs affichés sont finis ET qu'on n'est pas en mode rotation infini
+        if(state.currentDay.every(x=>x.done)){ 
+            if(!state.archives) state.archives=[]; 
+            state.archives.push([...state.currentDay]); 
+            state.currentDay=[]; 
+            state.rotationQueue = [];
+        } 
+        isInteracting = false; save(); 
+    } 
+}
+
 function finishSeason(){ if(isAdmin()){ const s=[...state.players].sort((a,b)=>b.points-a.points); if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";} } }
-function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0;}); qs("#winnerModal").style.display="none"; save(); }
+function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0;}); qs("#winnerModal").style.display="none"; state.currentDay=[]; state.rotationQueue=[]; save(); }
 function exportPDF(){ html2pdf().from(qs('#pdf-area')).set({filename:`FC26_S${state.season}.pdf`, html2canvas:{scale:2, backgroundColor:'#05070a'}}).save(); }
 
 document.querySelectorAll("nav button").forEach(btn => { btn.onclick = () => { isInteracting = false; document.querySelectorAll("nav button").forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }; });
