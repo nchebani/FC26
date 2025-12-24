@@ -46,7 +46,7 @@ main { padding: 15px; max-width: 600px; margin: auto; }
 table { width: 100%; border-collapse: collapse; }
 th { color: var(--muted); font-size: 0.6rem; text-transform: uppercase; padding-bottom: 10px; }
 td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; vertical-align: middle; }
-.col-player { text-align: left; padding-left: 5px; width: 40%; }
+.col-player { text-align: left; padding-left: 5px; width: 35%; }
 .col-center { text-align: center; }
 
 .val-badge { background: #1e1b4b; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
@@ -199,7 +199,6 @@ function getAllTimeStats() {
 function getLivePrediction() {
     if(!state.players || state.players.length === 0) return null;
     let scores = state.players.map(p => {
-        // Formule de puissance : Points + (Diff de buts * 0.5)
         let power = p.points + ((p.gf - p.ga) * 0.5);
         return { name: p.name, power: power };
     });
@@ -268,15 +267,18 @@ function render() {
             <div class="card">
                 <table>
                     <thead>
-                        <tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr>
+                        <tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">GD</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr>
                     </thead>
                     <tbody>
-                        ${sorted.map(p => `<tr>
-                            <td class="col-player"><strong>${p.name}</strong></td>
-                            <td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
-                            <td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
-                            <td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td>
-                        </tr>`).join('')}
+                        ${sorted.map(p => {
+                            const gd = p.gf - p.ga;
+                            return `<tr>
+                                <td class="col-player"><strong>${p.name}</strong></td>
+                                <td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
+                                <td class="col-center" style="color:${gd >= 0 ? 'var(--accent)' : 'var(--danger)'}; font-size:0.75rem">${gd > 0 ? '+'+gd : gd}</td>
+                                <td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
+                                <td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td>
+                            </tr>`}).join('')}
                     </tbody>
                 </table>
             </div>
@@ -326,7 +328,6 @@ function render() {
             app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE CLASSIQUE ⚽</button> ${rotationBtn}` : `<p>Attente de l'Admin...</p>`}</div>`;
         } else {
             app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => `<div class="match-card"><div class="team-row"><span>${m.p1}</span><select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false"></div><div class="team-row"><span>${m.p2}</span><select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false"></div>${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div>` : ''}</div>`).join('')}</div>`;
-            
             if(state.rotationQueue && state.rotationQueue.length > 0) {
                 app.innerHTML += `<div class="card" style="border: 1px dashed var(--purple); text-align:center"><small style="color:var(--muted)">PROCHAIN MATCH : LE GAGNANT CONTRE</small><br><strong>${state.rotationQueue[0]}</strong></div>`;
             }
@@ -375,11 +376,10 @@ function render() {
     }
 }
 
-// --- LOGIQUE WINNER STAYS (3 JOUEURS) ---
 function startWinnerStays() {
     if(isAdmin() && state.players.length === 3) {
         const names = state.players.map(p => p.name);
-        state.rotationQueue = [names[2]]; // Le 3eme attend
+        state.rotationQueue = [names[2]]; 
         state.currentDay = [{
             p1: names[0], p2: names[1], s1: null, s2: null, done: false,
             seasonRef: state.season, date: new Date().toLocaleDateString('fr-FR'),
@@ -393,9 +393,7 @@ function handleRotation(lastMatch) {
     const winner = lastMatch.s1 > lastMatch.s2 ? lastMatch.p1 : (lastMatch.s2 > lastMatch.s1 ? lastMatch.p2 : lastMatch.p1);
     const loser = winner === lastMatch.p1 ? lastMatch.p2 : lastMatch.p1;
     const waiting = state.rotationQueue.shift(); 
-    
     state.rotationQueue.push(loser);
-    
     state.currentDay.push({
         p1: winner, p2: waiting, s1: null, s2: null, done: false,
         seasonRef: state.season, date: new Date().toLocaleDateString('fr-FR'),
@@ -457,11 +455,7 @@ function validateMatch(i){
         if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;} 
         m.s1=s1; m.s2=s2; m.done=true; 
         m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value; 
-
-        if(state.rotationQueue && state.rotationQueue.length > 0) {
-            handleRotation(m);
-        }
-
+        if(state.rotationQueue && state.rotationQueue.length > 0) handleRotation(m);
         if(state.currentDay.every(x=>x.done)){ 
             if(!state.archives) state.archives=[]; 
             state.archives.push([...state.currentDay]); 
