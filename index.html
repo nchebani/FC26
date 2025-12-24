@@ -69,7 +69,9 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .tactic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.7rem; }
 .tactic-item { background: #0a0c10; padding: 8px; border-radius: 8px; border-left: 3px solid var(--purple); }
 
-.predict-card { background: linear-gradient(135deg, #1e1b4b 0%, #111418 100%); border: 1px solid var(--purple); padding: 20px; }
+.predict-card { background: linear-gradient(135deg, #1e1b4b 0%, #111418 100%); border: 1px solid var(--purple); padding: 20px; margin-bottom:15px; }
+.live-predict-card { background: linear-gradient(135deg, #0f172a 0%, #020617 100%); border: 1px solid var(--accent); padding: 15px; }
+
 .match-card { border-bottom: 1px solid var(--border); padding: 15px 0; }
 .team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
 .team-select { background: #000; color: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px; font-size: 0.7rem; width: 110px; }
@@ -193,6 +195,21 @@ function getAllTimeStats() {
     });
     return stats;
 }
+
+function getLivePrediction() {
+    if(!state.players || state.players.length === 0) return null;
+    let scores = state.players.map(p => {
+        // Formule de puissance : Points + (Diff de buts * 0.5)
+        let power = p.points + ((p.gf - p.ga) * 0.5);
+        return { name: p.name, power: power };
+    });
+    scores.sort((a,b) => b.power - a.power);
+    let totalPower = scores.reduce((acc, curr) => acc + Math.max(0.1, curr.power), 0);
+    let top = scores[0];
+    let proba = Math.round((Math.max(0.1, top.power) / (totalPower || 1)) * 100);
+    return { name: top.name, proba: proba };
+}
+
 function getSeasonRecord() {
     let record = { name: "-", goals: 0, season: 0 }; if(!state.archives) return record;
     const seasons = {};
@@ -267,10 +284,40 @@ function render() {
     }
 
     if (tab === "analysis") {
-        const allTime = getAllTimeStats(); const pred = getPrediction(); const seasonRecord = getSeasonRecord();
+        const allTime = getAllTimeStats(); 
+        const pred = getPrediction(); 
+        const livePred = getLivePrediction();
+        const seasonRecord = getSeasonRecord();
         const playersByGoals = Object.keys(allTime).sort((a,b) => allTime[b].gf - allTime[a].gf);
         const playersByDef = Object.keys(allTime).sort((a,b) => (allTime[a].ga/allTime[a].games) - (allTime[b].ga/allTime[b].games));
-        app.innerHTML = `<h3>🧠 Analyse IA</h3><div class="card predict-card"><div style="color:var(--purple); font-size:0.7rem">FAVORI HISTORIQUE 🔥</div><div style="font-size:1.8rem; font-weight:700; margin:10px 0">${pred.name}</div><div style="display:flex; align-items:center; gap:10px"><div style="flex:1; height:8px; background:#000; border-radius:10px; overflow:hidden"><div style="width:${pred.proba}%; height:100%; background:var(--purple)"></div></div><span>${pred.proba}%</span></div></div><div class="card"><strong>📋 CONSEIL TACTIQUE</strong><select id="tacticPlayer" class="team-select" style="width:100%; margin-top:10px" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderTacticAdvice()"><option value="">Sélectionner un joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div><div class="card"><strong>⚔️ COMPARATEUR</strong><div style="display:flex; gap:10px; margin-top:10px"><select id="duel1" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div><div class="card"><strong>🏆 PANTHÉON</strong><div class="stat-row"><span class="stat-label">⚽ BUTEUR ALL-TIME</span><span class="stat-value">${playersByGoals[0] || '-'} (${allTime[playersByGoals[0]]?.gf || 0} buts)</span></div><div class="stat-row"><span class="stat-label">🛡️ MEILLEURE DÉFENSE</span><span class="stat-value">${playersByDef[0] || '-'}</span></div><div class="stat-row"><span class="stat-label">🔥 RECORD / SAISON</span><span class="stat-value">${seasonRecord.name} (${seasonRecord.goals})</span></div></div>`;
+        
+        app.innerHTML = `<h3>🧠 Analyse IA</h3>
+        <div class="card live-predict-card">
+            <div style="color:var(--accent); font-size:0.7rem; font-weight:bold"><i class="fas fa-chart-line"></i> PRÉDICTION TITRE (SAISON ${state.season})</div>
+            <div style="font-size:1.6rem; font-weight:700; margin:5px 0">${livePred ? livePred.name : '-'}</div>
+            <div style="font-size:0.7rem; color:var(--muted); margin-bottom:10px">Probabilité de finir 1er selon la dynamique actuelle</div>
+            <div style="display:flex; align-items:center; gap:10px">
+                <div style="flex:1; height:6px; background:#000; border-radius:10px; overflow:hidden">
+                    <div style="width:${livePred ? livePred.proba : 0}%; height:100%; background:var(--accent)"></div>
+                </div>
+                <span style="font-weight:bold">${livePred ? livePred.proba : 0}%</span>
+            </div>
+        </div>
+
+        <div class="card predict-card">
+            <div style="color:var(--purple); font-size:0.7rem">FAVORI HISTORIQUE (ALL-TIME) 🔥</div>
+            <div style="font-size:1.4rem; font-weight:700; margin:10px 0">${pred.name}</div>
+            <div style="display:flex; align-items:center; gap:10px">
+                <div style="flex:1; height:6px; background:#000; border-radius:10px; overflow:hidden">
+                    <div style="width:${pred.proba}%; height:100%; background:var(--purple)"></div>
+                </div>
+                <span>${pred.proba}%</span>
+            </div>
+        </div>
+
+        <div class="card"><strong>📋 CONSEIL TACTIQUE</strong><select id="tacticPlayer" class="team-select" style="width:100%; margin-top:10px" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderTacticAdvice()"><option value="">Sélectionner un joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div>
+        <div class="card"><strong>⚔️ COMPARATEUR</strong><div style="display:flex; gap:10px; margin-top:10px"><select id="duel1" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div>
+        <div class="card"><strong>🏆 PANTHÉON</strong><div class="stat-row"><span class="stat-label">⚽ BUTEUR ALL-TIME</span><span class="stat-value">${playersByGoals[0] || '-'} (${allTime[playersByGoals[0]]?.gf || 0} buts)</span></div><div class="stat-row"><span class="stat-label">🛡️ MEILLEURE DÉFENSE</span><span class="stat-value">${playersByDef[0] || '-'}</span></div><div class="stat-row"><span class="stat-label">🔥 RECORD / SAISON</span><span class="stat-value">${seasonRecord.name} (${seasonRecord.goals})</span></div></div>`;
     }
 
     if (tab === "matches") {
@@ -356,7 +403,6 @@ function handleRotation(lastMatch) {
     });
 }
 
-// --- FONCTIONS DE MODIFICATION ---
 function editOldMatch(dayIdx, mIdx) {
     isInteracting = true;
     const m = state.archives[dayIdx][mIdx];
@@ -428,7 +474,6 @@ function validateMatch(i){
 
 function finishSeason(){ 
     if(isAdmin()){ 
-        // Archivage forcé des matchs joués avant de finir
         if(state.currentDay && state.currentDay.some(m => m.done)) {
             if(!state.archives) state.archives = [];
             const completed = state.currentDay.filter(m => m.done);
