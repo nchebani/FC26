@@ -134,7 +134,7 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 <button data-tab="analysis"><i class="fas fa-brain"></i><span>IA</span></button>
 <button data-tab="matches"><i class="fas fa-gamepad"></i><span>Jouer</span></button>
 <button data-tab="players"><i class="fas fa-users"></i><span>Joueurs</span></button>
-<button data-tab="archives"><i class="fas fa-history"></i><span>Palmarès</span></button>
+<button data-tab="archives"><i class="fas fa-history"></i><span>Global</span></button>
 </nav>
 
 <script>
@@ -175,6 +175,26 @@ function save() { if(isAdmin()) pushData(); render(); }
 // --- CALCULS ---
 function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
 
+// Nouveauté : Calcul des titres par joueur
+function getTitlesCount(playerName) {
+    if(!state.archives) return 0;
+    let titles = 0;
+    const seasons = {};
+    state.archives.flat().forEach(m => {
+        if(!seasons[m.seasonRef]) seasons[m.seasonRef] = {};
+        if(!seasons[m.seasonRef][m.p1]) seasons[m.seasonRef][m.p1] = 0;
+        if(!seasons[m.seasonRef][m.p2]) seasons[m.seasonRef][m.p2] = 0;
+        if(m.s1 > m.s2) seasons[m.seasonRef][m.p1] += 3;
+        else if(m.s2 > m.s1) seasons[m.seasonRef][m.p2] += 3;
+        else { seasons[m.seasonRef][m.p1] += 1; seasons[m.seasonRef][m.p2] += 1; }
+    });
+    Object.keys(seasons).forEach(s => {
+        const winner = Object.keys(seasons[s]).reduce((a, b) => seasons[s][a] > seasons[s][b] ? a : b);
+        if(winner === playerName) titles++;
+    });
+    return titles;
+}
+
 function getSeasonWinner(sNum) {
 if(!state.archives) return "Inconnu";
 let pts = {};
@@ -185,8 +205,9 @@ if(m.s1 > m.s2) pts[m.p1] += 3;
 else if(m.s2 > m.s1) pts[m.p2] += 3;
 else { pts[m.p1] += 1; pts[m.p2] += 1; }
 });
-let winner = Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b, "-");
-return winner;
+if (Object.keys(pts).length === 0) return "-";
+let sorted = Object.keys(pts).sort((a,b) => pts[b] - pts[a]);
+return { winner: sorted[0], runnerUp: sorted[1] || "-" };
 }
 
 function getAllTimeStats() {
@@ -265,7 +286,7 @@ headToHead.p1Goals += m.s2; headToHead.p2Goals += m.s1;
 });
 
 const totalGames = headToHead.p1Wins + headToHead.p2Wins + headToHead.draws;
-if(totalGames === 0) return { analysis: "Aucun duel historique enregistré.", advice: "Premier round psychologique !" };
+if(totalGames === 0) return "Aucun duel historique enregistré. Premier round psychologique !";
 
 let analysis = "";
 if(headToHead.p1Wins > headToHead.p2Wins) {
@@ -287,7 +308,6 @@ advice = `Conseil IA : **${p2Name}** doit surveiller ses contres, il encaisse en
 } else {
 advice = "Conseil IA : Match qui s'annonce tactique, le premier qui marque prendra une option sérieuse.";
 }
-
 return { analysis, advice };
 }
 
@@ -397,44 +417,78 @@ app.innerHTML += `<div class="card" style="border: 1px dashed var(--purple); tex
 }
 
 if (tab === "players") {
-app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><div><strong>${p.name}</strong><br><small style="color:var(--blue)">${calculateValue(p)} M€ (Pts: ${p.points})</small></div>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.1rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
+app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => {
+    const titles = getTitlesCount(p.name);
+    return `<div class="card" style="display:flex; justify-content:space-between; align-items:center">
+        <div>
+            <div style="display:flex; align-items:center; gap:10px">
+                <strong>${p.name}</strong> 
+                ${titles > 0 ? `<span style="color:var(--gold); font-size:0.8rem">🏆 ${titles}</span>` : ''}
+            </div>
+            <small style="color:var(--blue)">${calculateValue(p)} M€ (Pts: ${p.points})</small>
+        </div>
+        ${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.1rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}
+    </div>`}).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
 }
 
 if (tab === "archives") {
-app.innerHTML = `<h3>🏆 Historique & Modifs</h3>`;
-if(!state.archives) return;
-const grouped = {}; state.archives.forEach((d, globalIdx) => {
-const sRef = d[0].seasonRef;
-if(!grouped[sRef]) grouped[sRef] = [];
-grouped[sRef].push({day: d, idx: globalIdx});
-});
+    const allTime = getAllTimeStats();
+    app.innerHTML = `<h3>🌐 Données Globales</h3>`;
+    
+    // 1. Tableau des Champions
+    let championsHTML = `<h4>🏆 Tableau des Champions</h4><div class="card" style="padding:0"><table><thead><tr><th class="col-center">Saison</th><th class="col-player">Champion</th><th class="col-player">Dauphin</th></tr></thead><tbody>`;
+    for(let i=1; i < state.season; i++) {
+        const res = getSeasonWinner(i);
+        championsHTML += `<tr><td class="col-center">S${i}</td><td class="col-player" style="color:var(--gold)"><b>${res.winner}</b></td><td class="col-player">${res.runnerUp}</td></tr>`;
+    }
+    if(state.season === 1 && (!state.archives || state.archives.length === 0)) championsHTML += `<tr><td colspan="3" style="text-align:center; padding:20px; color:var(--muted)">Aucune saison terminée</td></tr>`;
+    championsHTML += `</tbody></table></div>`;
+    app.innerHTML += championsHTML;
 
-Object.keys(grouped).sort((a,b) => b-a).forEach(s => {
-const sWinner = getSeasonWinner(s);
-app.innerHTML += `<div class="card">
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-<div style="color:var(--gold); font-weight:bold">SAISON ${s} <span style="color:var(--text); font-size:0.7rem; margin-left:10px">(Vainqueur: ${sWinner})</span></div>
-${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}
-</div>
-${grouped[s].map((item, di) => `
-<details style="margin-bottom:8px">
-<summary style="color:var(--blue)">Journée ${di+1} (${item.day[0].date})</summary>
-<div style="font-size:0.75rem; padding:10px">
-${item.day.map((m, mIdx) => `
-<div style="display:flex; flex-direction:column; gap:2px; margin-bottom:12px; border-bottom:1px solid #333; padding-bottom:8px">
-<div style="display:flex; justify-content:space-between; align-items:center">
-<span style="font-weight:bold">${m.p1} <span style="color:var(--muted); font-size:0.6rem; font-weight:normal">(${m.team1 || '?'})</span></span>
-<b style="font-size:1rem; color:var(--blue)">${m.s1} - ${m.s2}</b>
-<span style="font-weight:bold; text-align:right"><span style="color:var(--muted); font-size:0.6rem; font-weight:normal">(${m.team2 || '?'})</span> ${m.p2}</span>
-</div>
-${isAdmin() ? `<div style="text-align:center; margin-top:5px"><button class="btn-edit" onclick="editOldMatch(${item.idx}, ${mIdx})">Modifier Score</button></div>` : ''}
-</div>
-<div id="edit_${item.idx}_${mIdx}"></div>
-`).join('')}
-</div>
-</details>`).join('')}
-</div>`;
-});
+    // 2. Stats de Carrière (All-Time)
+    let careerHTML = `<h4>📊 Stats de Carrière (All-Time)</h4><div class="card"><table><thead><tr><th class="col-player">Joueur</th><th class="col-center">MJ</th><th class="col-center">Pts</th><th class="col-center">Buts</th></tr></thead><tbody>`;
+    Object.keys(allTime).sort((a,b) => allTime[b].pts - allTime[a].pts).forEach(name => {
+        const s = allTime[name];
+        careerHTML += `<tr><td class="col-player"><strong>${name}</strong></td><td class="col-center">${s.games}</td><td class="col-center" style="color:var(--blue)">${s.pts}</td><td class="col-center">${s.gf}</td></tr>`;
+    });
+    careerHTML += `</tbody></table></div>`;
+    app.innerHTML += careerHTML;
+
+    // 3. Archives détaillées (Ancien code)
+    app.innerHTML += `<h4>📜 Historique des Matchs</h4>`;
+    if(!state.archives) return;
+    const grouped = {}; state.archives.forEach((d, globalIdx) => {
+        const sRef = d[0].seasonRef;
+        if(!grouped[sRef]) grouped[sRef] = [];
+        grouped[sRef].push({day: d, idx: globalIdx});
+    });
+
+    Object.keys(grouped).sort((a,b) => b-a).forEach(s => {
+        const res = getSeasonWinner(s);
+        app.innerHTML += `<div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+        <div style="color:var(--gold); font-weight:bold">SAISON ${s} <span style="color:var(--text); font-size:0.7rem; margin-left:10px">(Vainqueur: ${res.winner})</span></div>
+        ${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}
+        </div>
+        ${grouped[s].map((item, di) => `
+        <details style="margin-bottom:8px">
+        <summary style="color:var(--blue)">Journée ${di+1} (${item.day[0].date})</summary>
+        <div style="font-size:0.75rem; padding:10px">
+        ${item.day.map((m, mIdx) => `
+        <div style="display:flex; flex-direction:column; gap:2px; margin-bottom:12px; border-bottom:1px solid #333; padding-bottom:8px">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+        <span style="font-weight:bold">${m.p1} <span style="color:var(--muted); font-size:0.6rem; font-weight:normal">(${m.team1 || '?'})</span></span>
+        <b style="font-size:1rem; color:var(--blue)">${m.s1} - ${m.s2}</b>
+        <span style="font-weight:bold; text-align:right"><span style="color:var(--muted); font-size:0.6rem; font-weight:normal">(${m.team2 || '?'})</span> ${m.p2}</span>
+        </div>
+        ${isAdmin() ? `<div style="text-align:center; margin-top:5px"><button class="btn-edit" onclick="editOldMatch(${item.idx}, ${mIdx})">Modifier Score</button></div>` : ''}
+        </div>
+        <div id="edit_${item.idx}_${mIdx}"></div>
+        `).join('')}
+        </div>
+        </details>`).join('')}
+        </div>`;
+    });
 }
 }
 
