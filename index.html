@@ -42,41 +42,50 @@ main { padding: 15px; max-width: 600px; margin: auto; }
 .hof-card { background: linear-gradient(135deg, #1a1a1a 0%, #000 100%); border: 1px solid var(--gold); text-align: center; padding: 20px; }
 .goat-title { color: var(--gold); font-size: 0.7rem; letter-spacing: 2px; font-weight: bold; margin-bottom: 10px; }
 .goat-name { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 5px; }
-.season-winner-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; font-size: 0.9rem; }
+.streak-badge { background: #da363322; color: var(--danger); border: 1px solid var(--danger); padding: 2px 8px; border-radius: 10px; font-size: 0.6rem; font-weight: bold; }
 
 .awards-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
 .award-card { min-width: 130px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
 .award-winner { font-size: 0.8rem; font-weight: bold; color: var(--gold); display: block; margin-top: 5px; }
+
 table { width: 100%; border-collapse: collapse; }
 th { color: var(--muted); font-size: 0.6rem; text-transform: uppercase; padding-bottom: 10px; }
 td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; vertical-align: middle; }
 .col-player { text-align: left; padding-left: 5px; width: 35%; }
 .col-center { text-align: center; }
 .val-badge { background: #1e1b4b; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
+
 .form-container { display: flex; gap: 4px; justify-content: center; }
 .dot { width: 9px; height: 9px; border-radius: 50%; }
 .win { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
 .loss { background: var(--danger); }
 .draw { background: var(--muted); }
+
 .duel-bar-container { height: 12px; background: #000; border-radius: 10px; margin: 15px 0; overflow: hidden; display: flex; border: 1px solid var(--border); }
 .duel-bar-left { background: var(--blue); height: 100%; transition: width 0.5s ease; border-right: 2px solid #fff; }
 .duel-bar-right { background: var(--purple); height: 100%; transition: width 0.5s ease; }
+
 .tactic-badge { background: #1e1b4b; color: var(--blue); padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: bold; display: inline-block; margin-bottom: 10px; }
 .tactic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.7rem; }
 .tactic-item { background: #0a0c10; padding: 8px; border-radius: 8px; border-left: 3px solid var(--purple); }
+
 .predict-card { background: linear-gradient(135deg, #1e1b4b 0%, #111418 100%); border: 1px solid var(--purple); padding: 20px; margin-bottom:15px; }
 .live-predict-card { background: linear-gradient(135deg, #0f172a 0%, #020617 100%); border: 1px solid var(--accent); padding: 15px; }
+
 .brief-box { background: #0a0c10; border-left: 4px solid var(--gold); padding: 12px; margin-top: 10px; font-size: 0.75rem; border-radius: 4px; line-height: 1.4; }
 .brief-title { color: var(--gold); font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; font-size: 0.7rem; }
 .brief-advice { color: var(--muted); font-style: italic; display: block; margin-top: 5px; border-top: 1px solid #333; padding-top: 5px; }
+
 .match-card { border-bottom: 1px solid var(--border); padding: 15px 0; }
 .team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
 .team-select { background: #000; color: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px; font-size: 0.7rem; width: 110px; }
 .score-input { width: 45px; height: 40px; background: #000; border: 1px solid var(--border); color: white; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
+
 .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
 .btn-rotation { background: var(--purple); margin-top: 10px; }
 .btn-edit { background: none; border: 1px solid var(--blue); color: var(--blue); padding: 4px 8px; border-radius: 6px; font-size: 0.6rem; cursor: pointer; }
 .edit-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px dashed var(--blue); text-align: center; }
+
 #winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
 .vs-circle { background: var(--border); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; }
 </style>
@@ -164,7 +173,7 @@ function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
 function save() { if(isAdmin()) pushData(); render(); }
 
-// --- LOGIQUE HALL OF FAME ---
+// --- LOGIQUE PALMARÈS ---
 function getWinnersPerSeason() {
     if (!state.archives) return [];
     let seasonData = {};
@@ -176,44 +185,39 @@ function getWinnersPerSeason() {
         else if (m.s2 > m.s1) seasonData[m.seasonRef][m.p2] += 3;
         else { seasonData[m.seasonRef][m.p1] += 1; seasonData[m.seasonRef][m.p2] += 1; }
     });
-    let finalWinners = [];
-    Object.keys(seasonData).forEach(sNum => {
+    return Object.keys(seasonData).sort((a,b)=>a-b).map(sNum => {
         let players = seasonData[sNum];
         let winner = Object.keys(players).reduce((a, b) => players[a] > players[b] ? a : b);
-        finalWinners.push({ season: sNum, winner: winner, participants: Object.keys(players) });
+        return { season: sNum, winner: winner };
     });
-    return finalWinners;
 }
 
-function getGlobalPlayerStats() {
+function getHallOfFameStats() {
     const winners = getWinnersPerSeason();
-    let stats = {};
-    // Initialiser avec tous les joueurs actuels
-    state.players.forEach(p => stats[p.name] = { wins: 0, played: 0 });
+    if (winners.length === 0) return { goat: {name:"-", titles:0}, streaks: [], counts: {} };
     
-    winners.forEach(w => {
-        // Compter les victoires
-        if (!stats[w.winner]) stats[w.winner] = { wins: 0, played: 0 };
-        stats[w.winner].wins++;
-        
-        // Compter les saisons jouées
-        w.participants.forEach(pName => {
-            if (!stats[pName]) stats[pName] = { wins: 0, played: 0 };
-            stats[pName].played++;
-        });
+    let counts = {};
+    let streaks = [];
+    let currentStreak = { name: winners[0].winner, count: 1 };
+
+    winners.forEach((w, i) => {
+        counts[w.winner] = (counts[w.winner] || 0) + 1;
+        if (i > 0) {
+            if (w.winner === winners[i-1].winner) {
+                currentStreak.count++;
+            } else {
+                if (currentStreak.count >= 2) streaks.push({...currentStreak});
+                currentStreak = { name: w.winner, count: 1 };
+            }
+        }
     });
-    return stats;
+    if (currentStreak.count >= 2) streaks.push({...currentStreak});
+
+    let goatName = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+    return { goat: {name: goatName, titles: counts[goatName]}, streaks, counts, list: [...winners].reverse() };
 }
 
-function getGOAT() {
-    const stats = getGlobalPlayerStats();
-    let names = Object.keys(stats);
-    if (names.length === 0) return { name: "Aucun", titles: 0 };
-    let goatName = names.reduce((a, b) => stats[a].wins > stats[b].wins ? a : b);
-    return { name: goatName, titles: stats[goatName].wins, all: stats };
-}
-
-// --- CALCULS ORIGINAUX ---
+// --- FONCTIONS CALCULS ---
 function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
 function getAllTimeStats() {
 let stats = {}; if(!state.archives) return stats;
@@ -288,13 +292,13 @@ ${sorted.map(p => `<tr><td class="col-player"><strong>${p.name}</strong></td><td
 if (tab === "matches") {
 if (!state.currentDay || state.currentDay.length === 0) {
 app.innerHTML = `<div class="card" style="text-align:center; padding:40px; border: 2px dashed var(--border)">
-<p style="color:var(--muted)">Aucun match en cours.</p>
+<p style="color:var(--muted)">Aucun match. L'admin doit lancer la session.</p>
 ${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER SESSION ⚽</button>` : ''}
 </div>`;
 } else {
 const activeIdx = state.currentDay.findIndex(m => !m.done);
 const m = state.currentDay[activeIdx] || state.currentDay[state.currentDay.length-1];
-app.innerHTML = `<h3>En Direct 🏟️</h3>`;
+app.innerHTML = `<h3>Match en cours 🏟️</h3>`;
 if(!m.done) {
 app.innerHTML += `<div class="card" style="border: 2px solid var(--accent)">
 <div class="team-row">
@@ -311,54 +315,34 @@ ${isAdmin() ? `<button class="btn-primary" style="margin-top:20px" onclick="vali
 }
 
 if (tab === "halloffame") {
-    const winners = getWinnersPerSeason();
-    const goat = getGOAT();
-    
+    const stats = getHallOfFameStats();
     app.innerHTML = `<h3>🏆 Hall of Fame</h3>
     <div class="card hof-card">
         <div class="goat-title">LÉGENDE SUPRÊME (GOAT)</div>
-        <div class="goat-name">${goat.name}</div>
-        <div style="color:var(--gold); font-size:0.8rem">${goat.titles} TITRE(S)</div>
-    </div>
-    
-    <div class="card">
-        <strong>🥇 STATISTIQUES CARRIÈRE</strong>
-        <table style="margin-top:10px">
-            <thead>
-                <tr>
-                    <th class="col-player">Joueur</th>
-                    <th class="col-center">Gagné</th>
-                    <th class="col-center">Joué</th>
-                    <th class="col-center">%</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${Object.entries(goat.all).sort((a,b) => b[1].wins - a[1].wins).map(([name, data]) => `
-                    <tr>
-                        <td class="col-player"><strong>${name}</strong></td>
-                        <td class="col-center" style="color:var(--gold)">${data.wins} 🏆</td>
-                        <td class="col-center">${data.played} s.</td>
-                        <td class="col-center" style="font-size:0.7rem">${data.played > 0 ? Math.round((data.wins/data.played)*100) : 0}%</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="card">
-        <strong>📅 HISTORIQUE</strong>
-        <div style="margin-top:10px">
-            ${[...winners].reverse().map(w => `
-                <div class="season-winner-row">
-                    <span style="color:var(--muted)">Saison ${w.season}</span>
-                    <span style="font-weight:bold; color:var(--blue)">${w.winner}</span>
-                </div>
-            `).join('')}
-        </div>
+        <div class="goat-name">${stats.goat.name}</div>
+        <div style="color:var(--gold); font-size:0.75rem; font-weight:bold">${stats.goat.titles} TITRES</div>
     </div>`;
+
+    if (stats.streaks.length > 0) {
+        app.innerHTML += `<div class="card">
+            <strong>🔥 SÉRIES DE VICTOIRES (STREAKS)</strong>
+            <div style="margin-top:10px">
+                ${stats.streaks.sort((a,b)=>b.count-a.count).map(s => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #222">
+                        <span>${s.name}</span>
+                        <span class="streak-badge">${s.count} TITRES CONSÉCUTIFS</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
+    }
+
+    app.innerHTML += `<div class="card"><strong>🥇 TOP CHAMPIONS</strong><div style="margin-top:10px">${Object.entries(stats.counts).sort((a,b)=>b[1]-a[1]).map(([n,c])=>`<div style="display:flex; justify-content:space-between; padding:5px 0"><span>${n}</span><span style="color:var(--gold); font-weight:bold">${c} 🏆</span></div>`).join('')}</div></div>
+    <div class="card"><strong>📅 HISTORIQUE</strong><div style="margin-top:10px">${stats.list.map(w=>`<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #222; font-size:0.85rem"><span style="color:var(--muted)">Saison ${w.season}</span><span style="font-weight:bold; color:var(--blue)">${w.winner}</span></div>`).join('')}</div></div>`;
 }
 
 if (tab === "analysis") {
+const allTime = getAllTimeStats();
 const livePred = getLivePrediction();
 app.innerHTML = `<h3>🧠 IA Expert</h3>
 <div class="card live-predict-card">
