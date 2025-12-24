@@ -39,13 +39,11 @@ nav button.active { color: var(--accent); }
 main { padding: 15px; max-width: 600px; margin: auto; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative; }
 
-/* Styles pour le nouvel onglet Hall of Fame */
 .hof-card { background: linear-gradient(135deg, #1a1a1a 0%, #000 100%); border: 1px solid var(--gold); text-align: center; padding: 20px; }
 .goat-title { color: var(--gold); font-size: 0.7rem; letter-spacing: 2px; font-weight: bold; margin-bottom: 10px; }
 .goat-name { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 5px; }
 .season-winner-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; font-size: 0.9rem; }
 
-/* Reste des styles originaux */
 .awards-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
 .award-card { min-width: 130px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
 .award-winner { font-size: 0.8rem; font-weight: bold; color: var(--gold); display: block; margin-top: 5px; }
@@ -82,6 +80,7 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 #winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
 .live-match-header { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
 .vs-circle { background: var(--border); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; }
+.streak-badge { background: linear-gradient(to right, #f83600 0%, #f9d423 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; font-size: 0.8rem; margin-left: 5px; }
 </style>
 </head>
 <body>
@@ -167,21 +166,30 @@ function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
 function save() { if(isAdmin()) pushData(); render(); }
 
+// --- LOGIQUE STREAK ---
+function getWinningStreak(name) {
+    const allMatches = state.archives ? state.archives.flat() : [];
+    let streak = 0;
+    const matches = [...allMatches].reverse().filter(m => m.p1 === name || m.p2 === name);
+    for (let m of matches) {
+        const isWin = (m.p1 === name && m.s1 > m.s2) || (m.p2 === name && m.s2 > m.s1);
+        if (isWin) streak++; else break;
+    }
+    return streak;
+}
+
 // --- LOGIQUE HALL OF FAME ---
 function getWinnersPerSeason() {
     if (!state.archives) return [];
     let seasonData = {};
-    
     state.archives.flat().forEach(m => {
         if (!seasonData[m.seasonRef]) seasonData[m.seasonRef] = {};
         if (!seasonData[m.seasonRef][m.p1]) seasonData[m.seasonRef][m.p1] = 0;
         if (!seasonData[m.seasonRef][m.p2]) seasonData[m.seasonRef][m.p2] = 0;
-        
         if (m.s1 > m.s2) seasonData[m.seasonRef][m.p1] += 3;
         else if (m.s2 > m.s1) seasonData[m.seasonRef][m.p2] += 3;
         else { seasonData[m.seasonRef][m.p1] += 1; seasonData[m.seasonRef][m.p2] += 1; }
     });
-
     let finalWinners = [];
     Object.keys(seasonData).forEach(sNum => {
         let players = seasonData[sNum];
@@ -261,6 +269,8 @@ return { form: "4-2-3-1 (2)", style: "Équilibré", def: "Équilibré", width: "
 }
 function getMatchBriefing(p1Name, p2Name) {
 const allMatches = state.archives ? state.archives.flat() : [];
+const s1 = getWinningStreak(p1Name);
+const s2 = getWinningStreak(p2Name);
 let headToHead = { p1Wins: 0, p2Wins: 0, draws: 0, p1Goals: 0, p2Goals: 0 };
 allMatches.forEach(m => {
 if(m.p1 === p1Name && m.p2 === p2Name) {
@@ -271,10 +281,10 @@ if(m.s2 > m.s1) headToHead.p1Wins++; else if(m.s1 > m.s2) headToHead.p2Wins++; e
 headToHead.p1Goals += m.s2; headToHead.p2Goals += m.s1;
 }
 });
-const totalGames = headToHead.p1Wins + headToHead.p2Wins + headToHead.draws;
-if(totalGames === 0) return { analysis: "Aucun duel historique enregistré.", advice: "Premier round psychologique !" };
-let analysis = headToHead.p1Wins > headToHead.p2Wins ? `**${p1Name}** domine historiquement (${headToHead.p1Wins} victoires). ` : (headToHead.p2Wins > headToHead.p1Wins ? `**${p2Name}** a l'ascendant (${headToHead.p2Wins} victoires). ` : "Équilibre parfait entre ces deux rivaux. ");
-let advice = headToHead.p1Goals > headToHead.p2Goals ? `**${p2Name}** doit surveiller ses contres.` : "Match qui s'annonce très tactique.";
+let analysis = headToHead.p1Wins > headToHead.p2Wins ? `**${p1Name}** domine historiquement. ` : (headToHead.p2Wins > headToHead.p1Wins ? `**${p2Name}** a l'ascendant. ` : "Équilibre parfait. ");
+if(s1 >= 3) analysis += `🔥 **${p1Name}** est sur une série de ${s1} victoires ! `;
+if(s2 >= 3) analysis += `🔥 **${p2Name}** est sur une série de ${s2} victoires ! `;
+let advice = "Match tactique en vue.";
 return { analysis, advice };
 }
 
@@ -307,8 +317,10 @@ app.innerHTML = `<div id="pdf-area">
 <tbody>
 ${sorted.map(p => {
 const gd = p.gf - p.ga;
+const streak = getWinningStreak(p.name);
+const streakHtml = streak >= 3 ? `<span class="streak-badge">🔥${streak}</span>` : '';
 return `<tr>
-<td class="col-player"><strong>${p.name}</strong></td>
+<td class="col-player"><strong>${p.name}</strong>${streakHtml}</td>
 <td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
 <td class="col-center" style="color:${gd >= 0 ? 'var(--accent)' : 'var(--danger)'}; font-size:0.75rem">${gd > 0 ? '+'+gd : gd}</td>
 <td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
@@ -361,45 +373,7 @@ ${brief.analysis.replace(/\*\*/g, '<b>').replace(/\*\*/g, '</b>')}
 if (tab === "halloffame") {
     const winners = getWinnersPerSeason();
     const goat = getGOAT();
-    
-    app.innerHTML = `<h3>🏆 Hall of Fame</h3>`;
-    
-    // Carte du GOAT
-    app.innerHTML += `
-    <div class="card hof-card">
-        <div class="goat-title">LE PLUS TITRÉ (GOAT)</div>
-        <i class="fas fa-crown" style="color:var(--gold); font-size:2rem; margin-bottom:10px"></i>
-        <div class="goat-name">${goat.name}</div>
-        <div style="color:var(--muted); font-size:0.8rem">${goat.titles} Titre(s) de Champion</div>
-    </div>`;
-
-    // Top Gagnants
-    app.innerHTML += `
-    <div class="card">
-        <strong>🥇 CLASSEMENT DES CHAMPIONS</strong>
-        <div style="margin-top:10px">
-            ${Object.entries(goat.all).sort((a,b) => b[1] - a[1]).map(([name, count]) => `
-                <div style="display:flex; justify-content:space-between; padding:5px 0">
-                    <span>${name}</span>
-                    <span style="color:var(--gold); font-weight:bold">${count} 🏆</span>
-                </div>
-            `).join('')}
-        </div>
-    </div>`;
-
-    // Liste par saison
-    app.innerHTML += `
-    <div class="card">
-        <strong>📅 HISTORIQUE DES SAISONS</strong>
-        <div style="margin-top:10px">
-            ${winners.map(w => `
-                <div class="season-winner-row">
-                    <span style="color:var(--muted)">Saison ${w.season}</span>
-                    <span style="font-weight:bold; color:var(--blue)">${w.winner}</span>
-                </div>
-            `).join('')}
-        </div>
-    </div>`;
+    app.innerHTML = `<h3>🏆 Hall of Fame</h3><div class="card hof-card"><div class="goat-title">LE PLUS TITRÉ (GOAT)</div><i class="fas fa-crown" style="color:var(--gold); font-size:2rem; margin-bottom:10px"></i><div class="goat-name">${goat.name}</div><div style="color:var(--muted); font-size:0.8rem">${goat.titles} Titre(s)</div></div><div class="card"><strong>🥇 CLASSEMENT DES CHAMPIONS</strong><div style="margin-top:10px">${Object.entries(goat.all).sort((a,b) => b[1] - a[1]).map(([name, count]) => `<div style="display:flex; justify-content:space-between; padding:5px 0"><span>${name}</span><span style="color:var(--gold); font-weight:bold">${count} 🏆</span></div>`).join('')}</div></div><div class="card"><strong>📅 HISTORIQUE</strong><div style="margin-top:10px">${winners.map(w => `<div class="season-winner-row"><span style="color:var(--muted)">Saison ${w.season}</span><span style="font-weight:bold; color:var(--blue)">${w.winner}</span></div>`).join('')}</div></div>`;
 }
 
 if (tab === "analysis") {
@@ -420,7 +394,7 @@ app.innerHTML = `<h3>🧠 Analyse IA Expert</h3>
 </div>
 </div>
 <div class="card predict-card">
-<div style="color:var(--purple); font-size:0.7rem">FAVORI HISTORIQUE (ALL-TIME) 🔥</div>
+<div style="color:var(--purple); font-size:0.7rem">FAVORI HISTORIQUE 🔥</div>
 <div style="font-size:1.4rem; font-weight:700; margin:10px 0">${pred.name}</div>
 <div style="display:flex; align-items:center; gap:10px">
 <div style="flex:1; height:6px; background:#000; border-radius:10px; overflow:hidden"><div style="width:${pred.proba}%; height:100%; background:var(--purple)"></div></div>
@@ -428,8 +402,7 @@ app.innerHTML = `<h3>🧠 Analyse IA Expert</h3>
 </div>
 </div>
 <div class="card"><strong>📋 CONSEIL TACTIQUE</strong><select id="tacticPlayer" class="team-select" style="width:100%; margin-top:10px" onchange="renderTacticAdvice()"><option value="">Choisir un joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div>
-<div class="card"><strong>⚔️ COMPARATEUR</strong><div style="display:flex; gap:10px; margin-top:10px"><select id="duel1" class="team-select" style="flex:1" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div>
-<div class="card"><strong>🏆 PANTHÉON</strong><div class="stat-row"><span class="stat-label">⚽ BUTEUR ALL-TIME</span><span class="stat-value">${playersByGoals[0] || '-'} (${allTime[playersByGoals[0]]?.gf || 0} buts)</span></div><div class="stat-row"><span class="stat-label">🛡️ MEILLEURE DÉFENSE</span><span class="stat-value">${playersByDef[0] || '-'}</span></div><div class="stat-row"><span class="stat-label">🔥 RECORD / SAISON</span><span class="stat-value">${seasonRecord.name} (${seasonRecord.goals})</span></div></div>`;
+<div class="card"><strong>⚔️ COMPARATEUR</strong><div style="display:flex; gap:10px; margin-top:10px"><select id="duel1" class="team-select" style="flex:1" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div>`;
 }
 
 if (tab === "players") {
@@ -450,7 +423,6 @@ app.innerHTML += `<div class="card"><div style="display:flex; justify-content:sp
 }
 }
 
-// Fonctions Match & Rotation
 function startWinnerStays() {
 if(isAdmin() && state.players.length === 3) {
 const names = state.players.map(p => p.name);
@@ -485,7 +457,6 @@ state.currentDay=[]; state.rotationQueue = [];
 isInteracting = false; save();
 }
 }
-
 function rewardPlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Points pour ${p.name} ?`); if(pts) { p.points += parseInt(pts); save(); } } }
 function penalizePlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Retirer points à ${p.name} ?`); if(pts) { p.points -= parseInt(pts); save(); } } }
 function deleteSeason(sNum) { if(isAdmin() && confirm("Supprimer ?")) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
