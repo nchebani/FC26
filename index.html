@@ -345,11 +345,10 @@ function startWinnerStays() {
 function handleRotation(lastMatch) {
     const winner = lastMatch.s1 > lastMatch.s2 ? lastMatch.p1 : (lastMatch.s2 > lastMatch.s1 ? lastMatch.p2 : lastMatch.p1);
     const loser = winner === lastMatch.p1 ? lastMatch.p2 : lastMatch.p1;
-    const waiting = state.rotationQueue.shift(); // Celui qui attendait entre
+    const waiting = state.rotationQueue.shift(); 
     
-    state.rotationQueue.push(loser); // Le perdant va dans la file
+    state.rotationQueue.push(loser);
     
-    // Créer le nouveau match
     state.currentDay.push({
         p1: winner, p2: waiting, s1: null, s2: null, done: false,
         seasonRef: state.season, date: new Date().toLocaleDateString('fr-FR'),
@@ -379,17 +378,12 @@ function saveOldMatch(dayIdx, mIdx) {
         const m = state.archives[dayIdx][mIdx];
         const p1 = state.players.find(p => p.name === m.p1);
         const p2 = state.players.find(p => p.name === m.p2);
-        
         if(p1 && p2) {
-            p1.gf -= m.s1; p1.ga -= m.s2;
-            p2.gf -= m.s2; p2.ga -= m.s1;
+            p1.gf -= m.s1; p1.ga -= m.s2; p2.gf -= m.s2; p2.ga -= m.s1;
             if(m.s1 > m.s2) p1.points -= 3; else if(m.s2 > m.s1) p2.points -= 3; else {p1.points -= 1; p2.points -= 1;}
-            
-            p1.gf += s1; p1.ga += s2;
-            p2.gf += s2; p2.ga += s1;
+            p1.gf += s1; p1.ga += s2; p2.gf += s2; p2.ga += s1;
             if(s1 > s2) p1.points += 3; else if(s2 > s1) p2.points += 3; else {p1.points += 1; p2.points += 1;}
         }
-        
         m.s1 = s1; m.s2 = s2;
         isInteracting = false;
         save();
@@ -418,12 +412,10 @@ function validateMatch(i){
         m.s1=s1; m.s2=s2; m.done=true; 
         m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value; 
 
-        // Si on est en mode Rotation (Winner Stays)
         if(state.rotationQueue && state.rotationQueue.length > 0) {
             handleRotation(m);
         }
 
-        // Si tous les matchs affichés sont finis ET qu'on n'est pas en mode rotation infini
         if(state.currentDay.every(x=>x.done)){ 
             if(!state.archives) state.archives=[]; 
             state.archives.push([...state.currentDay]); 
@@ -434,8 +426,26 @@ function validateMatch(i){
     } 
 }
 
-function finishSeason(){ if(isAdmin()){ const s=[...state.players].sort((a,b)=>b.points-a.points); if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";} } }
-function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0;}); qs("#winnerModal").style.display="none"; state.currentDay=[]; state.rotationQueue=[]; save(); }
+function finishSeason(){ 
+    if(isAdmin()){ 
+        // Archivage forcé des matchs joués avant de finir
+        if(state.currentDay && state.currentDay.some(m => m.done)) {
+            if(!state.archives) state.archives = [];
+            const completed = state.currentDay.filter(m => m.done);
+            if(completed.length > 0) state.archives.push([...completed]);
+        }
+        const s=[...state.players].sort((a,b)=>b.points-a.points); 
+        if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";} 
+        save();
+    } 
+}
+function closeWinner(){ 
+    state.season++; 
+    state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0;}); 
+    state.currentDay=[]; state.rotationQueue=[]; 
+    qs("#winnerModal").style.display="none"; 
+    save(); 
+}
 function exportPDF(){ html2pdf().from(qs('#pdf-area')).set({filename:`FC26_S${state.season}.pdf`, html2canvas:{scale:2, backgroundColor:'#05070a'}}).save(); }
 
 document.querySelectorAll("nav button").forEach(btn => { btn.onclick = () => { isInteracting = false; document.querySelectorAll("nav button").forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }; });
