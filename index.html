@@ -78,9 +78,7 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .btn-edit { background: none; border: 1px solid var(--blue); color: var(--blue); padding: 4px 8px; border-radius: 6px; font-size: 0.6rem; cursor: pointer; }
 .edit-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px dashed var(--blue); text-align: center; }
 #winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
-.live-match-header { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
 .vs-circle { background: var(--border); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; }
-.streak-badge { background: linear-gradient(to right, #f83600 0%, #f9d423 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; font-size: 0.8rem; margin-left: 5px; }
 </style>
 </head>
 <body>
@@ -208,7 +206,7 @@ function getGOAT() {
     return { name: goat, titles: counts[goat], all: counts };
 }
 
-// --- CALCULS ORIGINAUX ---
+// --- CALCULS ---
 function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
 function getAllTimeStats() {
 let stats = {}; if(!state.archives) return stats;
@@ -223,15 +221,11 @@ return stats;
 }
 function getLivePrediction() {
 if(!state.players || state.players.length === 0) return null;
-let scores = state.players.map(p => {
-let power = p.points + ((p.gf - p.ga) * 0.5);
-return { name: p.name, power: power };
-});
+let scores = state.players.map(p => ({ name: p.name, power: p.points + ((p.gf - p.ga) * 0.5) }));
 scores.sort((a,b) => b.power - a.power);
 let totalPower = scores.reduce((acc, curr) => acc + Math.max(0.1, curr.power), 0);
 let top = scores[0];
-let proba = Math.round((Math.max(0.1, top.power) / (totalPower || 1)) * 100);
-return { name: top.name, proba: proba };
+return { name: top.name, proba: Math.round((Math.max(0.1, top.power) / (totalPower || 1)) * 100) };
 }
 function getSeasonRecord() {
 let record = { name: "-", goals: 0, season: 0 }; if(!state.archives) return record;
@@ -269,8 +263,7 @@ return { form: "4-2-3-1 (2)", style: "Équilibré", def: "Équilibré", width: "
 }
 function getMatchBriefing(p1Name, p2Name) {
 const allMatches = state.archives ? state.archives.flat() : [];
-const s1 = getWinningStreak(p1Name);
-const s2 = getWinningStreak(p2Name);
+const s1 = getWinningStreak(p1Name); const s2 = getWinningStreak(p2Name);
 let headToHead = { p1Wins: 0, p2Wins: 0, draws: 0, p1Goals: 0, p2Goals: 0 };
 allMatches.forEach(m => {
 if(m.p1 === p1Name && m.p2 === p2Name) {
@@ -281,11 +274,10 @@ if(m.s2 > m.s1) headToHead.p1Wins++; else if(m.s1 > m.s2) headToHead.p2Wins++; e
 headToHead.p1Goals += m.s2; headToHead.p2Goals += m.s1;
 }
 });
-let analysis = headToHead.p1Wins > headToHead.p2Wins ? `**${p1Name}** domine historiquement. ` : (headToHead.p2Wins > headToHead.p1Wins ? `**${p2Name}** a l'ascendant. ` : "Équilibre parfait. ");
-if(s1 >= 3) analysis += `🔥 **${p1Name}** est sur une série de ${s1} victoires ! `;
-if(s2 >= 3) analysis += `🔥 **${p2Name}** est sur une série de ${s2} victoires ! `;
-let advice = "Match tactique en vue.";
-return { analysis, advice };
+let analysis = headToHead.p1Wins > headToHead.p2Wins ? `**${p1Name}** domine l'historique. ` : (headToHead.p2Wins > headToHead.p1Wins ? `**${p2Name}** a l'avantage. ` : "Équilibre parfait. ");
+if(s1 >= 3) analysis += `🔥 **${p1Name}** est intenable (${s1} succés) ! `;
+if(s2 >= 3) analysis += `🔥 **${p2Name}** est sur une série de ${s2} ! `;
+return { analysis, advice: "Match sous haute tension." };
 }
 
 // --- RENDU ---
@@ -298,135 +290,70 @@ const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.g
 const pichichi = [...state.players].sort((a,b) => b.gf - a.gf)[0];
 const defense = [...state.players].sort((a,b) => a.ga - b.ga)[0];
 const topVal = sorted.length ? [...state.players].sort((a,b) => calculateValue(b) - calculateValue(a))[0] : null;
-
-app.innerHTML = `<div id="pdf-area">
-<div class="awards-scroll">
-<div class="award-card">⚽ <div class="award-winner">${pichichi?.name || '-'}</div><div style="font-size:0.5rem">PICHICHI</div></div>
-<div class="award-card">🛡️ <div class="award-winner">${defense?.name || '-'}</div><div style="font-size:0.5rem">LE ROC</div></div>
-<div class="award-card">💎 <div class="award-winner">${topVal ? calculateValue(topVal) : '0'}M</div><div style="font-size:0.5rem">VALEUR TOP</div></div>
-</div>
-<div style="display:flex; justify-content:space-between; margin:15px 0">
-<h3>Classement S${state.season}</h3>
-<button class="btn-primary" style="width:auto; padding:5px 15px; font-size:0.7rem" onclick="exportPDF()">PDF</button>
-</div>
-<div class="card">
-<table>
-<thead>
-<tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">GD</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr>
-</thead>
-<tbody>
-${sorted.map(p => {
-const gd = p.gf - p.ga;
-const streak = getWinningStreak(p.name);
-const streakHtml = streak >= 3 ? `<span class="streak-badge">🔥${streak}</span>` : '';
-return `<tr>
-<td class="col-player"><strong>${p.name}</strong>${streakHtml}</td>
-<td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
-<td class="col-center" style="color:${gd >= 0 ? 'var(--accent)' : 'var(--danger)'}; font-size:0.75rem">${gd > 0 ? '+'+gd : gd}</td>
-<td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
-<td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td>
-</tr>`}).join('')}
-</tbody>
-</table>
-</div>
-</div>${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:10px" onclick="finishSeason()">TERMINER LA SAISON</button>` : ''}`;
+app.innerHTML = `<div id="pdf-area"><div class="awards-scroll"><div class="award-card">⚽ <div class="award-winner">${pichichi?.name || '-'}</div><div style="font-size:0.5rem">PICHICHI</div></div><div class="award-card">🛡️ <div class="award-winner">${defense?.name || '-'}</div><div style="font-size:0.5rem">LE ROC</div></div><div class="award-card">💎 <div class="award-winner">${topVal ? calculateValue(topVal) : '0'}M</div><div style="font-size:0.5rem">VALEUR TOP</div></div></div><div style="display:flex; justify-content:space-between; margin:15px 0"><h3>Classement S${state.season}</h3><button class="btn-primary" style="width:auto; padding:5px 15px; font-size:0.7rem" onclick="exportPDF()">PDF</button></div><div class="card"><table><thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">GD</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr></thead><tbody>${sorted.map(p => {
+const gd = p.gf - p.ga; const s = getWinningStreak(p.name);
+return `<tr><td class="col-player"><strong>${p.name}</strong> ${s>=3?`<span style="color:#ff4500; font-size:0.7rem">🔥${s}</span>`:''}</td><td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td><td class="col-center" style="color:${gd >= 0 ? 'var(--accent)' : 'var(--danger)'}; font-size:0.75rem">${gd > 0 ? '+'+gd : gd}</td><td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td><td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td></tr>`}).join('')}</tbody></table></div></div>${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:10px" onclick="finishSeason()">TERMINER LA SAISON</button>` : ''}`;
 }
 
 if (tab === "matches") {
 if (!state.currentDay || state.currentDay.length === 0) {
 let rotationBtn = (isAdmin() && state.players.length === 3) ? `<button class="btn-primary btn-rotation" onclick="startWinnerStays()">ACTIVER LE MODE ROTATION (3 JOUEURS) 🔄</button>` : '';
-app.innerHTML = `<div class="card" style="text-align:center; padding:40px; border: 2px dashed var(--border)">
-<i class="fas fa-gamepad" style="font-size:3rem; color:var(--muted); margin-bottom:20px"></i>
-<p style="color:var(--muted)">Aucun match en cours sur le terrain.</p>
-${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER UNE JOURNÉE CLASSIQUE ⚽</button> ${rotationBtn}` : `<p>L'Admin doit lancer la session.</p>`}
-</div>`;
+app.innerHTML = `<div class="card" style="text-align:center; padding:40px; border: 2px dashed var(--border)"><i class="fas fa-gamepad" style="font-size:3rem; color:var(--muted); margin-bottom:20px"></i><p style="color:var(--muted)">Aucun match en cours.</p>${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER UNE JOURNÉE ⚽</button> ${rotationBtn}` : `<p>L'Admin doit lancer la session.</p>`}</div>`;
 } else {
 const activeMatchIdx = state.currentDay.findIndex(m => !m.done);
 const m = state.currentDay[activeMatchIdx] || state.currentDay[state.currentDay.length-1];
 app.innerHTML = `<h3>En Direct 🏟️</h3>`;
 if(!m.done) {
 const brief = getMatchBriefing(m.p1, m.p2);
-app.innerHTML += `<div class="card" style="border: 2px solid var(--accent)">
-<div style="text-align:center; color:var(--accent); font-size:0.6rem; font-weight:bold; margin-bottom:15px"><i class="fas fa-play-circle"></i> MATCH EN COURS</div>
-<div class="team-row">
-<div style="flex:1; text-align:right"><strong>${m.p1}</strong><br>
-<select class="team-select" id="t1_${activeMatchIdx}" ${!isAdmin()?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select>
-</div>
-<input type="number" id="s1_${activeMatchIdx}" class="score-input" placeholder="-" ${!isAdmin()?'disabled':''} style="margin: 0 10px">
-<div class="vs-circle">VS</div>
-<input type="number" id="s2_${activeMatchIdx}" class="score-input" placeholder="-" ${!isAdmin()?'disabled':''} style="margin: 0 10px">
-<div style="flex:1; text-align:left"><strong>${m.p2}</strong><br>
-<select class="team-select" id="t2_${activeMatchIdx}" ${!isAdmin()?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select>
-</div>
-</div>
-${isAdmin() ? `<button class="btn-primary" style="margin-top:20px" onclick="validateMatch(${activeMatchIdx})">VALIDER LE RÉSULTAT ✅</button>` : ''}
-<div class="brief-box">
-<div class="brief-title"><i class="fas fa-robot"></i> ANALYSE IA</div>
-${brief.analysis.replace(/\*\*/g, '<b>').replace(/\*\*/g, '</b>')}
-<span class="brief-advice">${brief.advice.replace(/\*\*/g, '<b>').replace(/\*\*/g, '</b>')}</span>
-</div>
-</div>`;
+app.innerHTML += `<div class="card" style="border: 2px solid var(--accent)"><div style="text-align:center; color:var(--accent); font-size:0.6rem; font-weight:bold; margin-bottom:15px"><i class="fas fa-play-circle"></i> MATCH EN COURS</div><div class="team-row"><div style="flex:1; text-align:right"><strong>${m.p1}</strong><br><select class="team-select" id="t1_${activeMatchIdx}" ${!isAdmin()?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select></div><input type="number" id="s1_${activeMatchIdx}" class="score-input" placeholder="-" ${!isAdmin()?'disabled':''} style="margin: 0 10px"><div class="vs-circle">VS</div><input type="number" id="s2_${activeMatchIdx}" class="score-input" placeholder="-" ${!isAdmin()?'disabled':''} style="margin: 0 10px"><div style="flex:1; text-align:left"><strong>${m.p2}</strong><br><select class="team-select" id="t2_${activeMatchIdx}" ${!isAdmin()?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select></div></div>${isAdmin() ? `<button class="btn-primary" style="margin-top:20px" onclick="validateMatch(${activeMatchIdx})">VALIDER LE RÉSULTAT ✅</button>` : ''}<div class="brief-box"><div class="brief-title"><i class="fas fa-robot"></i> ANALYSE IA</div>${brief.analysis.replace(/\*\*/g, '<b>').replace(/\*\*/g, '</b>')}</div></div>`;
 }
 }
 }
 
 if (tab === "halloffame") {
-    const winners = getWinnersPerSeason();
-    const goat = getGOAT();
-    app.innerHTML = `<h3>🏆 Hall of Fame</h3><div class="card hof-card"><div class="goat-title">LE PLUS TITRÉ (GOAT)</div><i class="fas fa-crown" style="color:var(--gold); font-size:2rem; margin-bottom:10px"></i><div class="goat-name">${goat.name}</div><div style="color:var(--muted); font-size:0.8rem">${goat.titles} Titre(s)</div></div><div class="card"><strong>🥇 CLASSEMENT DES CHAMPIONS</strong><div style="margin-top:10px">${Object.entries(goat.all).sort((a,b) => b[1] - a[1]).map(([name, count]) => `<div style="display:flex; justify-content:space-between; padding:5px 0"><span>${name}</span><span style="color:var(--gold); font-weight:bold">${count} 🏆</span></div>`).join('')}</div></div><div class="card"><strong>📅 HISTORIQUE</strong><div style="margin-top:10px">${winners.map(w => `<div class="season-winner-row"><span style="color:var(--muted)">Saison ${w.season}</span><span style="font-weight:bold; color:var(--blue)">${w.winner}</span></div>`).join('')}</div></div>`;
+    const winners = getWinnersPerSeason(); const goat = getGOAT();
+    app.innerHTML = `<h3>🏆 Hall of Fame</h3><div class="card hof-card"><div class="goat-title">LE PLUS TITRÉ (GOAT)</div><i class="fas fa-crown" style="color:var(--gold); font-size:2rem; margin-bottom:10px"></i><div class="goat-name">${goat.name}</div><div style="color:var(--muted); font-size:0.8rem">${goat.titles} Titre(s)</div></div><div class="card"><strong>🥇 CLASSEMENT</strong><div style="margin-top:10px">${Object.entries(goat.all).sort((a,b)=>b[1]-a[1]).map(([n, c])=>`<div style="display:flex; justify-content:space-between; padding:5px 0"><span>${n}</span><span style="color:var(--gold); font-weight:bold">${c} 🏆</span></div>`).join('')}</div></div><div class="card"><strong>📅 HISTORIQUE</strong><div style="margin-top:10px">${winners.map(w => `<div class="season-winner-row"><span style="color:var(--muted)">Saison ${w.season}</span><span style="font-weight:bold; color:var(--blue)">${w.winner}</span></div>`).join('')}</div></div>`;
 }
 
 if (tab === "analysis") {
-const allTime = getAllTimeStats();
-const pred = getPrediction();
-const livePred = getLivePrediction();
-const seasonRecord = getSeasonRecord();
-const playersByGoals = Object.keys(allTime).sort((a,b) => allTime[b].gf - allTime[a].gf);
-const playersByDef = Object.keys(allTime).sort((a,b) => (allTime[a].ga/allTime[a].games) - (allTime[b].ga/allTime[b].games));
-
-app.innerHTML = `<h3>🧠 Analyse IA Expert</h3>
-<div class="card live-predict-card">
-<div style="color:var(--accent); font-size:0.7rem; font-weight:bold"><i class="fas fa-chart-line"></i> PRÉDICTION TITRE (SAISON ${state.season})</div>
-<div style="font-size:1.6rem; font-weight:700; margin:5px 0">${livePred ? livePred.name : '-'}</div>
-<div style="display:flex; align-items:center; gap:10px">
-<div style="flex:1; height:6px; background:#000; border-radius:10px; overflow:hidden"><div style="width:${livePred ? livePred.proba : 0}%; height:100%; background:var(--accent)"></div></div>
-<span style="font-weight:bold">${livePred ? livePred.proba : 0}%</span>
-</div>
-</div>
-<div class="card predict-card">
-<div style="color:var(--purple); font-size:0.7rem">FAVORI HISTORIQUE 🔥</div>
-<div style="font-size:1.4rem; font-weight:700; margin:10px 0">${pred.name}</div>
-<div style="display:flex; align-items:center; gap:10px">
-<div style="flex:1; height:6px; background:#000; border-radius:10px; overflow:hidden"><div style="width:${pred.proba}%; height:100%; background:var(--purple)"></div></div>
-<span>${pred.proba}%</span>
-</div>
-</div>
-<div class="card"><strong>📋 CONSEIL TACTIQUE</strong><select id="tacticPlayer" class="team-select" style="width:100%; margin-top:10px" onchange="renderTacticAdvice()"><option value="">Choisir un joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div>
-<div class="card"><strong>⚔️ COMPARATEUR</strong><div style="display:flex; gap:10px; margin-top:10px"><select id="duel1" class="team-select" style="flex:1" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div>`;
+const pred = getPrediction(); const livePred = getLivePrediction();
+app.innerHTML = `<h3>🧠 Analyse IA Expert</h3><div class="card live-predict-card"><div style="color:var(--accent); font-size:0.7rem; font-weight:bold"><i class="fas fa-chart-line"></i> PRÉDICTION TITRE S${state.season}</div><div style="font-size:1.6rem; font-weight:700; margin:5px 0">${livePred ? livePred.name : '-'}</div><div style="display:flex; align-items:center; gap:10px"><div style="flex:1; height:6px; background:#000; border-radius:10px; overflow:hidden"><div style="width:${livePred ? livePred.proba : 0}%; height:100%; background:var(--accent)"></div></div><span>${livePred ? livePred.proba : 0}%</span></div></div><div class="card"><strong>📋 TACTIQUE</strong><select id="tacticPlayer" class="team-select" style="width:100%; margin-top:10px" onchange="renderTacticAdvice()"><option value="">Choisir...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div><div class="card"><strong>⚔️ COMPARATEUR</strong><div style="display:flex; gap:10px; margin-top:10px"><select id="duel1" class="team-select" style="flex:1" onchange="renderDuelAnalysis()"><option value="">J1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onchange="renderDuelAnalysis()"><option value="">J2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div>`;
 }
 
 if (tab === "players") {
-app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><div><strong>${p.name}</strong><br><small style="color:var(--blue)">${calculateValue(p)} M€ (Pts: ${p.points})</small></div>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); cursor:pointer"><i class="fas fa-plus-circle"></i></button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
+app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><div><strong>${p.name}</strong><br><small style="color:var(--blue)">${calculateValue(p)} M€</small></div>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; color:var(--accent)"><i class="fas fa-plus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; color:var(--danger)"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RESET</button>` : ''}`;
 }
 
 if (tab === "archives") {
-app.innerHTML = `<h3>📂 Archives Sessions</h3>`;
-if(!state.archives) return;
+app.innerHTML = `<h3>📂 Archives</h3>`; if(!state.archives) return;
 const grouped = {}; state.archives.forEach((d, globalIdx) => {
-const sRef = d[0].seasonRef;
-if(!grouped[sRef]) grouped[sRef] = [];
-grouped[sRef].push({day: d, idx: globalIdx});
+const sRef = d[0].seasonRef; if(!grouped[sRef]) grouped[sRef] = []; grouped[sRef].push({day: d, idx: globalIdx});
 });
-Object.keys(grouped).sort((a,b) => b-a).forEach(s => {
-app.innerHTML += `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px"><div style="color:var(--gold); font-weight:bold">SAISON ${s}</div>${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}</div>${grouped[s].map((item, di) => `<details style="margin-bottom:8px"><summary style="color:var(--blue); font-size:0.8rem">Session du ${item.day[0].date}</summary><div style="font-size:0.75rem; padding:10px">${item.day.map((m, mIdx) => `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #222">${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2} ${isAdmin() ? `<button class="btn-edit" onclick="editOldMatch(${item.idx}, ${mIdx})">Edit</button>` : ''}</div><div id="edit_${item.idx}_${mIdx}"></div>`).join('')}</div></details>`).join('')}</div>`;
+Object.keys(grouped).sort((a,b)=>b-a).forEach(s => {
+app.innerHTML += `<div class="card"><div style="color:var(--gold); font-weight:bold">SAISON ${s}</div>${grouped[s].map((item, di) => `<details style="margin-top:8px"><summary style="color:var(--blue); font-size:0.8rem">Session du ${item.day[0].date}</summary><div style="font-size:0.75rem; padding:10px">${item.day.map((m, mIdx) => `<div>${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2} ${isAdmin() ? `<button class="btn-edit" onclick="editOldMatch(${item.idx}, ${mIdx})">Edit</button>` : ''}</div><div id="edit_${item.idx}_${mIdx}"></div>`).join('')}</div></details>`).join('')}</div>`;
 });
 }
 }
 
+// --- FONCTIONS ---
+function editOldMatch(dayIdx, mIdx) {
+const m = state.archives[dayIdx][mIdx];
+qs(`#edit_${dayIdx}_${mIdx}`).innerHTML = `<div class="edit-box"><input type="number" id="es1_${dayIdx}_${mIdx}" class="score-input" value="${m.s1}"> - <input type="number" id="es2_${dayIdx}_${mIdx}" class="score-input" value="${m.s2}"><br><button class="btn-primary" style="margin-top:10px" onclick="saveOldMatch(${dayIdx}, ${mIdx})">SAUVER</button></div>`;
+}
+function saveOldMatch(dayIdx, mIdx) {
+const m = state.archives[dayIdx][mIdx];
+const s1 = parseInt(qs(`#es1_${dayIdx}_${mIdx}`).value), s2 = parseInt(qs(`#es2_${dayIdx}_${mIdx}`).value);
+const p1 = state.players.find(p => p.name === m.p1), p2 = state.players.find(p => p.name === m.p2);
+if(m.s1 > m.s2) p1.points -= 3; else if(m.s2 > m.s1) p2.points -= 3; else { p1.points--; p2.points--; }
+p1.gf -= m.s1; p1.ga -= m.s2; p2.gf -= m.s2; p2.ga -= m.s1;
+m.s1 = s1; m.s2 = s2;
+p1.gf += s1; p1.ga += s2; p2.gf += s2; p2.ga += s1;
+if(s1 > s2) p1.points += 3; else if(s2 > s1) p2.points += 3; else { p1.points++; p2.points++; }
+save();
+}
 function startWinnerStays() {
 if(isAdmin() && state.players.length === 3) {
-const names = state.players.map(p => p.name);
-state.rotationQueue = [names[2]];
+const names = state.players.map(p => p.name); state.rotationQueue = [names[2]];
 state.currentDay = [{ p1: names[0], p2: names[1], s1: null, s2: null, done: false, seasonRef: state.season, date: new Date().toLocaleDateString('fr-FR'), team1: "Real Madrid", team2: "Man City" }];
 save();
 }
@@ -434,40 +361,30 @@ save();
 function handleRotation(lastMatch) {
 const winner = lastMatch.s1 > lastMatch.s2 ? lastMatch.p1 : (lastMatch.s2 > lastMatch.s1 ? lastMatch.p2 : lastMatch.p1);
 const loser = winner === lastMatch.p1 ? lastMatch.p2 : lastMatch.p1;
-const waiting = state.rotationQueue.shift();
-state.rotationQueue.push(loser);
+const waiting = state.rotationQueue.shift(); state.rotationQueue.push(loser);
 state.currentDay.push({ p1: winner, p2: waiting, s1: null, s2: null, done: false, seasonRef: state.season, date: new Date().toLocaleDateString('fr-FR'), team1: "Real Madrid", team2: "Man City" });
 }
 function validateMatch(i){
 if(isAdmin()){
-const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value);
-if(isNaN(s1)||isNaN(s2)) return;
-const m=state.currentDay[i];
-const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
+const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value); if(isNaN(s1)||isNaN(s2)) return;
+const m=state.currentDay[i]; const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
 p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
 if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
-m.s1=s1; m.s2=s2; m.done=true;
-m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
+m.s1=s1; m.s2=s2; m.done=true; m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
 if(state.rotationQueue && state.rotationQueue.length > 0) handleRotation(m);
-if(state.currentDay.every(x=>x.done)){
-if(!state.archives) state.archives=[];
-state.archives.push([...state.currentDay]);
-state.currentDay=[]; state.rotationQueue = [];
-}
+if(state.currentDay.every(x=>x.done)){ if(!state.archives) state.archives=[]; state.archives.push([...state.currentDay]); state.currentDay=[]; state.rotationQueue = []; }
 isInteracting = false; save();
 }
 }
-function rewardPlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Points pour ${p.name} ?`); if(pts) { p.points += parseInt(pts); save(); } } }
-function penalizePlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Retirer points à ${p.name} ?`); if(pts) { p.points -= parseInt(pts); save(); } } }
-function deleteSeason(sNum) { if(isAdmin() && confirm("Supprimer ?")) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
+function rewardPlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Points ?`); if(pts) { p.points += parseInt(pts); save(); } } }
 function initSystem() { if(isAdmin() && confirm("Reset ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
-function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">FIN</button></div>`; }
-function renderDuelAnalysis() { isInteracting = true; const p1 = qs("#duel1").value, p2 = qs("#duel2").value; const stats = getAllTimeStats(); if(!p1 || !p2 || p1 === p2) return; const s1 = stats[p1] || {pts:0, games:1}, s2 = stats[p2] || {pts:0, games:1}; const r = ((s1.pts/s1.games) / ((s1.pts/s1.games)+(s2.pts/s2.games)||1)) * 100; qs("#duelResult").innerHTML = `<div class="duel-bar-container"><div class="duel-bar-left" style="width:${r}%"></div><div class="duel-bar-right" style="width:${100-r}%"></div></div><button class="btn-primary" style="font-size:0.6rem" onclick="isInteracting=false; render()">FIN</button>`; }
+function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">${t.form}</div><br><b>${t.style}</b><br><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">OK</button></div>`; }
+function renderDuelAnalysis() { isInteracting = true; const p1 = qs("#duel1").value, p2 = qs("#duel2").value; const stats = getAllTimeStats(); if(!p1 || !p2 || p1 === p2) return; const s1 = stats[p1] || {pts:0, games:1}, s2 = stats[p2] || {pts:0, games:1}; const r = ((s1.pts/s1.games) / ((s1.pts/s1.games)+(s2.pts/s2.games)||1)) * 100; qs("#duelResult").innerHTML = `<div class="duel-bar-container"><div class="duel-bar-left" style="width:${r}%"></div><div class="duel-bar-right" style="width:${100-r}%"></div></div><button class="btn-primary" style="font-size:0.6rem" onclick="isInteracting=false; render()">OK</button>`; }
 function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0}); save();}} }
 function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
-function startDay(){ if(isAdmin() && state.players.length >= 2){ state.rotationQueue = []; state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
+function startDay(){ if(isAdmin() && state.players.length >= 2){ state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
 function finishSeason(){ if(isAdmin()){ const s=[...state.players].sort((a,b)=>b.points-a.points); if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";} save(); } }
-function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0;}); state.currentDay=[]; state.rotationQueue=[]; qs("#winnerModal").style.display="none"; save(); }
+function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0;}); state.currentDay=[]; qs("#winnerModal").style.display="none"; save(); }
 function exportPDF(){ html2pdf().from(qs('#pdf-area')).set({filename:`FC26_S${state.season}.pdf`, html2canvas:{scale:2, backgroundColor:'#05070a'}}).save(); }
 
 document.querySelectorAll("nav button").forEach(btn => { btn.onclick = () => { isInteracting = false; document.querySelectorAll("nav button").forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }; });
