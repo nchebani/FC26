@@ -83,6 +83,10 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .edit-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px dashed var(--blue); text-align: center; }
 
 #winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
+
+/* Styles Briefing IA */
+.brief-box { background: #0a0c10; border-left: 4px solid var(--gold); padding: 10px; margin-top: 10px; font-size: 0.75rem; border-radius: 4px; }
+.brief-title { color: var(--gold); font-weight: bold; margin-bottom: 5px; display: block; font-size: 0.65rem; text-transform: uppercase; }
 </style>
 </head>
 <body>
@@ -244,6 +248,28 @@ function getTactic(playerName) {
     return { form: "4-2-3-1 (2)", style: "Équilibré", def: "Équilibré", width: "50 / 50", role: "MOC Libre / Pivot" };
 }
 
+// LOGIQUE BRIEFING IA
+function getMatchBriefing(p1, p2) {
+    const allMatches = state.archives ? state.archives.flat() : [];
+    let p1Wins = 0, p2Wins = 0, draws = 0, p1Goals = 0, p2Goals = 0;
+    
+    allMatches.forEach(m => {
+        if(m.p1 === p1 && m.p2 === p2) {
+            if(m.s1 > m.s2) p1Wins++; else if(m.s2 > m.s1) p2Wins++; else draws++;
+            p1Goals += m.s1; p2Goals += m.s2;
+        } else if(m.p1 === p2 && m.p2 === p1) {
+            if(m.s2 > m.s1) p1Wins++; else if(m.s1 > m.s2) p2Wins++; else draws++;
+            p1Goals += m.s2; p2Goals += m.s1;
+        }
+    });
+
+    if(p1Wins + p2Wins + draws === 0) return "Aucun historique entre ces deux joueurs. Un nouveau duel commence !";
+
+    if(p1Wins > p2Wins) return `Attention **${p2}**, **${p1}** a déjà gagné contre toi (${p1Wins} fois). Surveille ton attaque, tu as déjà perdu ${p1Wins} duels face à lui.`;
+    if(p2Wins > p1Wins) return `Attention **${p1}**, **${p2}** a déjà gagné contre toi (${p2Wins} fois). Surveille ton attaque, tu as déjà perdu ${p2Wins} duels face à lui.`;
+    return `Duel très serré ! Égalité parfaite sur l'historique (${p1Wins}V - ${draws}N - ${p2Wins}V).`;
+}
+
 function render() {
     const tab = qs("nav button.active").dataset.tab;
     const app = qs("#app"); app.innerHTML = "";
@@ -290,6 +316,7 @@ function render() {
         const pred = getPrediction(); 
         const livePred = getLivePrediction();
         const seasonRecord = getSeasonRecord();
+        const upcomingMatches = state.currentDay ? state.currentDay.filter(m => !m.done) : [];
         const playersByGoals = Object.keys(allTime).sort((a,b) => allTime[b].gf - allTime[a].gf);
         const playersByDef = Object.keys(allTime).sort((a,b) => (allTime[a].ga/allTime[a].games) - (allTime[b].ga/allTime[b].games));
         
@@ -305,6 +332,17 @@ function render() {
                 <span style="font-weight:bold">${livePred ? livePred.proba : 0}%</span>
             </div>
         </div>
+
+        ${upcomingMatches.length > 0 ? `
+        <div class="card" style="border: 1px solid var(--gold)">
+            <strong>💡 CONSEILS DE MATCHS RESTANTS</strong>
+            ${upcomingMatches.map(m => `
+                <div class="brief-box">
+                    <span class="brief-title">${m.p1} vs ${m.p2}</span>
+                    ${getMatchBriefing(m.p1, m.p2).replace(/\*\*/g, "")}
+                </div>
+            `).join('')}
+        </div>` : ''}
 
         <div class="card predict-card">
             <div style="color:var(--purple); font-size:0.7rem">FAVORI HISTORIQUE (ALL-TIME) 🔥</div>
