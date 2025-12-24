@@ -72,6 +72,11 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .predict-card { background: linear-gradient(135deg, #1e1b4b 0%, #111418 100%); border: 1px solid var(--purple); padding: 20px; margin-bottom:15px; }
 .live-predict-card { background: linear-gradient(135deg, #0f172a 0%, #020617 100%); border: 1px solid var(--accent); padding: 15px; }
 
+/* Styles Briefing IA */
+.brief-box { background: #0a0c10; border-left: 4px solid var(--gold); padding: 12px; margin-top: 10px; font-size: 0.75rem; border-radius: 4px; line-height: 1.4; }
+.brief-title { color: var(--gold); font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; font-size: 0.7rem; }
+.brief-advice { color: var(--muted); font-style: italic; display: block; margin-top: 5px; border-top: 1px solid #333; padding-top: 5px; }
+
 .match-card { border-bottom: 1px solid var(--border); padding: 15px 0; }
 .team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
 .team-select { background: #000; color: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px; font-size: 0.7rem; width: 110px; }
@@ -83,10 +88,6 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .edit-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px dashed var(--blue); text-align: center; }
 
 #winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
-
-/* Styles Briefing IA */
-.brief-box { background: #0a0c10; border-left: 4px solid var(--gold); padding: 10px; margin-top: 10px; font-size: 0.75rem; border-radius: 4px; }
-.brief-title { color: var(--gold); font-weight: bold; margin-bottom: 5px; display: block; font-size: 0.65rem; text-transform: uppercase; }
 </style>
 </head>
 <body>
@@ -248,26 +249,48 @@ function getTactic(playerName) {
     return { form: "4-2-3-1 (2)", style: "Équilibré", def: "Équilibré", width: "50 / 50", role: "MOC Libre / Pivot" };
 }
 
-// LOGIQUE BRIEFING IA
-function getMatchBriefing(p1, p2) {
+// LOGIQUE BRIEFING IA AVANCÉE
+function getMatchBriefing(p1Name, p2Name) {
     const allMatches = state.archives ? state.archives.flat() : [];
-    let p1Wins = 0, p2Wins = 0, draws = 0, p1Goals = 0, p2Goals = 0;
+    const stats = getAllTimeStats();
     
+    let headToHead = { p1Wins: 0, p2Wins: 0, draws: 0, p1Goals: 0, p2Goals: 0 };
     allMatches.forEach(m => {
-        if(m.p1 === p1 && m.p2 === p2) {
-            if(m.s1 > m.s2) p1Wins++; else if(m.s2 > m.s1) p2Wins++; else draws++;
-            p1Goals += m.s1; p2Goals += m.s2;
-        } else if(m.p1 === p2 && m.p2 === p1) {
-            if(m.s2 > m.s1) p1Wins++; else if(m.s1 > m.s2) p2Wins++; else draws++;
-            p1Goals += m.s2; p2Goals += m.s1;
+        if(m.p1 === p1Name && m.p2 === p2Name) {
+            if(m.s1 > m.s2) headToHead.p1Wins++; else if(m.s2 > m.s1) headToHead.p2Wins++; else headToHead.draws++;
+            headToHead.p1Goals += m.s1; headToHead.p2Goals += m.s2;
+        } else if(m.p1 === p2Name && m.p2 === p1Name) {
+            if(m.s2 > m.s1) headToHead.p1Wins++; else if(m.s1 > m.s2) headToHead.p2Wins++; else headToHead.draws++;
+            headToHead.p1Goals += m.s2; headToHead.p2Goals += m.s1;
         }
     });
 
-    if(p1Wins + p2Wins + draws === 0) return "Aucun historique entre ces deux joueurs. Un nouveau duel commence !";
+    const totalGames = headToHead.p1Wins + headToHead.p2Wins + headToHead.draws;
+    if(totalGames === 0) return "Aucun duel historique enregistré. Premier round psychologique !";
 
-    if(p1Wins > p2Wins) return `Attention **${p2}**, **${p1}** a déjà gagné contre toi (${p1Wins} fois). Surveille ton attaque, tu as déjà perdu ${p1Wins} duels face à lui.`;
-    if(p2Wins > p1Wins) return `Attention **${p1}**, **${p2}** a déjà gagné contre toi (${p2Wins} fois). Surveille ton attaque, tu as déjà perdu ${p2Wins} duels face à lui.`;
-    return `Duel très serré ! Égalité parfaite sur l'historique (${p1Wins}V - ${draws}N - ${p2Wins}V).`;
+    let analysis = "";
+    if(headToHead.p1Wins > headToHead.p2Wins) {
+        analysis = `**${p1Name}** domine historiquement ce choc (${headToHead.p1Wins} victoires). `;
+    } else if(headToHead.p2Wins > headToHead.p1Wins) {
+        analysis = `**${p2Name}** a l'ascendant psychologique (${headToHead.p2Wins} victoires). `;
+    } else {
+        analysis = "Équilibre parfait entre ces deux rivaux. ";
+    }
+
+    // Conseil Tactique Dynamique
+    let advice = "";
+    const p1Stats = stats[p1Name] || {gf:0, ga:0, games:1};
+    const p2Stats = stats[p2Name] || {gf:0, ga:0, games:1};
+    
+    if(p1Stats.gf/p1Stats.games > 2.5 && p2Stats.ga/p2Stats.games > 2) {
+        advice = `Conseil IA : **${p1Name}** devrait jouer le pressing haut, la défense de **${p2Name}** est souvent friable.`;
+    } else if (headToHead.p1Goals > headToHead.p2Goals) {
+        advice = `Conseil IA : **${p2Name}** doit surveiller ses contres, il encaisse en moyenne ${ (headToHead.p1Goals/totalGames).toFixed(1) } buts par match face à son adversaire.`;
+    } else {
+        advice = "Conseil IA : Match qui s'annonce tactique, le premier qui marque prendra une option sérieuse.";
+    }
+
+    return { analysis, advice };
 }
 
 function render() {
@@ -335,13 +358,16 @@ function render() {
 
         ${upcomingMatches.length > 0 ? `
         <div class="card" style="border: 1px solid var(--gold)">
-            <strong>💡 CONSEILS DE MATCHS RESTANTS</strong>
-            ${upcomingMatches.map(m => `
+            <strong style="color:var(--gold); font-size:0.8rem"><i class="fas fa-bolt"></i> BRIEFING DES MATCHS</strong>
+            ${upcomingMatches.map(m => {
+                const brief = getMatchBriefing(m.p1, m.p2);
+                return `
                 <div class="brief-box">
-                    <span class="brief-title">${m.p1} vs ${m.p2}</span>
-                    ${getMatchBriefing(m.p1, m.p2).replace(/\*\*/g, "")}
-                </div>
-            `).join('')}
+                    <div class="brief-title"><i class="fas fa-vs"></i> ${m.p1} VS ${m.p2}</div>
+                    ${brief.analysis.replace(/\*\*/g, '<b>').replace(/\*\*/g, '</b>')}
+                    <span class="brief-advice">${brief.advice.replace(/\*\*/g, '<b>').replace(/\*\*/g, '</b>')}</span>
+                </div>`;
+            }).join('')}
         </div>` : ''}
 
         <div class="card predict-card">
