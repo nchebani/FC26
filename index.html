@@ -13,6 +13,7 @@
 :root {
 --bg: #05070a; --card: #111418; --border: #30363d;
 --accent: #238636; --blue: #58a6ff; --gold: #d4af37;
+--silver: #bec2cb; --bronze: #cd7f32;
 --text: #f8fafc; --muted: #8b949e; --danger: #da3633;
 --purple: #8957e5;
 }
@@ -45,6 +46,14 @@ nav button.active { color: var(--accent); }
 
 main { padding: 15px; max-width: 600px; margin: auto; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative; }
+
+/* HOF STYLES */
+.medal-card { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid transparent; }
+.medal-gold { background: linear-gradient(90deg, #d4af3722, transparent); border-left-color: var(--gold); }
+.medal-silver { background: linear-gradient(90deg, #bec2cb22, transparent); border-left-color: var(--silver); }
+.medal-bronze { background: linear-gradient(90deg, #cd7f3222, transparent); border-left-color: var(--bronze); }
+.hof-stat { font-size: 1.2rem; font-weight: bold; }
+.hof-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; }
 
 .awards-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
 .award-card { min-width: 130px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
@@ -142,6 +151,7 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 <button data-tab="analysis"><i class="fas fa-brain"></i><span>IA</span></button>
 <button data-tab="matches"><i class="fas fa-gamepad"></i><span>Jouer</span></button>
 <button data-tab="players"><i class="fas fa-users"></i><span>Joueurs</span></button>
+<button data-tab="hof"><i class="fas fa-crown"></i><span>H.O.F</span></button>
 <button data-tab="archives"><i class="fas fa-history"></i><span>Palmarès</span></button>
 </nav>
 
@@ -228,6 +238,40 @@ function getSeasonWinner(sNum) {
         else { pts[m.p1] += 1; pts[m.p2] += 1; }
     });
     return Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b);
+}
+
+// HOF CALCS
+function getHOFStats() {
+    const medals = {}; 
+    const allTimeStats = getAllTimeStats();
+    const players = state.players.map(p => p.name);
+    players.forEach(p => medals[p] = { gold: 0, silver: 0, bronze: 0, goals: allTimeStats[p]?.gf || 0 });
+
+    if(state.archives) {
+        const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
+        seasons.forEach(s => {
+            const matches = state.archives.flat().filter(m => m.seasonRef == s);
+            let pts = {};
+            matches.forEach(m => {
+                if(!pts[m.p1]) pts[m.p1] = 0; if(!pts[m.p2]) pts[m.p2] = 0;
+                if(m.s1 > m.s2) pts[m.p1] += 3; else if(m.s2 > m.s1) pts[m.p2] += 3; else { pts[m.p1]++; pts[m.p2]++; }
+            });
+            const sorted = Object.keys(pts).sort((a,b) => pts[b] - pts[a]);
+            if(sorted[0]) medals[sorted[0]].gold++;
+            if(sorted[1]) medals[sorted[1]].silver++;
+            if(sorted[2]) medals[sorted[2]].bronze++;
+        });
+    }
+
+    let highestScore = { p1: "-", p2: "-", s1: 0, s2: 0, total: 0 };
+    const allMatches = state.archives ? state.archives.flat() : [];
+    allMatches.forEach(m => {
+        if((m.s1 + m.s2) > highestScore.total) {
+            highestScore = { ...m, total: m.s1 + m.s2 };
+        }
+    });
+
+    return { medals, highestScore };
 }
 
 function getGoat() {
@@ -455,14 +499,73 @@ if (tab === "players") {
 app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px" onfocus="isInteracting=true" onblur="isInteracting=false"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><div><strong>${p.name}</strong><br><small style="color:var(--blue)">${calculateValue(p)} M€ (Pts: ${p.points})</small></div>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.1rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
 }
 
+if (tab === "hof") {
+    const hof = getHOFStats();
+    const goat = getGoat();
+    const sortedMedals = Object.entries(hof.medals).sort((a,b) => b[1].gold - a[1].gold || b[1].silver - a[1].silver || b[1].bronze - a[1].bronze);
+    const topScorer = Object.entries(hof.medals).sort((a,b) => b[1].goals - a[1].goals)[0];
+
+    app.innerHTML = `<h3>🏛️ Hall of Fame</h3>
+    
+    <div class="card predict-card" style="border: 2px solid var(--gold); text-align:center">
+        <div style="color:var(--gold); font-size:0.8rem; font-weight:bold; letter-spacing:2px">THE G.O.A.T</div>
+        <i class="fas fa-crown" style="font-size:3rem; color:var(--gold); margin:15px 0"></i>
+        <div style="font-size:2rem; font-weight:800; text-transform:uppercase">${goat.name}</div>
+        <div style="color:var(--muted); font-size:0.8rem">Légende immortelle avec <b>${goat.titles}</b> titres</div>
+    </div>
+
+    <div class="card">
+        <strong>🥇 TABLEAU DES MÉDAILLES</strong>
+        <div style="margin-top:15px">
+            ${sortedMedals.map((m, idx) => `
+                <div class="medal-card ${idx==0?'medal-gold':idx==1?'medal-silver':idx==2?'medal-bronze':''}" style="background:rgba(255,255,255,0.03); margin-bottom:8px">
+                    <div style="font-size:1.2rem; font-weight:bold; width:30px">#${idx+1}</div>
+                    <div style="flex:1">
+                        <div style="font-weight:bold; font-size:0.9rem">${m[0]}</div>
+                        <div style="display:flex; gap:10px; margin-top:4px">
+                            <span style="color:var(--gold); font-size:0.7rem"><i class="fas fa-medal"></i> ${m[1].gold}</span>
+                            <span style="color:var(--silver); font-size:0.7rem"><i class="fas fa-medal"></i> ${m[1].silver}</span>
+                            <span style="color:var(--bronze); font-size:0.7rem"><i class="fas fa-medal"></i> ${m[1].bronze}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, #0a0c10 0%, #1e1b4b 100%);">
+        <div style="display:flex; align-items:center; gap:15px">
+            <div style="background:var(--blue); padding:15px; border-radius:12px; color:white">
+                <i class="fas fa-futbol" style="font-size:1.5rem"></i>
+            </div>
+            <div>
+                <div class="hof-label">Meilleur Buteur All-Time</div>
+                <div class="hof-stat">${topScorer ? topScorer[0] : '-'}</div>
+                <div style="color:var(--blue); font-size:0.8rem; font-weight:bold">${topScorer ? topScorer[1].goals : 0} Buts inscrits</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="border: 1px dashed var(--purple)">
+        <div class="hof-label">🔥 Record du Score (Match simple)</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px">
+            <div style="text-align:center; flex:1">
+                <div style="font-weight:bold">${hof.highestScore.p1}</div>
+                <div style="font-size:1.8rem; font-weight:800; color:var(--purple)">${hof.highestScore.s1}</div>
+            </div>
+            <div style="font-size:1.2rem; color:var(--muted); padding:0 15px">VS</div>
+            <div style="text-align:center; flex:1">
+                <div style="font-weight:bold">${hof.highestScore.p2}</div>
+                <div style="font-size:1.8rem; font-weight:800; color:var(--purple)">${hof.highestScore.s2}</div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:10px; font-size:0.6rem; color:var(--muted)">Total historique : ${hof.highestScore.total} buts en un match</div>
+    </div>`;
+}
+
 if (tab === "archives") {
     const goat = getGoat();
-    app.innerHTML = `<h3>🏆 Panthéon & Historique</h3>
-    <div class="card predict-card" style="border: 1px solid var(--gold); margin-bottom: 25px;">
-        <div style="color:var(--gold); font-size:0.7rem; font-weight:bold">G.O.A.T (MEILLEUR DE L'HISTOIRE) 👑</div>
-        <div style="font-size:1.6rem; font-weight:700; margin:5px 0">${goat.name}</div>
-        <div style="font-size:0.75rem; color:var(--muted)">Total de <b>${goat.titles}</b> titres de champion</div>
-    </div>`;
+    app.innerHTML = `<h3>🏆 Historique des Saisons</h3>`;
 
     if(!state.archives) return;
     const grouped = {}; 
