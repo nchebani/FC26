@@ -728,16 +728,13 @@ p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
 if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
 m.s1=s1; m.s2=s2; m.done=true;
 m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
-
-// LOGIQUE MODIFIÉE ICI POUR LA ROTATION
-if(state.rotationQueue && state.rotationQueue.length > 0) {
-    handleRotation(m);
-} else if(state.currentDay.every(x=>x.done)){
-    if(!state.archives) state.archives=[];
-    state.archives.push([...state.currentDay]);
-    state.currentDay=[];
+if(state.rotationQueue && state.rotationQueue.length > 0) handleRotation(m);
+if(state.currentDay.every(x=>x.done)){
+if(!state.archives) state.archives=[];
+state.archives.push([...state.currentDay]);
+state.currentDay=[];
+state.rotationQueue = [];
 }
-
 isInteracting = false; save();
 }
 }
