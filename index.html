@@ -245,7 +245,7 @@ function getHOFStats() {
     const medals = {}; 
     const allTimeStats = getAllTimeStats();
     const players = state.players.map(p => p.name);
-    players.forEach(p => medals[p] = { gold: 0, silver: 0, bronze: 0, goals: allTimeStats[p]?.gf || 0 });
+    players.forEach(p => medals[p] = { gold: 0, silver: 0, bronze: 0, goals: allTimeStats[p]?.gf || 0, seasons: new Set() });
 
     if(state.archives) {
         const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
@@ -255,11 +255,13 @@ function getHOFStats() {
             matches.forEach(m => {
                 if(!pts[m.p1]) pts[m.p1] = 0; if(!pts[m.p2]) pts[m.p2] = 0;
                 if(m.s1 > m.s2) pts[m.p1] += 3; else if(m.s2 > m.s1) pts[m.p2] += 3; else { pts[m.p1]++; pts[m.p2]++; }
+                if(medals[m.p1]) medals[m.p1].seasons.add(s);
+                if(medals[m.p2]) medals[m.p2].seasons.add(s);
             });
             const sorted = Object.keys(pts).sort((a,b) => pts[b] - pts[a]);
-            if(sorted[0]) medals[sorted[0]].gold++;
-            if(sorted[1]) medals[sorted[1]].silver++;
-            if(sorted[2]) medals[sorted[2]].bronze++;
+            if(sorted[0] && medals[sorted[0]]) medals[sorted[0]].gold++;
+            if(sorted[1] && medals[sorted[1]]) medals[sorted[1]].silver++;
+            if(sorted[2] && medals[sorted[2]]) medals[sorted[2]].bronze++;
         });
     }
 
@@ -280,7 +282,7 @@ function getGoat() {
     const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
     seasons.forEach(s => {
         const winner = getSeasonWinner(s);
-        if(winner !== "-") titles[winner] = (titles[winner] || 0) + 1;
+        if(winner !== "-" && winner !== "Inconnu") titles[winner] = (titles[winner] || 0) + 1;
     });
     const winnerName = Object.keys(titles).reduce((a, b) => titles[a] > titles[b] ? a : b, "-");
     return { name: winnerName, titles: titles[winnerName] || 0 };
@@ -508,6 +510,7 @@ if (tab === "hof") {
     const goat = getGoat();
     const sortedMedals = Object.entries(hof.medals).sort((a,b) => b[1].gold - a[1].gold || b[1].silver - a[1].silver || b[1].bronze - a[1].bronze);
     const topScorer = Object.entries(hof.medals).sort((a,b) => b[1].goals - a[1].goals)[0];
+    const titlesRanking = Object.entries(hof.medals).filter(m => m[1].gold > 0).sort((a,b) => b[1].gold - a[1].gold);
 
     app.innerHTML = `<h3>🏛️ Hall of Fame</h3>
     
@@ -516,6 +519,16 @@ if (tab === "hof") {
         <i class="fas fa-crown" style="font-size:3rem; color:var(--gold); margin:15px 0"></i>
         <div style="font-size:2rem; font-weight:800; text-transform:uppercase">${goat.name}</div>
         <div style="color:var(--muted); font-size:0.8rem">Légende immortelle avec <b>${goat.titles}</b> titres</div>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, #1e1b4b 0%, #05070a 100%); border-color: var(--gold);">
+        <strong style="color:var(--gold); font-size:0.7rem; display:block; margin-bottom:10px"><i class="fas fa-trophy"></i> CLASSEMENT PAR SAISONS GAGNÉES</strong>
+        ${titlesRanking.length > 0 ? titlesRanking.map((m, idx) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom: 1px solid #ffffff10">
+                <span style="font-size:0.85rem">${idx + 1}. <b>${m[0]}</b></span>
+                <span style="color:var(--gold); font-weight:bold">${m[1].gold} 🏆</span>
+            </div>
+        `).join('') : '<div style="text-align:center; font-size:0.7rem; color:var(--muted)">Aucun titre enregistré.</div>'}
     </div>
 
     <div class="card">
@@ -530,6 +543,7 @@ if (tab === "hof") {
                             <span style="color:var(--gold); font-size:0.7rem"><i class="fas fa-medal"></i> ${m[1].gold}</span>
                             <span style="color:var(--silver); font-size:0.7rem"><i class="fas fa-medal"></i> ${m[1].silver}</span>
                             <span style="color:var(--bronze); font-size:0.7rem"><i class="fas fa-medal"></i> ${m[1].bronze}</span>
+                            <span style="color:var(--muted); font-size:0.7rem; margin-left:auto">Longévité: <b>${m[1].seasons.size} S.</b></span>
                         </div>
                     </div>
                 </div>
