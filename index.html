@@ -20,13 +20,14 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
 
-/* Styles pour l'export PDF structuré */
-.pdf-export-content { background: white; color: black; padding: 40px; }
-.pdf-season-block { border-bottom: 2px solid #eee; margin-bottom: 30px; padding-bottom: 20px; page-break-inside: avoid; }
-.pdf-season-title { color: #1e1b4b; border-left: 5px solid #238636; padding-left: 15px; margin-bottom: 15px; }
+/* Styles spécifiques pour l'export PDF structuré */
+.pdf-export-content { background: white; color: black; padding: 40px; font-family: Arial, sans-serif; }
+.pdf-header { text-align: center; border-bottom: 2px solid #1e1b4b; margin-bottom: 20px; padding-bottom: 10px; }
+.pdf-season-block { margin-bottom: 30px; page-break-inside: avoid; }
+.pdf-season-title { color: #1e1b4b; background: #f0f0f0; padding: 8px 15px; border-left: 5px solid #238636; margin-bottom: 10px; }
 .pdf-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-.pdf-table th, .pdf-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 10pt; }
-.pdf-table th { background: #f8f9fa; }
+.pdf-table th, .pdf-table td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 9pt; }
+.pdf-table th { background: #e9ecef; font-weight: bold; }
 
 #syncNotify { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--purple); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; z-index: 2000; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; }
 
@@ -57,40 +58,29 @@ main { padding: 15px; max-width: 600px; margin: auto; }
 
 .sparkline-box { display: flex; align-items: flex-end; gap: 3px; height: 24px; justify-content: center; overflow: hidden; }
 .spark-bar { width: 5px; background: var(--border); border-radius: 1px; transition: height 0.3s; min-height: 2px; }
-.spark-up { background: var(--accent) !important; }
-.spark-down { background: var(--danger) !important; }
 
-.badge-container { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
-.prestige-badge { font-size: 0.55rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; gap: 3px; }
-
-table { width: 100%; border-collapse: collapse; }
+.table { width: 100%; border-collapse: collapse; }
 th { color: var(--muted); font-size: 0.6rem; text-transform: uppercase; padding-bottom: 10px; }
 td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; vertical-align: middle; }
 .col-player { text-align: left; padding-left: 5px; width: 35%; }
 .col-center { text-align: center; }
 
 .val-badge { background: #1e1b4b; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
-.power-trend { font-size: 0.7rem; margin-left: 3px; }
-
 .form-container { display: flex; gap: 4px; justify-content: center; }
 .dot { width: 9px; height: 9px; border-radius: 50%; }
-.win { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+.win { background: var(--accent); }
 .loss { background: var(--danger); }
 .draw { background: var(--muted); }
 
-.brief-box { background: #0a0c10; border-left: 4px solid var(--gold); padding: 12px; margin-top: 10px; font-size: 0.75rem; border-radius: 4px; line-height: 1.4; }
+.brief-box { background: #0a0c10; border-left: 4px solid var(--gold); padding: 12px; margin-top: 10px; font-size: 0.75rem; border-radius: 4px; }
 .match-card { border-bottom: 1px solid var(--border); padding: 15px 0; }
 .team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
 .team-select { background: #000; color: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px; font-size: 0.7rem; width: 110px; }
 .score-input { width: 45px; height: 40px; background: #000; border: 1px solid var(--border); color: white; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
 
 .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
-.awards-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
-.award-card { min-width: 130px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
-.award-winner { font-size: 0.8rem; font-weight: bold; color: var(--gold); display: block; margin-top: 5px; }
 
 #winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
-.match-commentary { background: rgba(88, 166, 255, 0.05); border: 1px solid #30363d; padding: 8px 12px; border-radius: 8px; margin-top: 10px; font-size: 0.7rem; color: var(--muted); font-style: italic; line-height: 1.3; }
 </style>
 </head>
 <body>
@@ -173,39 +163,20 @@ setInterval(pullData, 5000);
 
 function updateTicker() {
     const ticker = qs("#resultTicker");
-    if (!state.archives || state.archives.length === 0) {
-        ticker.style.display = "none";
-        return;
-    }
+    if (!state.archives || state.archives.length === 0) { ticker.style.display = "none"; return; }
     ticker.style.display = "block";
     const lastMatches = state.archives.flat().slice(-10).reverse();
     const content = lastMatches.map(m => `<div class="ticker-item">${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2}</div>`).join('');
     ticker.innerHTML = `<div class="ticker">${content}${content}</div>`;
 }
 
-function checkPin() { qs('#pinOverlay').style.display = 'flex'; qs('#pinCode').focus(); }
-function validatePin() { if(qs('#pinCode').value === ADMIN_PIN) { qs('#pinOverlay').style.display = 'none'; login('ADMIN'); } else { alert("PIN Incorrect"); } }
 function login(user) { currentUser = user; localStorage.setItem("fc26_user", user); qs('#loginOverlay').style.display = 'none'; qs('#userDisplay').innerText = user; pullData(); }
 function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
 function save() { if(isAdmin()) pushData(); render(); }
 
-// --- LOGIQUE CALCULS ---
 function calculateValue(p) { 
-    let base = 10;
-    let ptsValue = (p.points || 0) * 1.5;
-    let gdValue = ((p.gf || 0) - (p.ga || 0)) * 0.5;
-    let csValue = (p.cs || 0) * 1.0;
-    return (base + ptsValue + gdValue + csValue).toFixed(1); 
-}
-
-function getPowerRankingTrend(p) {
-    const history = getForm(p.name);
-    if (history.length < 2) return '→';
-    const recent = history.slice(0, 3).reduce((acc, val) => acc + (val === 'win' ? 3 : (val === 'draw' ? 1 : 0)), 0) / 3;
-    const allStats = getAllTimeStats()[p.name];
-    const overall = allStats ? (allStats.pts / allStats.games) : 0;
-    return recent > overall + 0.5 ? '↑' : (recent < overall - 0.5 ? '↓' : '→');
+    return (10 + (p.points || 0) * 1.5 + ((p.gf || 0) - (p.ga || 0)) * 0.5 + (p.cs || 0)).toFixed(1); 
 }
 
 function getForm(name) {
@@ -213,24 +184,10 @@ function getForm(name) {
     [...allMatches].reverse().forEach(m => {
         if((m.p1 === name || m.p2 === name) && history.length < 5) {
             const win = (m.p1 === name) ? m.s1 > m.s2 : m.s2 > m.s1;
-            const draw = m.s1 === m.s2;
-            history.push(win ? 'win' : (draw ? 'draw' : 'loss'));
+            history.push(win ? 'win' : (m.s1 === m.s2 ? 'draw' : 'loss'));
         }
     });
     return history;
-}
-
-function getAllTimeStats() {
-    let stats = {}; if(!state.archives) return stats;
-    state.archives.flat().forEach(m => {
-        if(!stats[m.p1]) stats[m.p1] = { gf:0, ga:0, pts:0, cs:0, games:0 };
-        if(!stats[m.p2]) stats[m.p2] = { gf:0, ga:0, pts:0, cs:0, games:0 };
-        stats[m.p1].gf += m.s1; stats[m.p1].ga += m.s2; stats[m.p1].games++;
-        stats[m.p2].gf += m.s2; stats[m.p2].ga += m.s1; stats[m.p2].games++;
-        if(m.s2 === 0) stats[m.p1].cs++; if(m.s1 === 0) stats[m.p2].cs++;
-        if(m.s1 > m.s2) stats[m.p1].pts += 3; else if(m.s2 > m.s1) stats[m.p2].pts += 3; else { stats[m.p1].pts++; stats[m.p2].pts++; }
-    });
-    return stats;
 }
 
 function getSeasonWinner(sNum) {
@@ -240,51 +197,47 @@ function getSeasonWinner(sNum) {
     if(matches.length === 0) return "-";
     matches.forEach(m => {
         if(!pts[m.p1]) pts[m.p1] = 0; if(!pts[m.p2]) pts[m.p2] = 0;
-        if(m.s1 > m.s2) pts[m.p1] += 3; else if (m.s2 > m.s1) pts[m.p2] += 3; else { pts[m.p1] += 1; pts[m.p2] += 1; }
+        if(m.s1 > m.s2) pts[m.p1] += 3; else if (m.s2 > m.s1) pts[m.p2] += 3; else { pts[m.p1]++; pts[m.p2]++; }
     });
     return Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b);
 }
 
-// --- EXPORT PDF STRUCTURÉ ---
+/* NOUVELLE FONCTION EXPORT PDF */
 function exportFullHistoryPDF() {
     const container = document.createElement('div');
     container.className = 'pdf-export-content';
-    container.innerHTML = `<h1 style="text-align:center; color:#1e1b4b">FC26 ELITE - RAPPORT HISTORIQUE</h1>
-                           <p style="text-align:center">Généré le ${new Date().toLocaleDateString()}</p><hr>`;
+    container.innerHTML = `<div class="pdf-header"><h1>RAPPORT HISTORIQUE - FC26 ELITE</h1><p>Date d'export : ${new Date().toLocaleDateString()}</p></div>`;
 
-    const grouped = {}; 
-    state.archives.flat().forEach(m => { 
-        if(!grouped[m.seasonRef]) grouped[m.seasonRef] = []; 
-        grouped[m.seasonRef].push(m); 
-    });
-
-    Object.keys(grouped).sort((a,b)=>b-a).forEach(sNum => {
-        const matches = grouped[sNum];
-        const winner = getSeasonWinner(sNum);
-        let html = `<div class="pdf-season-block">
-            <h2 class="pdf-season-title">SAISON ${sNum} (Vainqueur: ${winner} 🏆)</h2>
-            <table class="pdf-table">
-                <thead><tr><th>Match</th><th>Score</th><th>Équipes</th><th>Date</th></tr></thead>
-                <tbody>`;
-        matches.forEach(m => {
-            html += `<tr>
-                <td>${m.p1} vs ${m.p2}</td>
-                <td style="font-weight:bold">${m.s1} - ${m.s2}</td>
-                <td style="font-size:8pt">${m.team1} / ${m.team2}</td>
-                <td>${m.date || '-'}</td>
-            </tr>`;
+    if(!state.archives || state.archives.length === 0) {
+        container.innerHTML += "<p style='text-align:center'>Aucune donnée archivée.</p>";
+    } else {
+        const grouped = {};
+        state.archives.flat().forEach(m => {
+            if(!grouped[m.seasonRef]) grouped[m.seasonRef] = [];
+            grouped[m.seasonRef].push(m);
         });
-        html += `</tbody></table></div>`;
-        container.innerHTML += html;
-    });
 
-    const opt = {
-        margin: 10,
-        filename: `FC26_Historique_Complet.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+        Object.keys(grouped).sort((a,b)=>b-a).forEach(sNum => {
+            const winner = getSeasonWinner(sNum);
+            let html = `<div class="pdf-season-block">
+                <h2 class="pdf-season-title">SAISON ${sNum} — Vainqueur : ${winner} 🏆</h2>
+                <table class="pdf-table">
+                    <thead><tr><th>Match</th><th>Score</th><th>Équipes jouées</th><th>Date</th></tr></thead>
+                    <tbody>`;
+            grouped[sNum].forEach(m => {
+                html += `<tr>
+                    <td>${m.p1} vs ${m.p2}</td>
+                    <td style="font-weight:bold">${m.s1} - ${m.s2}</td>
+                    <td>${m.team1} / ${m.team2}</td>
+                    <td>${m.date || '-'}</td>
+                </tr>`;
+            });
+            html += `</tbody></table></div>`;
+            container.innerHTML += html;
+        });
+    }
+
+    const opt = { margin: 10, filename: `FC26_Historique_Complet.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
     html2pdf().from(container).set(opt).save();
 }
 
@@ -295,24 +248,17 @@ const app = qs("#app"); app.innerHTML = "";
 
 if (tab === "dashboard") {
 const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
-app.innerHTML = `<div id="pdf-area">
-<div class="awards-scroll">
-<div class="award-card">⚽ <div class="award-winner">${[...state.players].sort((a,b)=>b.gf-a.gf)[0]?.name || '-'}</div><div style="font-size:0.5rem">PICHICHI</div></div>
-<div class="award-card" style="border-color: var(--blue)">🧤 <div class="award-winner">${[...state.players].sort((a,b)=>b.cs-a.cs)[0]?.name || '-'}</div><div style="font-size:0.5rem">GANTS D'OR</div></div>
-</div>
-<h3>Classement S${state.season}</h3>
-<div class="card">
-<table>
-<thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr></thead>
-<tbody>${sorted.map(p => `<tr>
-<td class="col-player"><strong>${p.name}</strong></td>
-<td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
-<td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
-<td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td>
-</tr>`).join('')}</tbody>
-</table>
-</div>
-</div>${isAdmin() ? `<button class="btn-primary" style="background:var(--danger)" onclick="finishSeason()">TERMINER SAISON</button>` : ''}`;
+app.innerHTML = `<h3>Classement S${state.season}</h3><div class="card"><table><thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr></thead><tbody>${sorted.map(p => `<tr><td class="col-player"><strong>${p.name}</strong></td><td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td><td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td><td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td></tr>`).join('')}</tbody></table></div>`;
+}
+
+if (tab === "archives") {
+    app.innerHTML = `<h3>🏆 Palmarès</h3>
+    <button class="btn-primary" style="background:var(--purple); margin-bottom:15px;" onclick="exportFullHistoryPDF()"><i class="fas fa-file-pdf"></i> GÉNÉRER RAPPORT PDF HISTORIQUE</button>`;
+    if(!state.archives) return;
+    const grouped = {}; state.archives.flat().forEach(m => { if(!grouped[m.seasonRef]) grouped[m.seasonRef] = []; grouped[m.seasonRef].push(m); });
+    Object.keys(grouped).sort((a,b)=>b-a).forEach(s => {
+        app.innerHTML += `<div class="card"><strong>SAISON ${s}</strong><br><small>Vainqueur : ${getSeasonWinner(s)} 🏆</small></div>`;
+    });
 }
 
 if (tab === "matches") {
@@ -330,20 +276,11 @@ ${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i
 if (tab === "players") {
 app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between"><strong>${p.name}</strong>${isAdmin() ? `<button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger)"><i class="fas fa-trash"></i></button>` : ''}</div>`).join('')}`;
 }
-
-if (tab === "archives") {
-    app.innerHTML = `<h3>🏆 Palmarès</h3>
-    <button class="btn-primary" style="background:var(--purple); margin-bottom:15px;" onclick="exportFullHistoryPDF()"><i class="fas fa-file-pdf"></i> GÉNÉRER RAPPORT PDF HISTORIQUE</button>`;
-    if(!state.archives) return;
-    const grouped = {}; state.archives.flat().forEach(m => { if(!grouped[m.seasonRef]) grouped[m.seasonRef] = []; grouped[m.seasonRef].push(m); });
-    Object.keys(grouped).sort((a,b)=>b-a).forEach(s => {
-        app.innerHTML += `<div class="card"><strong>SAISON ${s}</strong><br><small>Vainqueur : ${getSeasonWinner(s)} 🏆</small></div>`;
-    });
-}
 }
 
+function checkPin() { qs('#pinOverlay').style.display = 'flex'; qs('#pinCode').focus(); }
+function validatePin() { if(qs('#pinCode').value === ADMIN_PIN) { qs('#pinOverlay').style.display = 'none'; login('ADMIN'); } else { alert("PIN Incorrect"); } }
 function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0, cs:0}); save();}} }
-function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
 function startDay(){ if(isAdmin() && state.players.length >= 2){ state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
 function validateMatch(i){
     if(isAdmin()){
@@ -352,9 +289,7 @@ function validateMatch(i){
         const m=state.currentDay[i];
         const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
         p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
-        if(s2 === 0) p1.cs = (p1.cs || 0) + 1;
-        if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
-        if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
+        if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points++; p2.points++;}
         m.s1=s1; m.s2=s2; m.done=true; m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
         if(state.currentDay.every(x=>x.done)){ state.archives.push([...state.currentDay]); state.currentDay=[]; }
         save();
