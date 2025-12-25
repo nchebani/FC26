@@ -216,14 +216,13 @@ function updateTicker() {
 
 function checkPin() { qs('#pinOverlay').style.display = 'flex'; qs('#pinCode').focus(); }
 function validatePin() { if(qs('#pinCode').value === ADMIN_PIN) { qs('#pinOverlay').style.display = 'none'; login('ADMIN'); } else { alert("PIN Incorrect"); } }
-function login(user) { currentUser = user; localStorage.setItem("fc26_user", user); qs('#loginOverlay').style.display = 'none'; qs('#userDisplay').innerText = user; pullData(); }
+function login(user) { currentUser = user; localStorage.setItem("fc26_user") || user; localStorage.setItem("fc26_user", user); qs('#loginOverlay').style.display = 'none'; qs('#userDisplay').innerText = user; pullData(); }
 function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
 function save() { if(isAdmin()) pushData(); render(); }
 
 // --- CALCULS ---
 function calculateValue(p) { 
-    // Valeur dynamique basée sur points, GD et Clean Sheets (cs)
     let base = 10;
     let ptsValue = (p.points || 0) * 1.5;
     let gdValue = ((p.gf || 0) - (p.ga || 0)) * 0.5;
@@ -248,19 +247,16 @@ function getPlayerBadges(p) {
     const stats = getAllTimeStats()[p.name];
     if(!stats || stats.games === 0) return badges;
     
-    // Sniper badge
     const currentMoyenne = p.gf / Math.max(1, (p.points/3 + p.ga/10)); 
     if (currentMoyenne > 3 || (stats.gf / stats.games) > 3) {
         badges.push({ class: 'badge-sniper', icon: 'fa-crosshairs', label: 'Sniper' });
     }
     
-    // Muraille badge (Clean Sheets)
     const maxCS = Math.max(...state.players.map(pl => pl.cs || 0));
     if (p.cs > 0 && p.cs === maxCS) {
         badges.push({ class: 'badge-mur', icon: 'fa-user-shield', label: 'Muraille' });
     }
 
-    // Clutch badge
     const allMatches = state.archives ? state.archives.flat() : [];
     const clutchWins = allMatches.filter(m => {
         const isP1 = m.p1 === p.name;
@@ -471,6 +467,57 @@ function getMatchBriefing(p1Name, p2Name) {
     else if(totalGames > 0 && headToHead.p1Goals / totalGames > 2) advice += `**${p1Name}** sait comment marquer face à ce bloc, patience et contres rapides recommandés.`;
     else advice += "Match fermé en vue. Le premier but sera probablement décisif.";
     return { analysis, advice };
+}
+
+// --- NOUVELLE FONCTION COMMENTAIRE ---
+function generateSportsCommentary(p1, p2, s1, s2) {
+    const diff = Math.abs(s1 - s2);
+    const total = s1 + s2;
+    const winner = s1 > s2 ? p1 : p2;
+    const loser = s1 > s2 ? p2 : p1;
+
+    const templates = {
+        crushing: [
+            `DÉMONSTRATION ! **${winner}** a littéralement étouffé **${loser}** avec un score sans appel de ${Math.max(s1,s2)}-${Math.min(s1,s2)}.`,
+            `Masterclass de **${winner}** qui ne laisse que des miettes à son adversaire du jour.`,
+            `Humiliation totale au stade ! **${winner}** inflige une correction mémorable à **${loser}**.`
+        ],
+        tight: [
+            `Quel suspense ! **${winner}** s'impose sur le fil face à un **${loser}** combatif.`,
+            `Match de haute tension qui bascule finalement en faveur de **${winner}** (${s1}-${s2}).`,
+            `Une victoire arrachée aux tripes par **${winner}**. Le public est en délire !`
+        ],
+        draw: [
+            `Dos à dos ! **${p1}** et **${p2}** se quittent sur un score de parité. Personne n'a su faire la différence.`,
+            `Un match nul tactique où les défenses ont pris le pas sur les attaques (${s1}-${s2}).`,
+            `Partage des points logique entre deux concurrents qui se craignaient trop.`
+        ],
+        goalFest: [
+            `Pluie de buts ! Un match fou entre deux joueurs portés vers l'avant. Score final : ${s1}-${s2}.`,
+            `Spectacle total ! Les spectateurs en ont eu pour leur argent avec ce score fleuve.`,
+            `Défenses aux abois et attaques de feu : un régal pour les fans de football !`
+        ],
+        cleanSheet: [
+            `Le verrou ! **${winner}** s'impose sans concéder le moindre but. Une solidité défensive exemplaire.`,
+            `**${loser}** n'a jamais trouvé la faille face au mur érigé par **${winner}**.`,
+            `Score de ${Math.max(s1,s2)}-0. Une victoire nette et sans bavure.`
+        ]
+    };
+
+    let commentary = "";
+    if (s1 === s2) {
+        commentary = templates.draw[Math.floor(Math.random() * templates.draw.length)];
+    } else if (diff >= 4) {
+        commentary = templates.crushing[Math.floor(Math.random() * templates.crushing.length)];
+    } else if (total >= 6) {
+        commentary = templates.goalFest[Math.floor(Math.random() * templates.goalFest.length)];
+    } else if ((s1 > 0 && s2 === 0) || (s2 > 0 && s1 === 0)) {
+        commentary = templates.cleanSheet[Math.floor(Math.random() * templates.cleanSheet.length)];
+    } else {
+        commentary = templates.tight[Math.floor(Math.random() * templates.tight.length)];
+    }
+
+    return commentary;
 }
 
 function render() {
@@ -804,25 +851,32 @@ function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.player
 function startDay(){ if(isAdmin() && state.players.length >= 2){ state.rotationQueue = []; state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
 
 function validateMatch(i){
-if(isAdmin()){
-const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value);
-if(isNaN(s1)||isNaN(s2)) return;
-const m=state.currentDay[i];
-const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
-p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
-if(s2 === 0) p1.cs = (p1.cs || 0) + 1;
-if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
-if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
-m.s1=s1; m.s2=s2; m.done=true;
-m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
-if(state.rotationQueue && state.rotationQueue.length > 0) handleRotation(m);
-if(state.currentDay.every(x=>x.done)){
-if(!state.archives) state.archives=[];
-state.archives.push([...state.currentDay]);
-state.currentDay=[]; state.rotationQueue = [];
-}
-isInteracting = false; save();
-}
+    if(isAdmin()){
+        const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value);
+        if(isNaN(s1)||isNaN(s2)) return;
+        const m=state.currentDay[i];
+        
+        // --- GÉNÉRATION DU COMMENTAIRE ---
+        const commentary = generateSportsCommentary(m.p1, m.p2, s1, s2);
+        
+        const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
+        p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
+        if(s2 === 0) p1.cs = (p1.cs || 0) + 1;
+        if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
+        if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
+        m.s1=s1; m.s2=s2; m.done=true;
+        m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
+        if(state.rotationQueue && state.rotationQueue.length > 0) handleRotation(m);
+        if(state.currentDay.every(x=>x.done)){
+            if(!state.archives) state.archives=[];
+            state.archives.push([...state.currentDay]);
+            state.currentDay=[]; state.rotationQueue = [];
+        }
+        isInteracting = false; save();
+        
+        // --- AFFICHAGE DU COMMENTAIRE ---
+        alert("📢 FLASH INFOS :\n" + commentary.replace(/\*\*/g, ''));
+    }
 }
 
 function finishSeason(){
