@@ -56,7 +56,7 @@ main { padding: 15px; max-width: 600px; margin: auto; }
 .hof-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; }
 
 .awards-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
-.award-card { min-width: 130px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
+.award-card { min-width: 130px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; transition: 0.3s; }
 .award-winner { font-size: 0.8rem; font-weight: bold; color: var(--gold); display: block; margin-top: 5px; }
 
 table { width: 100%; border-collapse: collapse; }
@@ -213,16 +213,30 @@ function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.
 function getStreak(playerName) {
     const allMatches = state.archives ? state.archives.flat() : [];
     const currentMatches = state.currentDay ? state.currentDay.filter(m => m.done) : [];
-    const totalHistory = [...allMatches, ...currentMatches].reverse();
-    let streak = 0;
-    for (let m of totalHistory) {
-        if (m.p1 === playerName || m.p2 === playerName) {
-            const isP1 = m.p1 === playerName;
-            const won = isP1 ? m.s1 > m.s2 : m.s2 > m.s1;
-            if (won) streak++; else break;
+    const totalHistory = [...allMatches, ...currentMatches]
+        .filter(m => m.p1 === playerName || m.p2 === playerName)
+        .reverse();
+
+    if (totalHistory.length === 0) return { count: 0, type: 'none' };
+
+    let count = 0;
+    let type = null;
+
+    for (let i = 0; i < totalHistory.length; i++) {
+        const m = totalHistory[i];
+        const isP1 = m.p1 === playerName;
+        const currentResult = m.s1 === m.s2 ? 'draw' : 
+                             ((isP1 && m.s1 > m.s2) || (!isP1 && m.s2 > m.s1) ? 'win' : 'loss');
+
+        if (i === 0) {
+            type = currentResult;
+            count = 1;
+        } else {
+            if (currentResult === type) count++;
+            else break;
         }
     }
-    return streak;
+    return { count, type };
 }
 
 function getSeasonWinner(sNum) {
@@ -397,12 +411,17 @@ const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.g
 const pichichi = [...state.players].sort((a,b) => b.gf - a.gf)[0];
 const defense = [...state.players].sort((a,b) => a.ga - b.ga)[0];
 const topVal = sorted.length ? [...state.players].sort((a,b) => calculateValue(b) - calculateValue(a))[0] : null;
-const topStreakPlayer = [...state.players].map(p => ({name: p.name, streak: getStreak(p.name)})).sort((a,b) => b.streak - a.streak)[0];
+
+// Calcul de la série la plus longue (Victoires uniquement)
+const streaks = state.players.map(p => ({ name: p.name, data: getStreak(p.name) }));
+const topStreakPlayer = streaks
+    .filter(s => s.data.type === 'win')
+    .sort((a, b) => b.data.count - a.data.count)[0];
 
 app.innerHTML = `<div id="pdf-area">
 <div class="awards-scroll">
-<div class="award-card">⚽ <div class="award-winner">${pichichi?.name || '-'}</div><div style="font-size:0.5rem">PICHICHI</div></div>
-<div class="award-card">🔥 <div class="award-winner">${topStreakPlayer?.streak > 0 ? topStreakPlayer.name : '-'}</div><div style="font-size:0.5rem">SÉRIE: ${topStreakPlayer?.streak || 0}</div></div>
+<div class="award-card">⚽ <div class="award-winner">${pichichi?.gf > 0 ? pichichi.name : '-'}</div><div style="font-size:0.5rem">PICHICHI (${pichichi?.gf || 0})</div></div>
+<div class="award-card" style="${topStreakPlayer?.data.count >= 3 ? 'border-color: var(--gold); background: rgba(212,175,55,0.1);' : ''}">🔥 <div class="award-winner">${topStreakPlayer ? topStreakPlayer.name : '-'}</div><div style="font-size:0.5rem">ON FIRE : ${topStreakPlayer ? topStreakPlayer.data.count : 0} VIT.</div></div>
 <div class="award-card">🛡️ <div class="award-winner">${defense?.name || '-'}</div><div style="font-size:0.5rem">LE ROC</div></div>
 <div class="award-card">💎 <div class="award-winner">${topVal ? calculateValue(topVal) : '0'}M</div><div style="font-size:0.5rem">VALEUR TOP</div></div>
 </div>
@@ -418,10 +437,15 @@ app.innerHTML = `<div id="pdf-area">
 <tbody>
 ${sorted.map(p => {
 const gd = p.gf - p.ga;
-const streak = getStreak(p.name);
-const fireEmoji = streak >= 2 ? `<span style="color:#ff4500; font-size:0.75rem; margin-left:5px"><i class="fas fa-fire"></i>${streak}</span>` : '';
+const s = getStreak(p.name);
+let streakIcon = "";
+if(s.count >= 2) {
+    if(s.type === 'win') streakIcon = `<span style="color:var(--gold); font-size:0.7rem; margin-left:5px"><i class="fas fa-fire"></i> ${s.count}</span>`;
+    else if(s.type === 'loss') streakIcon = `<span style="color:var(--danger); font-size:0.7rem; margin-left:5px"><i class="fas fa-arrow-down"></i> ${s.count}</span>`;
+}
+
 return `<tr>
-<td class="col-player"><strong>${p.name}</strong>${fireEmoji}</td>
+<td class="col-player"><strong>${p.name}</strong>${streakIcon}</td>
 <td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
 <td class="col-center" style="color:${gd >= 0 ? 'var(--accent)' : 'var(--danger)'}; font-size:0.75rem">${gd > 0 ? '+'+gd : gd}</td>
 <td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
@@ -511,7 +535,6 @@ if (tab === "hof") {
     const sortedMedals = Object.entries(hof.medals).sort((a,b) => b[1].gold - a[1].gold || b[1].silver - a[1].silver || b[1].bronze - a[1].bronze);
     const topScorer = Object.entries(hof.medals).sort((a,b) => b[1].goals - a[1].goals)[0];
     
-    // Modification demandée : Statistiques sur le nombre de saisons gagnées par joueur
     const titlesRanking = Object.entries(hof.medals)
         .filter(m => m[1].gold > 0)
         .sort((a,b) => b[1].gold - a[1].gold);
@@ -795,3 +818,4 @@ pullData();
 </script>
 </body>
 </html>
+
