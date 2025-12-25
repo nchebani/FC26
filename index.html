@@ -58,6 +58,7 @@ main { padding: 15px; max-width: 600px; margin: auto; }
 .badge-sniper { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
 .badge-mur { background: #dcfce7; color: #166534; border: 1px solid #22c55e; }
 .badge-clutch { background: #ede9fe; color: #5b21b6; border: 1px solid #8b5cf6; }
+.badge-clean { background: #e0f2fe; color: #0369a1; border: 1px solid #0ea5e9; }
 
 /* HOF STYLES */
 .medal-card { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid transparent; }
@@ -78,6 +79,7 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .col-center { text-align: center; }
 
 .val-badge { background: #1e1b4b; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
+.power-trend { font-size: 0.7rem; margin-left: 3px; }
 
 .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #ffffff05; }
 .stat-label { font-size: 0.75rem; color: var(--muted); }
@@ -220,20 +222,45 @@ if(currentUser) login(currentUser);
 function save() { if(isAdmin()) pushData(); render(); }
 
 // --- CALCULS ---
-function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
+function calculateValue(p) { 
+    // Valeur dynamique basée sur points, GD et Clean Sheets (cs)
+    let base = 10;
+    let ptsValue = (p.points || 0) * 1.5;
+    let gdValue = ((p.gf || 0) - (p.ga || 0)) * 0.5;
+    let csValue = (p.cs || 0) * 1.0;
+    return (base + ptsValue + gdValue + csValue).toFixed(1); 
+}
+
+function getPowerRankingTrend(p) {
+    const history = getForm(p.name);
+    if (history.length < 2) return '→';
+    const recent = history.slice(0, 3).reduce((acc, val) => acc + (val === 'win' ? 3 : (val === 'draw' ? 1 : 0)), 0) / 3;
+    const allStats = getAllTimeStats()[p.name];
+    const overall = allStats ? (allStats.pts / allStats.games) : 0;
+    
+    if (recent > overall + 0.5) return '↑';
+    if (recent < overall - 0.5) return '↓';
+    return '→';
+}
 
 function getPlayerBadges(p) {
     const badges = [];
     const stats = getAllTimeStats()[p.name];
     if(!stats || stats.games === 0) return badges;
+    
+    // Sniper badge
     const currentMoyenne = p.gf / Math.max(1, (p.points/3 + p.ga/10)); 
     if (currentMoyenne > 3 || (stats.gf / stats.games) > 3) {
         badges.push({ class: 'badge-sniper', icon: 'fa-crosshairs', label: 'Sniper' });
     }
-    const bestDef = [...state.players].sort((a,b) => a.ga - b.ga)[0];
-    if (bestDef && bestDef.name === p.name && p.ga < 10) {
-        badges.push({ class: 'badge-mur', icon: 'fa-shield-halved', label: 'Mur' });
+    
+    // Muraille badge (Clean Sheets)
+    const maxCS = Math.max(...state.players.map(pl => pl.cs || 0));
+    if (p.cs > 0 && p.cs === maxCS) {
+        badges.push({ class: 'badge-mur', icon: 'fa-user-shield', label: 'Muraille' });
     }
+
+    // Clutch badge
     const allMatches = state.archives ? state.archives.flat() : [];
     const clutchWins = allMatches.filter(m => {
         const isP1 = m.p1 === p.name;
@@ -246,7 +273,6 @@ function getPlayerBadges(p) {
     return badges;
 }
 
-// --- REWRITTEN PROG DATA TO PREVENT OVERFLOW ---
 function getProgressionData(playerName) {
     if(!state.archives || state.archives.length < 1) return [40, 40, 40];
     const history = [];
@@ -258,7 +284,6 @@ function getProgressionData(playerName) {
             if(m.p1 === playerName) pts += (m.s1 > m.s2 ? 3 : (m.s1 === m.s2 ? 1 : 0));
             if(m.p2 === playerName) pts += (m.s2 > m.s1 ? 3 : (m.s1 === m.s2 ? 1 : 0));
         });
-        // Scale 0-9 pts to percentage 10-100%
         let heightPercent = Math.min(100, Math.max(10, (pts / 9) * 100));
         history.push(heightPercent);
     });
@@ -311,7 +336,7 @@ function getHOFStats() {
     const medals = {}; 
     const allTimeStats = getAllTimeStats();
     const players = state.players.map(p => p.name);
-    players.forEach(p => medals[p] = { gold: 0, silver: 0, bronze: 0, goals: allTimeStats[p]?.gf || 0, seasons: new Set() });
+    players.forEach(p => medals[p] = { gold: 0, silver: 0, bronze: 0, goals: allTimeStats[p]?.gf || 0, cs: allTimeStats[p]?.cs || 0, seasons: new Set() });
 
     if(state.archives) {
         const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
@@ -356,10 +381,12 @@ function getGoat() {
 function getAllTimeStats() {
 let stats = {}; if(!state.archives) return stats;
 state.archives.flat().forEach(m => {
-if(!stats[m.p1]) stats[m.p1] = { gf:0, ga:0, pts:0, games:0 };
-if(!stats[m.p2]) stats[m.p2] = { gf:0, ga:0, pts:0, games:0 };
+if(!stats[m.p1]) stats[m.p1] = { gf:0, ga:0, pts:0, cs:0, games:0 };
+if(!stats[m.p2]) stats[m.p2] = { gf:0, ga:0, pts:0, cs:0, games:0 };
 stats[m.p1].gf += m.s1; stats[m.p1].ga += m.s2; stats[m.p1].games++;
 stats[m.p2].gf += m.s2; stats[m.p2].ga += m.s1; stats[m.p2].games++;
+if(m.s2 === 0) stats[m.p1].cs++;
+if(m.s1 === 0) stats[m.p2].cs++;
 if(m.s1 > m.s2) stats[m.p1].pts += 3; else if(m.s2 > m.s1) stats[m.p2].pts += 3; else { stats[m.p1].pts++; stats[m.p2].pts++; }
 });
 return stats;
@@ -368,7 +395,7 @@ return stats;
 function getLivePrediction() {
 if(!state.players || state.players.length === 0) return null;
 let scores = state.players.map(p => {
-let power = p.points + ((p.gf - p.ga) * 0.5);
+let power = p.points + ((p.gf - p.ga) * 0.5) + (p.cs * 0.5);
 return { name: p.name, power: power };
 });
 scores.sort((a,b) => b.power - a.power);
@@ -454,17 +481,14 @@ const app = qs("#app"); app.innerHTML = "";
 if (tab === "dashboard") {
 const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
 const pichichi = [...state.players].sort((a,b) => b.gf - a.gf)[0];
-const defense = [...state.players].sort((a,b) => a.ga - b.ga)[0];
+const defense = [...state.players].sort((a,b) => (a.ga/Math.max(1,a.points)) - (b.ga/Math.max(1,b.points)))[0];
+const topCS = [...state.players].sort((a,b) => (b.cs || 0) - (a.cs || 0))[0];
 const topVal = sorted.length ? [...state.players].sort((a,b) => calculateValue(b) - calculateValue(a))[0] : null;
-const streaks = state.players.map(p => ({ name: p.name, data: getStreak(p.name) }));
-const topStreakPlayer = streaks
-    .filter(s => s.data.type === 'win')
-    .sort((a, b) => b.data.count - a.data.count)[0];
 
 app.innerHTML = `<div id="pdf-area">
 <div class="awards-scroll">
 <div class="award-card">⚽ <div class="award-winner">${pichichi?.gf > 0 ? pichichi.name : '-'}</div><div style="font-size:0.5rem">PICHICHI (${pichichi?.gf || 0})</div></div>
-<div class="award-card" style="${topStreakPlayer?.data.count >= 3 ? 'border-color: var(--gold); background: rgba(212,175,55,0.1);' : ''}">🔥 <div class="award-winner">${topStreakPlayer ? topStreakPlayer.name : '-'}</div><div style="font-size:0.5rem">ON FIRE : ${topStreakPlayer ? topStreakPlayer.data.count : 0} VIT.</div></div>
+<div class="award-card" style="border-color: var(--blue)">🧤 <div class="award-winner">${topCS?.cs > 0 ? topCS.name : '-'}</div><div style="font-size:0.5rem">GANTS D'OR (${topCS?.cs || 0} CS)</div></div>
 <div class="award-card">🛡️ <div class="award-winner">${defense?.name || '-'}</div><div style="font-size:0.5rem">LE ROC</div></div>
 <div class="award-card">💎 <div class="award-winner">${topVal ? calculateValue(topVal) : '0'}M</div><div style="font-size:0.5rem">VALEUR TOP</div></div>
 </div>
@@ -479,7 +503,8 @@ app.innerHTML = `<div id="pdf-area">
 </thead>
 <tbody>
 ${sorted.map(p => {
-const gd = p.gf - p.ga;
+const trend = getPowerRankingTrend(p);
+const trendColor = trend === '↑' ? 'var(--accent)' : (trend === '↓' ? 'var(--danger)' : 'var(--muted)');
 const s = getStreak(p.name);
 const prog = getProgressionData(p.name);
 const badges = getPlayerBadges(p);
@@ -490,7 +515,7 @@ if(s.count >= 2) {
 }
 return `<tr>
 <td class="col-player">
-    <strong>${p.name}</strong>${streakIcon}
+    <strong>${p.name}</strong><span class="power-trend" style="color:${trendColor}">${trend}</span>${streakIcon}
     <div class="badge-container">
         ${badges.map(b => `<span class="prestige-badge ${b.class}"><i class="fas ${b.icon}"></i> ${b.label}</span>`).join('')}
     </div>
@@ -525,13 +550,13 @@ const livePred = getLivePrediction();
 const seasonRecord = getSeasonRecord();
 const upcomingMatches = state.currentDay ? state.currentDay.filter(m => !m.done) : [];
 const playersByGoals = Object.keys(allTime).sort((a,b) => allTime[b].gf - allTime[a].gf);
-const playersByDef = Object.keys(allTime).sort((a,b) => (allTime[a].ga/allTime[a].games) - (allTime[b].ga/allTime[b].games));
+const playersByCS = Object.keys(allTime).sort((a,b) => allTime[b].cs - allTime[a].cs);
 
 app.innerHTML = `<h3>🧠 Analyse IA</h3>
 <div class="card live-predict-card">
 <div style="color:var(--accent); font-size:0.7rem; font-weight:bold"><i class="fas fa-chart-line"></i> PRÉDICTION TITRE (SAISON ${state.season})</div>
 <div style="font-size:1.6rem; font-weight:700; margin:5px 0">${livePred ? livePred.name : '-'}</div>
-<div style="font-size:0.7rem; color:var(--muted); margin-bottom:10px">Probabilité de finir 1er selon la dynamique actuelle</div>
+<div style="font-size:0.7rem; color:var(--muted); margin-bottom:10px">Basée sur le Power Ranking actuel</div>
 <div style="display:flex; align-items:center; gap:10px">
 <div style="flex:1; height:6px; background:#000; border-radius:10px; overflow:hidden">
 <div style="width:${livePred ? livePred.proba : 0}%; height:100%; background:var(--accent)"></div>
@@ -564,7 +589,7 @@ ${brief.analysis.replace(/\*\*/g, '<b>').replace(/\*\*/g, '</b>')}
 </div>
 <div class="card"><strong>📋 CONSEIL TACTIQUE</strong><select id="tacticPlayer" class="team-select" style="width:100%; margin-top:10px" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderTacticAdvice()"><option value="">Sélectionner un joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div>
 <div class="card"><strong>⚔️ COMPARATEUR</strong><div style="display:flex; gap:10px; margin-top:10px"><select id="duel1" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div>
-<div class="card"><strong>🏆 PANTHÉON</strong><div class="stat-row"><span class="stat-label">⚽ BUTEUR ALL-TIME</span><span class="stat-value">${playersByGoals[0] || '-'} (${allTime[playersByGoals[0]]?.gf || 0} buts)</span></div><div class="stat-row"><span class="stat-label">🛡️ MEILLEURE DÉFENSE</span><span class="stat-value">${playersByDef[0] || '-'}</span></div><div class="stat-row"><span class="stat-label">🔥 RECORD / SAISON</span><span class="stat-value">${seasonRecord.name} (${seasonRecord.goals})</span></div></div>`;
+<div class="card"><strong>🏆 PANTHÉON</strong><div class="stat-row"><span class="stat-label">⚽ BUTEUR ALL-TIME</span><span class="stat-value">${playersByGoals[0] || '-'} (${allTime[playersByGoals[0]]?.gf || 0} buts)</span></div><div class="stat-row"><span class="stat-label">🧤 CLEAN SHEETS ALL-TIME</span><span class="stat-value">${playersByCS[0] || '-'} (${allTime[playersByCS[0]]?.cs || 0})</span></div><div class="stat-row"><span class="stat-label">🔥 RECORD / SAISON</span><span class="stat-value">${seasonRecord.name} (${seasonRecord.goals})</span></div></div>`;
 }
 
 if (tab === "matches") {
@@ -588,6 +613,7 @@ if (tab === "hof") {
     const goat = getGoat();
     const sortedMedals = Object.entries(hof.medals).sort((a,b) => b[1].gold - a[1].gold || b[1].silver - a[1].silver || b[1].bronze - a[1].bronze);
     const topScorer = Object.entries(hof.medals).sort((a,b) => b[1].goals - a[1].goals)[0];
+    const topCSAll = Object.entries(hof.medals).sort((a,b) => b[1].cs - a[1].cs)[0];
     const titlesRanking = Object.entries(hof.medals).filter(m => m[1].gold > 0).sort((a,b) => b[1].gold - a[1].gold);
 
     app.innerHTML = `<h3>🏛️ Hall of Fame</h3>
@@ -622,7 +648,7 @@ if (tab === "hof") {
                             <span style="color:var(--gold); font-size:0.75rem"><i class="fas fa-award"></i> ${m[1].gold} Or</span>
                             <span style="color:var(--silver); font-size:0.75rem"><i class="fas fa-award"></i> ${m[1].silver} Arg.</span>
                             <span style="color:var(--bronze); font-size:0.75rem"><i class="fas fa-award"></i> ${m[1].bronze} Br.</span>
-                            <span style="color:var(--muted); font-size:0.7rem; margin-left:auto">Longévité: <b>${m[1].seasons.size} S.</b></span>
+                            <span style="color:var(--muted); font-size:0.7rem; margin-left:auto">CS: <b>${m[1].cs}</b></span>
                         </div>
                     </div>
                 </div>
@@ -636,9 +662,9 @@ if (tab === "hof") {
             <div style="font-size:0.7rem; color:var(--muted)">${topScorer ? topScorer[1].goals : 0} buts</div>
         </div>
         <div class="card" style="margin-bottom:0">
-            <div class="hof-label">Record Match</div>
-            <div class="hof-stat" style="font-size:1rem; color:var(--purple)">${hof.highestScore.total} Buts</div>
-            <div style="font-size:0.7rem; color:var(--muted)">${hof.highestScore.p1} vs ${hof.highestScore.p2}</div>
+            <div class="hof-label">Gants d'Or All-Time</div>
+            <div class="hof-stat" style="font-size:1rem; color:var(--purple)">${topCSAll ? topCSAll[0] : '-'}</div>
+            <div style="font-size:0.7rem; color:var(--muted)">${topCSAll ? topCSAll[1].cs : 0} CS</div>
         </div>
     </div>`;
 }
@@ -730,8 +756,12 @@ const m = state.archives[dayIdx][mIdx];
 const p1 = state.players.find(p => p.name === m.p1), p2 = state.players.find(p => p.name === m.p2);
 if(p1 && p2) {
 p1.gf -= m.s1; p1.ga -= m.s2; p2.gf -= m.s2; p2.ga -= m.s1;
+if(m.s2 === 0) p1.cs = (p1.cs || 1) - 1;
+if(m.s1 === 0) p2.cs = (p2.cs || 1) - 1;
 if(m.s1 > m.s2) p1.points -= 3; else if(m.s2 > m.s1) p2.points -= 3; else {p1.points -= 1; p2.points -= 1;}
 p1.gf += s1; p1.ga += s2; p2.gf += s2; p2.ga += s1;
+if(s2 === 0) p1.cs = (p1.cs || 0) + 1;
+if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
 if(s1 > s2) p1.points += 3; else if(s2 > s1) p2.points += 3; else {p1.points += 1; p2.points += 1;}
 }
 m.s1 = s1; m.s2 = s2;
@@ -742,7 +772,7 @@ isInteracting = false; save();
 function rewardPlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points ajouter à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points += parseInt(pts); save(); } } }
 function penalizePlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points retirer à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points -= parseInt(pts); save(); } } }
 function deleteSeason(sNum) { if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} ?`)) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
-function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.rotationQueue = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
+function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.rotationQueue = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0; p.cs=0;}); save(); } }
 function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value, res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; }
 
 function renderDuelAnalysis() {
@@ -750,16 +780,16 @@ function renderDuelAnalysis() {
     const p1 = qs("#duel1").value, p2 = qs("#duel2").value;
     const stats = getAllTimeStats();
     if(!p1 || !p2 || p1 === p2) return;
-    const s1 = stats[p1] || {gf:0, ga:0, pts:0, games:1}, s2 = stats[p2] || {gf:0, ga:0, pts:0, games:1};
+    const s1 = stats[p1] || {gf:0, ga:0, pts:0, cs:0, games:1}, s2 = stats[p2] || {gf:0, ga:0, pts:0, cs:0, games:1};
     qs("#duelResult").innerHTML = `<div style="margin-top:20px; background:rgba(255,255,255,0.03); border-radius:15px; padding:15px; border: 1px solid var(--border);"><canvas id="duelChart" width="300" height="300"></canvas></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button>`;
     if(duelChartInstance) duelChartInstance.destroy();
     duelChartInstance = new Chart(document.getElementById('duelChart'), {
         type: 'radar',
         data: {
-            labels: ['Attaque', 'Défense', 'Points/Match', 'Ratio G/P'],
+            labels: ['Attaque', 'Défense', 'Points/Match', 'Clean Sheets'],
             datasets: [
-                { label: p1, data: [(s1.gf/s1.games)*2, 10-(s1.ga/s1.games)*2, (s1.pts/s1.games)*3, (s1.gf/s1.ga || 1)*2], borderColor: '#58a6ff', backgroundColor: 'rgba(88, 166, 255, 0.2)', borderWidth: 2 },
-                { label: p2, data: [(s2.gf/s2.games)*2, 10-(s2.ga/s2.games)*2, (s2.pts/s2.games)*3, (s2.gf/s2.ga || 1)*2], borderColor: '#8957e5', backgroundColor: 'rgba(137, 87, 229, 0.2)', borderWidth: 2 }
+                { label: p1, data: [(s1.gf/s1.games)*2, 10-(s1.ga/s1.games)*2, (s1.pts/s1.games)*3, (s1.cs/s1.games)*10], borderColor: '#58a6ff', backgroundColor: 'rgba(88, 166, 255, 0.2)', borderWidth: 2 },
+                { label: p2, data: [(s2.gf/s2.games)*2, 10-(s2.ga/s2.games)*2, (s2.pts/s2.games)*3, (s2.cs/s2.games)*10], borderColor: '#8957e5', backgroundColor: 'rgba(137, 87, 229, 0.2)', borderWidth: 2 }
             ]
         },
         options: { 
@@ -769,7 +799,7 @@ function renderDuelAnalysis() {
     });
 }
 
-function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0}); save();}} }
+function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0, cs:0}); save();}} }
 function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
 function startDay(){ if(isAdmin() && state.players.length >= 2){ state.rotationQueue = []; state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
 
@@ -780,6 +810,8 @@ if(isNaN(s1)||isNaN(s2)) return;
 const m=state.currentDay[i];
 const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
 p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
+if(s2 === 0) p1.cs = (p1.cs || 0) + 1;
+if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
 if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
 m.s1=s1; m.s2=s2; m.done=true;
 m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
@@ -811,7 +843,7 @@ function addSpecificSeason() {
         const newSeasonNum = prompt("Quel numéro de saison souhaitez-vous créer ?", state.season + 1);
         if (newSeasonNum !== null && !isNaN(newSeasonNum)) {
             state.season = parseInt(newSeasonNum);
-            state.players.forEach(p => { p.points = 0; p.gf = 0; p.ga = 0; });
+            state.players.forEach(p => { p.points = 0; p.gf = 0; p.ga = 0; p.cs = 0; });
             state.currentDay = []; state.rotationQueue = [];
             save();
         }
@@ -820,7 +852,7 @@ function addSpecificSeason() {
 
 function closeWinner(){
 state.season++;
-state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0;});
+state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0; p.cs=0;});
 state.currentDay=[]; state.rotationQueue=[];
 qs("#winnerModal").style.display="none";
 save();
