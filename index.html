@@ -216,17 +216,30 @@ function getStreak(playerName) {
 }
 
 function getSeasonWinner(sNum) {
-if(!state.archives) return "Inconnu";
-let pts = {};
-state.archives.flat().filter(m => m.seasonRef == sNum).forEach(m => {
-if(!pts[m.p1]) pts[m.p1] = 0;
-if(!pts[m.p2]) pts[m.p2] = 0;
-if(m.s1 > m.s2) pts[m.p1] += 3;
-else if(m.s2 > m.s1) pts[m.p2] += 3;
-else { pts[m.p1] += 1; pts[m.p2] += 1; }
-});
-let winner = Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b, "-");
-return winner;
+    if(!state.archives) return "Inconnu";
+    let pts = {};
+    const matches = state.archives.flat().filter(m => m.seasonRef == sNum);
+    if(matches.length === 0) return "-";
+    matches.forEach(m => {
+        if(!pts[m.p1]) pts[m.p1] = 0;
+        if(!pts[m.p2]) pts[m.p2] = 0;
+        if(m.s1 > m.s2) pts[m.p1] += 3;
+        else if(m.s2 > m.s1) pts[m.p2] += 3;
+        else { pts[m.p1] += 1; pts[m.p2] += 1; }
+    });
+    return Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b);
+}
+
+function getGoat() {
+    if(!state.archives || state.archives.length === 0) return { name: "-", titles: 0 };
+    const titles = {};
+    const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
+    seasons.forEach(s => {
+        const winner = getSeasonWinner(s);
+        if(winner !== "-") titles[winner] = (titles[winner] || 0) + 1;
+    });
+    const winnerName = Object.keys(titles).reduce((a, b) => titles[a] > titles[b] ? a : b, "-");
+    return { name: winnerName, titles: titles[winnerName] || 0 };
 }
 
 function getAllTimeStats() {
@@ -301,7 +314,6 @@ function getMatchBriefing(p1Name, p2Name) {
             else headToHead.p2Wins++;
             headToHead.p1Goals += p1IsM1 ? m.s1 : m.s2;
             headToHead.p2Goals += p1IsM1 ? m.s2 : m.s1;
-         headToHead.p2Goals += p1IsM1 ? m.s2 : m.s1;
         }
     });
 
@@ -444,40 +456,51 @@ app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div sty
 }
 
 if (tab === "archives") {
-app.innerHTML = `<h3>🏆 Historique & Modifs</h3>`;
-if(!state.archives) return;
-const grouped = {}; state.archives.forEach((d, globalIdx) => {
-const sRef = d[0].seasonRef;
-if(!grouped[sRef]) grouped[sRef] = [];
-grouped[sRef].push({day: d, idx: globalIdx});
-});
+    const goat = getGoat();
+    app.innerHTML = `<h3>🏆 Panthéon & Historique</h3>
+    <div class="card predict-card" style="border: 1px solid var(--gold); margin-bottom: 25px;">
+        <div style="color:var(--gold); font-size:0.7rem; font-weight:bold">G.O.A.T (MEILLEUR DE L'HISTOIRE) 👑</div>
+        <div style="font-size:1.6rem; font-weight:700; margin:5px 0">${goat.name}</div>
+        <div style="font-size:0.75rem; color:var(--muted)">Total de <b>${goat.titles}</b> titres de champion</div>
+    </div>`;
 
-Object.keys(grouped).sort((a,b) => b-a).forEach(s => {
-const sWinner = getSeasonWinner(s);
-app.innerHTML += `<div class="card">
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-<div style="color:var(--gold); font-weight:bold">SAISON ${s} <span style="color:var(--text); font-size:0.7rem; margin-left:10px">(Vainqueur: ${sWinner})</span></div>
-${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}
-</div>
-${grouped[s].map((item, di) => `
-<details style="margin-bottom:8px">
-<summary style="color:var(--blue)">Journée ${di+1} (${item.day[0].date})</summary>
-<div style="font-size:0.75rem; padding:10px">
-${item.day.map((m, mIdx) => `
-<div style="display:flex; flex-direction:column; gap:2px; margin-bottom:12px; border-bottom:1px solid #333; padding-bottom:8px">
-<div style="display:flex; justify-content:space-between; align-items:center">
-<span style="font-weight:bold">${m.p1} <span style="color:var(--muted); font-size:0.6rem; font-weight:normal">(${m.team1 || '?'})</span></span>
-<b style="font-size:1rem; color:var(--blue)">${m.s1} - ${m.s2}</b>
-<span style="font-weight:bold; text-align:right"><span style="color:var(--muted); font-size:0.6rem; font-weight:normal">(${m.team2 || '?'})</span> ${m.p2}</span>
-</div>
-${isAdmin() ? `<div style="text-align:center; margin-top:5px"><button class="btn-edit" onclick="editOldMatch(${item.idx}, ${mIdx})">Modifier Score</button></div>` : ''}
-</div>
-<div id="edit_${item.idx}_${mIdx}"></div>
-`).join('')}
-</div>
-</details>`).join('')}
-</div>`;
-});
+    if(!state.archives) return;
+    const grouped = {}; 
+    state.archives.forEach((d, globalIdx) => {
+        const sRef = d[0].seasonRef;
+        if(!grouped[sRef]) grouped[sRef] = [];
+        grouped[sRef].push({day: d, idx: globalIdx});
+    });
+
+    Object.keys(grouped).sort((a,b) => b-a).forEach(s => {
+        const sWinner = getSeasonWinner(s);
+        app.innerHTML += `<div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+        <div>
+            <div style="color:var(--gold); font-weight:bold">SAISON ${s}</div>
+            <div style="font-size:0.7rem; color:var(--accent)">Vainqueur : <b>${sWinner}</b> 🏆</div>
+        </div>
+        ${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}
+        </div>
+        ${grouped[s].map((item, di) => `
+        <details style="margin-bottom:8px">
+        <summary style="color:var(--blue); font-size:0.75rem">Journée ${di+1} (${item.day[0].date})</summary>
+        <div style="font-size:0.75rem; padding:10px">
+        ${item.day.map((m, mIdx) => `
+        <div style="display:flex; flex-direction:column; gap:2px; margin-bottom:12px; border-bottom:1px solid #333; padding-bottom:8px">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+        <span style="font-weight:bold">${m.p1} <span style="color:var(--muted); font-size:0.6rem; font-weight:normal">(${m.team1 || '?'})</span></span>
+        <b style="font-size:1rem; color:var(--blue)">${m.s1} - ${m.s2}</b>
+        <span style="font-weight:bold; text-align:right"><span style="color:var(--muted); font-size:0.6rem; font-weight:normal">(${m.team2 || '?'})</span> ${m.p2}</span>
+        </div>
+        ${isAdmin() ? `<div style="text-align:center; margin-top:5px"><button class="btn-edit" onclick="editOldMatch(${item.idx}, ${mIdx})">Modifier Score</button></div>` : ''}
+        </div>
+        <div id="edit_${item.idx}_${mIdx}"></div>
+        `).join('')}
+        </div>
+        </details>`).join('')}
+        </div>`;
+    });
 }
 }
 
@@ -639,4 +662,3 @@ pullData();
 </script>
 </body>
 </html>
-
