@@ -510,39 +510,52 @@ if (tab === "hof") {
     const goat = getGoat();
     const sortedMedals = Object.entries(hof.medals).sort((a,b) => b[1].gold - a[1].gold || b[1].silver - a[1].silver || b[1].bronze - a[1].bronze);
     const topScorer = Object.entries(hof.medals).sort((a,b) => b[1].goals - a[1].goals)[0];
-    const titlesRanking = Object.entries(hof.medals).filter(m => m[1].gold > 0).sort((a,b) => b[1].gold - a[1].gold);
+    
+    // Modification demandée : Statistiques sur le nombre de saisons gagnées par joueur
+    const titlesRanking = Object.entries(hof.medals)
+        .filter(m => m[1].gold > 0)
+        .sort((a,b) => b[1].gold - a[1].gold);
 
     app.innerHTML = `<h3>🏛️ Hall of Fame</h3>
     
-    <div class="card predict-card" style="border: 2px solid var(--gold); text-align:center">
+    <div class="card predict-card" style="border: 2px solid var(--gold); text-align:center; background: linear-gradient(135deg, #1e1b4b 0%, #05070a 100%);">
         <div style="color:var(--gold); font-size:0.8rem; font-weight:bold; letter-spacing:2px">THE G.O.A.T</div>
-        <i class="fas fa-crown" style="font-size:3rem; color:var(--gold); margin:15px 0"></i>
-        <div style="font-size:2rem; font-weight:800; text-transform:uppercase">${goat.name}</div>
-        <div style="color:var(--muted); font-size:0.8rem">Légende immortelle avec <b>${goat.titles}</b> titres</div>
+        <i class="fas fa-crown" style="font-size:3.5rem; color:var(--gold); margin:15px 0; filter: drop-shadow(0 0 10px rgba(212,175,55,0.5))"></i>
+        <div style="font-size:2.2rem; font-weight:800; text-transform:uppercase; color:white">${goat.name}</div>
+        <div style="color:var(--gold); font-size:1.1rem; font-weight:bold; margin-top:5px">
+            <i class="fas fa-trophy"></i> ${goat.titles} ${goat.titles > 1 ? 'SAISONS REMPORTÉES' : 'SAISON REMPORTÉE'}
+        </div>
     </div>
 
-    <div class="card" style="background: linear-gradient(135deg, #1e1b4b 0%, #05070a 100%); border-color: var(--gold);">
-        <strong style="color:var(--gold); font-size:0.7rem; display:block; margin-bottom:10px"><i class="fas fa-trophy"></i> CLASSEMENT PAR SAISONS GAGNÉES</strong>
-        ${titlesRanking.length > 0 ? titlesRanking.map((m, idx) => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom: 1px solid #ffffff10">
-                <span style="font-size:0.85rem">${idx + 1}. <b>${m[0]}</b></span>
-                <span style="color:var(--gold); font-weight:bold">${m[1].gold} 🏆</span>
-            </div>
-        `).join('') : '<div style="text-align:center; font-size:0.7rem; color:var(--muted)">Aucun titre enregistré.</div>'}
+    <div class="card" style="border-left: 4px solid var(--gold)">
+        <strong style="font-size:0.8rem; color:var(--gold)"><i class="fas fa-list-ol"></i> CLASSEMENT DES TITRES</strong>
+        <div style="margin-top:12px">
+            ${titlesRanking.length > 0 ? titlesRanking.map((m, idx) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom: 1px solid #ffffff05">
+                    <span style="font-size:0.9rem">
+                        <span style="color:var(--muted); margin-right:8px">#${idx + 1}</span>
+                        <b>${m[0]}</b>
+                    </span>
+                    <span style="background:rgba(212,175,55,0.1); color:var(--gold); padding:4px 10px; border-radius:12px; font-weight:bold; font-size:0.8rem">
+                        ${m[1].gold} 🏆
+                    </span>
+                </div>
+            `).join('') : '<div style="color:var(--muted); font-size:0.7rem; text-align:center; padding:10px">Aucun titre de saison décerné.</div>'}
+        </div>
     </div>
 
     <div class="card">
-        <strong>🥇 TABLEAU DES MÉDAILLES</strong>
+        <strong>🥇 TABLEAU DES MÉDAILLES (TOP 3)</strong>
         <div style="margin-top:15px">
             ${sortedMedals.map((m, idx) => `
-                <div class="medal-card ${idx==0?'medal-gold':idx==1?'medal-silver':idx==2?'medal-bronze':''}" style="background:rgba(255,255,255,0.03); margin-bottom:8px">
-                    <div style="font-size:1.2rem; font-weight:bold; width:30px">#${idx+1}</div>
+                <div class="medal-card ${idx==0?'medal-gold':idx==1?'medal-silver':idx==2?'medal-bronze':''}" style="background:rgba(255,255,255,0.02); margin-bottom:8px">
+                    <div style="font-size:1.1rem; font-weight:bold; width:30px; color:var(--muted)">${idx+1}</div>
                     <div style="flex:1">
                         <div style="font-weight:bold; font-size:0.9rem">${m[0]}</div>
-                        <div style="display:flex; gap:10px; margin-top:4px">
-                            <span style="color:var(--gold); font-size:0.7rem"><i class="fas fa-medal"></i> ${m[1].gold}</span>
-                            <span style="color:var(--silver); font-size:0.7rem"><i class="fas fa-medal"></i> ${m[1].silver}</span>
-                            <span style="color:var(--bronze); font-size:0.7rem"><i class="fas fa-medal"></i> ${m[1].bronze}</span>
+                        <div style="display:flex; gap:12px; margin-top:4px">
+                            <span style="color:var(--gold); font-size:0.75rem"><i class="fas fa-award"></i> ${m[1].gold} Or</span>
+                            <span style="color:var(--silver); font-size:0.75rem"><i class="fas fa-award"></i> ${m[1].silver} Arg.</span>
+                            <span style="color:var(--bronze); font-size:0.75rem"><i class="fas fa-award"></i> ${m[1].bronze} Br.</span>
                             <span style="color:var(--muted); font-size:0.7rem; margin-left:auto">Longévité: <b>${m[1].seasons.size} S.</b></span>
                         </div>
                     </div>
@@ -551,33 +564,17 @@ if (tab === "hof") {
         </div>
     </div>
 
-    <div class="card" style="background: linear-gradient(135deg, #0a0c10 0%, #1e1b4b 100%);">
-        <div style="display:flex; align-items:center; gap:15px">
-            <div style="background:var(--blue); padding:15px; border-radius:12px; color:white">
-                <i class="fas fa-futbol" style="font-size:1.5rem"></i>
-            </div>
-            <div>
-                <div class="hof-label">Meilleur Buteur All-Time</div>
-                <div class="hof-stat">${topScorer ? topScorer[0] : '-'}</div>
-                <div style="color:var(--blue); font-size:0.8rem; font-weight:bold">${topScorer ? topScorer[1].goals : 0} Buts inscrits</div>
-            </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+        <div class="card" style="margin-bottom:0">
+            <div class="hof-label">Pichichi All-Time</div>
+            <div class="hof-stat" style="font-size:1rem; color:var(--blue)">${topScorer ? topScorer[0] : '-'}</div>
+            <div style="font-size:0.7rem; color:var(--muted)">${topScorer ? topScorer[1].goals : 0} buts</div>
         </div>
-    </div>
-
-    <div class="card" style="border: 1px dashed var(--purple)">
-        <div class="hof-label">🔥 Record du Score (Match simple)</div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px">
-            <div style="text-align:center; flex:1">
-                <div style="font-weight:bold">${hof.highestScore.p1}</div>
-                <div style="font-size:1.8rem; font-weight:800; color:var(--purple)">${hof.highestScore.s1}</div>
-            </div>
-            <div style="font-size:1.2rem; color:var(--muted); padding:0 15px">VS</div>
-            <div style="text-align:center; flex:1">
-                <div style="font-weight:bold">${hof.highestScore.p2}</div>
-                <div style="font-size:1.8rem; font-weight:800; color:var(--purple)">${hof.highestScore.s2}</div>
-            </div>
+        <div class="card" style="margin-bottom:0">
+            <div class="hof-label">Record Match</div>
+            <div class="hof-stat" style="font-size:1rem; color:var(--purple)">${hof.highestScore.total} Buts</div>
+            <div style="font-size:0.7rem; color:var(--muted)">${hof.highestScore.p1} vs ${hof.highestScore.p2}</div>
         </div>
-        <div style="text-align:center; margin-top:10px; font-size:0.6rem; color:var(--muted)">Total historique : ${hof.highestScore.total} buts en un match</div>
     </div>`;
 }
 
