@@ -117,6 +117,20 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .edit-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px dashed var(--blue); text-align: center; }
 
 #winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
+
+/* NOUVEAU STYLE COMMENTAIRE */
+.match-commentary { 
+    background: rgba(88, 166, 255, 0.05); 
+    border: 1px solid #30363d; 
+    padding: 8px 12px; 
+    border-radius: 8px; 
+    margin-top: 10px; 
+    font-size: 0.7rem; 
+    color: var(--muted); 
+    font-style: italic;
+    line-height: 1.3;
+}
+.match-commentary b { color: var(--blue); }
 </style>
 </head>
 <body>
@@ -223,7 +237,6 @@ function save() { if(isAdmin()) pushData(); render(); }
 
 // --- CALCULS ---
 function calculateValue(p) { 
-    // Valeur dynamique basée sur points, GD et Clean Sheets (cs)
     let base = 10;
     let ptsValue = (p.points || 0) * 1.5;
     let gdValue = ((p.gf || 0) - (p.ga || 0)) * 0.5;
@@ -248,19 +261,16 @@ function getPlayerBadges(p) {
     const stats = getAllTimeStats()[p.name];
     if(!stats || stats.games === 0) return badges;
     
-    // Sniper badge
     const currentMoyenne = p.gf / Math.max(1, (p.points/3 + p.ga/10)); 
     if (currentMoyenne > 3 || (stats.gf / stats.games) > 3) {
         badges.push({ class: 'badge-sniper', icon: 'fa-crosshairs', label: 'Sniper' });
     }
     
-    // Muraille badge (Clean Sheets)
     const maxCS = Math.max(...state.players.map(pl => pl.cs || 0));
     if (p.cs > 0 && p.cs === maxCS) {
         badges.push({ class: 'badge-mur', icon: 'fa-user-shield', label: 'Muraille' });
     }
 
-    // Clutch badge
     const allMatches = state.archives ? state.archives.flat() : [];
     const clutchWins = allMatches.filter(m => {
         const isP1 = m.p1 === p.name;
@@ -473,6 +483,49 @@ function getMatchBriefing(p1Name, p2Name) {
     return { analysis, advice };
 }
 
+// --- NOUVELLE FONCTION COMMENTAIRE AUTOMATIQUE ---
+function generateMatchCommentary(m) {
+    const winner = m.s1 > m.s2 ? m.p1 : (m.s2 > m.s1 ? m.p2 : null);
+    const loser = winner === m.p1 ? m.p2 : m.p1;
+    const diff = Math.abs(m.s1 - m.s2);
+    const total = m.s1 + m.s2;
+
+    const winPhrases = [
+        `Victoire impériale de <b>${winner}</b> qui n'a laissé aucune chance à son adversaire.`,
+        `<b>${winner}</b> dicte sa loi aujourd'hui ! Un succès précieux.`,
+        `Quel réalisme de <b>${winner}</b> ! Le plan de jeu a fonctionné à merveille.`
+    ];
+    const tightPhrases = [
+        `<b>${winner}</b> l'emporte de justesse au terme d'un duel tactique intense.`,
+        `Match sous haute tension ! <b>${winner}</b> arrache les 3 points sur le fil.`,
+        `Cruel pour <b>${loser}</b>, mais c'est <b>${winner}</b> qui sort vainqueur de ce combat.`
+    ];
+    const stompPhrases = [
+        `Démonstration de force ! <b>${winner}</b> a littéralement humilié <b>${loser}</b>.`,
+        `Festival offensif ! <b>${winner}</b> était sur une autre planète.`,
+        `<b>${loser}</b> va devoir oublier ce cauchemar au plus vite...`
+    ];
+    const drawPhrases = [
+        `Un nul qui n'arrange personne. <b>${m.p1}</b> et <b>${m.p2}</b> se quittent dos à dos.`,
+        `Égalité parfaite. Les deux managers ont neutralisé leurs forces.`,
+        `Spectacle décevant ou défense de fer ? Le score reste de parité.`
+    ];
+    const cleanSheetExtra = " La défense a été héroïque, aucun but encaissé !";
+
+    let base = "";
+    if (winner) {
+        if (diff >= 3) base = stompPhrases[Math.floor(Math.random() * stompPhrases.length)];
+        else if (diff === 1) base = tightPhrases[Math.floor(Math.random() * tightPhrases.length)];
+        else base = winPhrases[Math.floor(Math.random() * winPhrases.length)];
+        
+        if (m.s1 === 0 || m.s2 === 0) base += cleanSheetExtra;
+    } else {
+        base = drawPhrases[Math.floor(Math.random() * drawPhrases.length)];
+    }
+    
+    return base;
+}
+
 function render() {
 updateTicker();
 const tab = qs("nav button.active").dataset.tab;
@@ -597,7 +650,20 @@ if (!state.currentDay || state.currentDay.length === 0) {
 let rotationBtn = (isAdmin() && state.players.length === 3) ? `<button class="btn-primary btn-rotation" onclick="startWinnerStays()">MODE 3 JOUEURS (WINNER STAYS) 🔄</button>` : '';
 app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE CLASSIQUE ⚽</button> ${rotationBtn}` : `<p>Attente de l'Admin...</p>`}</div>`;
 } else {
-app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => `<div class="match-card"><div class="team-row"><span>${m.p1}</span><select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false"></div><div class="team-row"><span>${m.p2}</span><select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select><input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false"></div>${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div>` : ''}</div>`).join('')}</div>`;
+app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => `
+<div class="match-card">
+    <div class="team-row">
+        <span>${m.p1}</span>
+        <select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select>
+        <input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">
+    </div>
+    <div class="team-row">
+        <span>${m.p2}</span>
+        <select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select>
+        <input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">
+    </div>
+    ${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div><div class="match-commentary"><i class="fas fa-quote-left" style="font-size:0.5rem; vertical-align:top; margin-right:5px"></i>${generateMatchCommentary(m)}</div>` : ''}
+</div>`).join('')}</div>`;
 if(state.rotationQueue && state.rotationQueue.length > 0) {
 app.innerHTML += `<div class="card" style="border: 1px dashed var(--purple); text-align:center"><small style="color:var(--muted)">PROCHAIN MATCH : LE GAGNANT CONTRE</small><br><strong>${state.rotationQueue[0]}</strong></div>`;
 }
