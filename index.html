@@ -47,6 +47,18 @@ nav button.active { color: var(--accent); }
 main { padding: 15px; max-width: 600px; margin: auto; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative; }
 
+/* PROGRESION & BADGES STYLES */
+.sparkline-box { display: flex; align-items: flex-end; gap: 2px; height: 20px; justify-content: center; }
+.spark-bar { width: 4px; background: var(--border); border-radius: 1px; transition: height 0.3s; }
+.spark-up { background: var(--accent); }
+.spark-down { background: var(--danger); }
+
+.badge-container { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+.prestige-badge { font-size: 0.55rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; gap: 3px; }
+.badge-sniper { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+.badge-mur { background: #dcfce7; color: #166534; border: 1px solid #22c55e; }
+.badge-clutch { background: #ede9fe; color: #5b21b6; border: 1px solid #8b5cf6; }
+
 /* HOF STYLES */
 .medal-card { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid transparent; }
 .medal-gold { background: linear-gradient(90deg, #d4af3722, transparent); border-left-color: var(--gold); }
@@ -210,6 +222,55 @@ function save() { if(isAdmin()) pushData(); render(); }
 // --- CALCULS ---
 function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
 
+// --- NOUVELLE FONCTION : BADGES DE PRESTIGE ---
+function getPlayerBadges(p) {
+    const badges = [];
+    const stats = getAllTimeStats()[p.name];
+    if(!stats || stats.games === 0) return badges;
+
+    // Sniper: Moyenne > 3 buts par match (Saison actuelle ou All-time)
+    const currentMoyenne = p.gf / Math.max(1, (p.points/3 + p.ga/10)); // Estimation des matchs joués
+    if (currentMoyenne > 3 || (stats.gf / stats.games) > 3) {
+        badges.push({ class: 'badge-sniper', icon: 'fa-crosshairs', label: 'Sniper' });
+    }
+
+    // Mur de Berlin: Meilleure défense de la ligue (Saison actuelle)
+    const bestDef = [...state.players].sort((a,b) => a.ga - b.ga)[0];
+    if (bestDef && bestDef.name === p.name && p.ga < 10) {
+        badges.push({ class: 'badge-mur', icon: 'fa-shield-halved', label: 'Mur' });
+    }
+
+    // Clutch: Mental d'acier (Séries de victoires par 1 but d'écart)
+    const allMatches = state.archives ? state.archives.flat() : [];
+    const clutchWins = allMatches.filter(m => {
+        const isP1 = m.p1 === p.name;
+        const diff = Math.abs(m.s1 - m.s2);
+        return diff === 1 && ((isP1 && m.s1 > m.s2) || (!isP1 && m.s2 > m.s1));
+    }).length;
+    if (clutchWins >= 3) {
+        badges.push({ class: 'badge-clutch', icon: 'fa-bolt', label: 'Clutch' });
+    }
+
+    return badges;
+}
+
+// --- NOUVELLE FONCTION : SPARKLINE DE PROGRESSION ---
+function getProgressionData(playerName) {
+    if(!state.archives || state.archives.length < 2) return [50, 50, 50];
+    const history = [];
+    const last3Days = state.archives.slice(-3);
+    
+    last3Days.forEach(day => {
+        let pts = 0;
+        day.forEach(m => {
+            if(m.p1 === playerName) pts += (m.s1 > m.s2 ? 3 : (m.s1 === m.s2 ? 1 : 0));
+            if(m.p2 === playerName) pts += (m.s2 > m.s1 ? 3 : (m.s1 === m.s2 ? 1 : 0));
+        });
+        history.push(pts * 10); // Scale pour le visuel
+    });
+    return history;
+}
+
 function getStreak(playerName) {
     const allMatches = state.archives ? state.archives.flat() : [];
     const currentMatches = state.currentDay ? state.currentDay.filter(m => m.done) : [];
@@ -254,7 +315,6 @@ function getSeasonWinner(sNum) {
     return Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b);
 }
 
-// HOF CALCS
 function getHOFStats() {
     const medals = {}; 
     const allTimeStats = getAllTimeStats();
@@ -412,7 +472,6 @@ const pichichi = [...state.players].sort((a,b) => b.gf - a.gf)[0];
 const defense = [...state.players].sort((a,b) => a.ga - b.ga)[0];
 const topVal = sorted.length ? [...state.players].sort((a,b) => calculateValue(b) - calculateValue(a))[0] : null;
 
-// Calcul de la série la plus longue (Victoires uniquement)
 const streaks = state.players.map(p => ({ name: p.name, data: getStreak(p.name) }));
 const topStreakPlayer = streaks
     .filter(s => s.data.type === 'win')
@@ -432,12 +491,14 @@ app.innerHTML = `<div id="pdf-area">
 <div class="card">
 <table>
 <thead>
-<tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">GD</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr>
+<tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">Prog.</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr>
 </thead>
 <tbody>
 ${sorted.map(p => {
 const gd = p.gf - p.ga;
 const s = getStreak(p.name);
+const prog = getProgressionData(p.name);
+const badges = getPlayerBadges(p);
 let streakIcon = "";
 if(s.count >= 2) {
     if(s.type === 'win') streakIcon = `<span style="color:var(--gold); font-size:0.7rem; margin-left:5px"><i class="fas fa-fire"></i> ${s.count}</span>`;
@@ -445,9 +506,22 @@ if(s.count >= 2) {
 }
 
 return `<tr>
-<td class="col-player"><strong>${p.name}</strong>${streakIcon}</td>
+<td class="col-player">
+    <strong>${p.name}</strong>${streakIcon}
+    <div class="badge-container">
+        ${badges.map(b => `<span class="prestige-badge ${b.class}"><i class="fas ${b.icon}"></i> ${b.label}</span>`).join('')}
+    </div>
+</td>
 <td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
-<td class="col-center" style="color:${gd >= 0 ? 'var(--accent)' : 'var(--danger)'}; font-size:0.75rem">${gd > 0 ? '+'+gd : gd}</td>
+<td class="col-center">
+    <div class="sparkline-box">
+        ${prog.map((v, i) => {
+            const isUp = i > 0 && v > prog[i-1];
+            const isDown = i > 0 && v < prog[i-1];
+            return `<div class="spark-bar ${isUp?'spark-up':isDown?'spark-down':''}" style="height:${Math.max(4, v)}px"></div>`;
+        }).join('')}
+    </div>
+</td>
 <td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
 <td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td>
 </tr>`}).join('')}
@@ -818,4 +892,3 @@ pullData();
 </script>
 </body>
 </html>
-
