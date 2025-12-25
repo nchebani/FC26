@@ -47,11 +47,11 @@ nav button.active { color: var(--accent); }
 main { padding: 15px; max-width: 600px; margin: auto; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative; }
 
-/* PROGRESION & BADGES STYLES */
-.sparkline-box { display: flex; align-items: flex-end; gap: 2px; height: 20px; justify-content: center; }
-.spark-bar { width: 4px; background: var(--border); border-radius: 1px; transition: height 0.3s; }
-.spark-up { background: var(--accent); }
-.spark-down { background: var(--danger); }
+/* PROGRESION - FIXED SCALE VERSION */
+.sparkline-box { display: flex; align-items: flex-end; gap: 3px; height: 24px; justify-content: center; overflow: hidden; }
+.spark-bar { width: 5px; background: var(--border); border-radius: 1px; transition: height 0.3s; min-height: 2px; }
+.spark-up { background: var(--accent) !important; }
+.spark-down { background: var(--danger) !important; }
 
 .badge-container { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
 .prestige-badge { font-size: 0.55rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; gap: 3px; }
@@ -222,25 +222,18 @@ function save() { if(isAdmin()) pushData(); render(); }
 // --- CALCULS ---
 function calculateValue(p) { return (10 + (p.points * 1.5) + ((p.gf - p.ga) * 0.5)).toFixed(1); }
 
-// --- NOUVELLE FONCTION : BADGES DE PRESTIGE ---
 function getPlayerBadges(p) {
     const badges = [];
     const stats = getAllTimeStats()[p.name];
     if(!stats || stats.games === 0) return badges;
-
-    // Sniper: Moyenne > 3 buts par match (Saison actuelle ou All-time)
-    const currentMoyenne = p.gf / Math.max(1, (p.points/3 + p.ga/10)); // Estimation des matchs joués
+    const currentMoyenne = p.gf / Math.max(1, (p.points/3 + p.ga/10)); 
     if (currentMoyenne > 3 || (stats.gf / stats.games) > 3) {
         badges.push({ class: 'badge-sniper', icon: 'fa-crosshairs', label: 'Sniper' });
     }
-
-    // Mur de Berlin: Meilleure défense de la ligue (Saison actuelle)
     const bestDef = [...state.players].sort((a,b) => a.ga - b.ga)[0];
     if (bestDef && bestDef.name === p.name && p.ga < 10) {
         badges.push({ class: 'badge-mur', icon: 'fa-shield-halved', label: 'Mur' });
     }
-
-    // Clutch: Mental d'acier (Séries de victoires par 1 but d'écart)
     const allMatches = state.archives ? state.archives.flat() : [];
     const clutchWins = allMatches.filter(m => {
         const isP1 = m.p1 === p.name;
@@ -250,13 +243,12 @@ function getPlayerBadges(p) {
     if (clutchWins >= 3) {
         badges.push({ class: 'badge-clutch', icon: 'fa-bolt', label: 'Clutch' });
     }
-
     return badges;
 }
 
-// --- NOUVELLE FONCTION : SPARKLINE DE PROGRESSION ---
+// --- REWRITTEN PROG DATA TO PREVENT OVERFLOW ---
 function getProgressionData(playerName) {
-    if(!state.archives || state.archives.length < 2) return [50, 50, 50];
+    if(!state.archives || state.archives.length < 1) return [40, 40, 40];
     const history = [];
     const last3Days = state.archives.slice(-3);
     
@@ -266,8 +258,11 @@ function getProgressionData(playerName) {
             if(m.p1 === playerName) pts += (m.s1 > m.s2 ? 3 : (m.s1 === m.s2 ? 1 : 0));
             if(m.p2 === playerName) pts += (m.s2 > m.s1 ? 3 : (m.s1 === m.s2 ? 1 : 0));
         });
-        history.push(pts * 10); // Scale pour le visuel
+        // Scale 0-9 pts to percentage 10-100%
+        let heightPercent = Math.min(100, Math.max(10, (pts / 9) * 100));
+        history.push(heightPercent);
     });
+    while(history.length < 3) history.unshift(30);
     return history;
 }
 
@@ -279,16 +274,13 @@ function getStreak(playerName) {
         .reverse();
 
     if (totalHistory.length === 0) return { count: 0, type: 'none' };
-
     let count = 0;
     let type = null;
-
     for (let i = 0; i < totalHistory.length; i++) {
         const m = totalHistory[i];
         const isP1 = m.p1 === playerName;
         const currentResult = m.s1 === m.s2 ? 'draw' : 
                              ((isP1 && m.s1 > m.s2) || (!isP1 && m.s2 > m.s1) ? 'win' : 'loss');
-
         if (i === 0) {
             type = currentResult;
             count = 1;
@@ -346,7 +338,6 @@ function getHOFStats() {
             highestScore = { ...m, total: m.s1 + m.s2 };
         }
     });
-
     return { medals, highestScore };
 }
 
@@ -436,28 +427,22 @@ function getMatchBriefing(p1Name, p2Name) {
             headToHead.p2Goals += p1IsM1 ? m.s2 : m.s1;
         }
     });
-
     const totalGames = headToHead.p1Wins + headToHead.p2Wins + headToHead.draws;
     const p1Form = getForm(p1Name);
     const p2Form = getForm(p2Name);
-
     let analysis = "";
-    if(totalGames === 0) {
-        analysis = "Premier duel historique ! ";
-    } else {
+    if(totalGames === 0) analysis = "Premier duel historique ! ";
+    else {
         const leader = headToHead.p1Wins > headToHead.p2Wins ? p1Name : (headToHead.p2Wins > headToHead.p1Wins ? p2Name : null);
         analysis = leader ? `**${leader}** a l'avantage psychologique (${Math.max(headToHead.p1Wins, headToHead.p2Wins)} victoires). ` : "Égalité parfaite sur leurs duels passés. ";
     }
-
     if(p1Form[0] === 'win' && p1Form[1] === 'win') analysis += `**${p1Name}** est sur une série de feu. `;
     if(p2Form[0] === 'loss' && p2Form[1] === 'loss') analysis += `Attention, **${p2Name}** semble en plein doute. `;
-
     let advice = "IA : ";
     const avgGaP2 = (stats[p2Name]?.ga / stats[p2Name]?.games) || 0;
     if(avgGaP2 > 2.5) advice += `La défense de **${p2Name}** prend l'eau (${avgGaP2.toFixed(1)} buts/m), **${p1Name}** doit tout miser sur l'attaque.`;
     else if(totalGames > 0 && headToHead.p1Goals / totalGames > 2) advice += `**${p1Name}** sait comment marquer face à ce bloc, patience et contres rapides recommandés.`;
     else advice += "Match fermé en vue. Le premier but sera probablement décisif.";
-
     return { analysis, advice };
 }
 
@@ -471,7 +456,6 @@ const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.g
 const pichichi = [...state.players].sort((a,b) => b.gf - a.gf)[0];
 const defense = [...state.players].sort((a,b) => a.ga - b.ga)[0];
 const topVal = sorted.length ? [...state.players].sort((a,b) => calculateValue(b) - calculateValue(a))[0] : null;
-
 const streaks = state.players.map(p => ({ name: p.name, data: getStreak(p.name) }));
 const topStreakPlayer = streaks
     .filter(s => s.data.type === 'win')
@@ -504,7 +488,6 @@ if(s.count >= 2) {
     if(s.type === 'win') streakIcon = `<span style="color:var(--gold); font-size:0.7rem; margin-left:5px"><i class="fas fa-fire"></i> ${s.count}</span>`;
     else if(s.type === 'loss') streakIcon = `<span style="color:var(--danger); font-size:0.7rem; margin-left:5px"><i class="fas fa-arrow-down"></i> ${s.count}</span>`;
 }
-
 return `<tr>
 <td class="col-player">
     <strong>${p.name}</strong>${streakIcon}
@@ -518,7 +501,7 @@ return `<tr>
         ${prog.map((v, i) => {
             const isUp = i > 0 && v > prog[i-1];
             const isDown = i > 0 && v < prog[i-1];
-            return `<div class="spark-bar ${isUp?'spark-up':isDown?'spark-down':''}" style="height:${Math.max(4, v)}px"></div>`;
+            return `<div class="spark-bar ${isUp?'spark-up':isDown?'spark-down':''}" style="height:${v}%"></div>`;
         }).join('')}
     </div>
 </td>
@@ -556,7 +539,6 @@ app.innerHTML = `<h3>🧠 Analyse IA</h3>
 <span style="font-weight:bold">${livePred ? livePred.proba : 0}%</span>
 </div>
 </div>
-
 ${upcomingMatches.length > 0 ? `
 <div class="card" style="border: 1px solid var(--gold)">
 <strong style="color:var(--gold); font-size:0.8rem"><i class="fas fa-bolt"></i> BRIEFING DES MATCHS</strong>
@@ -570,7 +552,6 @@ ${brief.analysis.replace(/\*\*/g, '<b>').replace(/\*\*/g, '</b>')}
 </div>`;
 }).join('')}
 </div>` : ''}
-
 <div class="card predict-card">
 <div style="color:var(--purple); font-size:0.7rem">FAVORI HISTORIQUE (ALL-TIME) 🔥</div>
 <div style="font-size:1.4rem; font-weight:700; margin:10px 0">${pred.name}</div>
@@ -581,7 +562,6 @@ ${brief.analysis.replace(/\*\*/g, '<b>').replace(/\*\*/g, '</b>')}
 <span>${pred.proba}%</span>
 </div>
 </div>
-
 <div class="card"><strong>📋 CONSEIL TACTIQUE</strong><select id="tacticPlayer" class="team-select" style="width:100%; margin-top:10px" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderTacticAdvice()"><option value="">Sélectionner un joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div>
 <div class="card"><strong>⚔️ COMPARATEUR</strong><div style="display:flex; gap:10px; margin-top:10px"><select id="duel1" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div>
 <div class="card"><strong>🏆 PANTHÉON</strong><div class="stat-row"><span class="stat-label">⚽ BUTEUR ALL-TIME</span><span class="stat-value">${playersByGoals[0] || '-'} (${allTime[playersByGoals[0]]?.gf || 0} buts)</span></div><div class="stat-row"><span class="stat-label">🛡️ MEILLEURE DÉFENSE</span><span class="stat-value">${playersByDef[0] || '-'}</span></div><div class="stat-row"><span class="stat-label">🔥 RECORD / SAISON</span><span class="stat-value">${seasonRecord.name} (${seasonRecord.goals})</span></div></div>`;
@@ -608,13 +588,9 @@ if (tab === "hof") {
     const goat = getGoat();
     const sortedMedals = Object.entries(hof.medals).sort((a,b) => b[1].gold - a[1].gold || b[1].silver - a[1].silver || b[1].bronze - a[1].bronze);
     const topScorer = Object.entries(hof.medals).sort((a,b) => b[1].goals - a[1].goals)[0];
-    
-    const titlesRanking = Object.entries(hof.medals)
-        .filter(m => m[1].gold > 0)
-        .sort((a,b) => b[1].gold - a[1].gold);
+    const titlesRanking = Object.entries(hof.medals).filter(m => m[1].gold > 0).sort((a,b) => b[1].gold - a[1].gold);
 
     app.innerHTML = `<h3>🏛️ Hall of Fame</h3>
-    
     <div class="card predict-card" style="border: 2px solid var(--gold); text-align:center; background: linear-gradient(135deg, #1e1b4b 0%, #05070a 100%);">
         <div style="color:var(--gold); font-size:0.8rem; font-weight:bold; letter-spacing:2px">THE G.O.A.T</div>
         <i class="fas fa-crown" style="font-size:3.5rem; color:var(--gold); margin:15px 0; filter: drop-shadow(0 0 10px rgba(212,175,55,0.5))"></i>
@@ -623,24 +599,17 @@ if (tab === "hof") {
             <i class="fas fa-trophy"></i> ${goat.titles} ${goat.titles > 1 ? 'SAISONS REMPORTÉES' : 'SAISON REMPORTÉE'}
         </div>
     </div>
-
     <div class="card" style="border-left: 4px solid var(--gold)">
         <strong style="font-size:0.8rem; color:var(--gold)"><i class="fas fa-list-ol"></i> CLASSEMENT DES TITRES</strong>
         <div style="margin-top:12px">
             ${titlesRanking.length > 0 ? titlesRanking.map((m, idx) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom: 1px solid #ffffff05">
-                    <span style="font-size:0.9rem">
-                        <span style="color:var(--muted); margin-right:8px">#${idx + 1}</span>
-                        <b>${m[0]}</b>
-                    </span>
-                    <span style="background:rgba(212,175,55,0.1); color:var(--gold); padding:4px 10px; border-radius:12px; font-weight:bold; font-size:0.8rem">
-                        ${m[1].gold} 🏆
-                    </span>
+                    <span style="font-size:0.9rem"><span style="color:var(--muted); margin-right:8px">#${idx + 1}</span><b>${m[0]}</b></span>
+                    <span style="background:rgba(212,175,55,0.1); color:var(--gold); padding:4px 10px; border-radius:12px; font-weight:bold; font-size:0.8rem">${m[1].gold} 🏆</span>
                 </div>
             `).join('') : '<div style="color:var(--muted); font-size:0.7rem; text-align:center; padding:10px">Aucun titre de saison décerné.</div>'}
         </div>
     </div>
-
     <div class="card">
         <strong>🥇 TABLEAU DES MÉDAILLES (TOP 3)</strong>
         <div style="margin-top:15px">
@@ -660,7 +629,6 @@ if (tab === "hof") {
             `).join('')}
         </div>
     </div>
-
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
         <div class="card" style="margin-bottom:0">
             <div class="hof-label">Pichichi All-Time</div>
@@ -676,9 +644,7 @@ if (tab === "hof") {
 }
 
 if (tab === "archives") {
-    const goat = getGoat();
     app.innerHTML = `<h3>🏆 Historique des Saisons</h3>`;
-
     if(!state.archives) return;
     const grouped = {}; 
     state.archives.forEach((d, globalIdx) => {
@@ -686,7 +652,6 @@ if (tab === "archives") {
         if(!grouped[sRef]) grouped[sRef] = [];
         grouped[sRef].push({day: d, idx: globalIdx});
     });
-
     Object.keys(grouped).sort((a,b) => b-a).forEach(s => {
         const sWinner = getSeasonWinner(s);
         app.innerHTML += `<div class="card">
@@ -759,12 +724,10 @@ qs(`#edit_${dayIdx}_${mIdx}`).innerHTML = `
 }
 
 function saveOldMatch(dayIdx, mIdx) {
-const s1 = parseInt(qs("#ns1").value);
-const s2 = parseInt(qs("#ns2").value);
+const s1 = parseInt(qs("#ns1").value), s2 = parseInt(qs("#ns2").value);
 if(confirm(`Modifier ce score en ${s1}-${s2} ? Les points des joueurs seront recalculés.`)) {
 const m = state.archives[dayIdx][mIdx];
-const p1 = state.players.find(p => p.name === m.p1);
-const p2 = state.players.find(p => p.name === m.p2);
+const p1 = state.players.find(p => p.name === m.p1), p2 = state.players.find(p => p.name === m.p2);
 if(p1 && p2) {
 p1.gf -= m.s1; p1.ga -= m.s2; p2.gf -= m.s2; p2.ga -= m.s1;
 if(m.s1 > m.s2) p1.points -= 3; else if(m.s2 > m.s1) p2.points -= 3; else {p1.points -= 1; p2.points -= 1;}
@@ -772,8 +735,7 @@ p1.gf += s1; p1.ga += s2; p2.gf += s2; p2.ga += s1;
 if(s1 > s2) p1.points += 3; else if(s2 > s1) p2.points += 3; else {p1.points += 1; p2.points += 1;}
 }
 m.s1 = s1; m.s2 = s2;
-isInteracting = false;
-save();
+isInteracting = false; save();
 }
 }
 
@@ -781,41 +743,23 @@ function rewardPlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.
 function penalizePlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points retirer à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points -= parseInt(pts); save(); } } }
 function deleteSeason(sNum) { if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} ?`)) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
 function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.rotationQueue = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
-function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; }
+function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value, res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; }
 
 function renderDuelAnalysis() {
     isInteracting = true;
     const p1 = qs("#duel1").value, p2 = qs("#duel2").value;
     const stats = getAllTimeStats();
     if(!p1 || !p2 || p1 === p2) return;
-    const s1 = stats[p1] || {gf:0, ga:0, pts:0, games:1};
-    const s2 = stats[p2] || {gf:0, ga:0, pts:0, games:1};
-    qs("#duelResult").innerHTML = `
-        <div style="margin-top:20px; background:rgba(255,255,255,0.03); border-radius:15px; padding:15px; border: 1px solid var(--border);">
-            <canvas id="duelChart" width="300" height="300"></canvas>
-        </div>
-        <button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button>
-    `;
+    const s1 = stats[p1] || {gf:0, ga:0, pts:0, games:1}, s2 = stats[p2] || {gf:0, ga:0, pts:0, games:1};
+    qs("#duelResult").innerHTML = `<div style="margin-top:20px; background:rgba(255,255,255,0.03); border-radius:15px; padding:15px; border: 1px solid var(--border);"><canvas id="duelChart" width="300" height="300"></canvas></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button>`;
     if(duelChartInstance) duelChartInstance.destroy();
     duelChartInstance = new Chart(document.getElementById('duelChart'), {
         type: 'radar',
         data: {
             labels: ['Attaque', 'Défense', 'Points/Match', 'Ratio G/P'],
             datasets: [
-                {
-                    label: p1,
-                    data: [(s1.gf/s1.games)*2, 10-(s1.ga/s1.games)*2, (s1.pts/s1.games)*3, (s1.gf/s1.ga || 1)*2],
-                    borderColor: '#58a6ff',
-                    backgroundColor: 'rgba(88, 166, 255, 0.2)',
-                    borderWidth: 2
-                },
-                {
-                    label: p2,
-                    data: [(s2.gf/s2.games)*2, 10-(s2.ga/s2.games)*2, (s2.pts/s2.games)*3, (s2.gf/s2.ga || 1)*2],
-                    borderColor: '#8957e5',
-                    backgroundColor: 'rgba(137, 87, 229, 0.2)',
-                    borderWidth: 2
-                }
+                { label: p1, data: [(s1.gf/s1.games)*2, 10-(s1.ga/s1.games)*2, (s1.pts/s1.games)*3, (s1.gf/s1.ga || 1)*2], borderColor: '#58a6ff', backgroundColor: 'rgba(88, 166, 255, 0.2)', borderWidth: 2 },
+                { label: p2, data: [(s2.gf/s2.games)*2, 10-(s2.ga/s2.games)*2, (s2.pts/s2.games)*3, (s2.gf/s2.ga || 1)*2], borderColor: '#8957e5', backgroundColor: 'rgba(137, 87, 229, 0.2)', borderWidth: 2 }
             ]
         },
         options: { 
@@ -827,7 +771,6 @@ function renderDuelAnalysis() {
 
 function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0}); save();}} }
 function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
-
 function startDay(){ if(isAdmin() && state.players.length >= 2){ state.rotationQueue = []; state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
 
 function validateMatch(i){
@@ -844,8 +787,7 @@ if(state.rotationQueue && state.rotationQueue.length > 0) handleRotation(m);
 if(state.currentDay.every(x=>x.done)){
 if(!state.archives) state.archives=[];
 state.archives.push([...state.currentDay]);
-state.currentDay=[];
-state.rotationQueue = [];
+state.currentDay=[]; state.rotationQueue = [];
 }
 isInteracting = false; save();
 }
@@ -870,9 +812,7 @@ function addSpecificSeason() {
         if (newSeasonNum !== null && !isNaN(newSeasonNum)) {
             state.season = parseInt(newSeasonNum);
             state.players.forEach(p => { p.points = 0; p.gf = 0; p.ga = 0; });
-            state.currentDay = []; 
-            state.rotationQueue = [];
-            alert("Mode Saison " + state.season + " activé. Les stats sont remises à 0 pour cette session.");
+            state.currentDay = []; state.rotationQueue = [];
             save();
         }
     }
