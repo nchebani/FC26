@@ -483,13 +483,41 @@ function getMatchBriefing(p1Name, p2Name) {
     return { analysis, advice };
 }
 
-// --- NOUVELLE FONCTION COMMENTAIRE AUTOMATIQUE ---
+// --- FONCTION COMMENTAIRE AUTOMATIQUE ENRICHIE ---
 function generateMatchCommentary(m) {
     const winner = m.s1 > m.s2 ? m.p1 : (m.s2 > m.s1 ? m.p2 : null);
     const loser = winner === m.p1 ? m.p2 : m.p1;
     const diff = Math.abs(m.s1 - m.s2);
     const total = m.s1 + m.s2;
+    const statsAllTime = getAllTimeStats();
+    
+    let base = "";
+    let specialEvent = "";
 
+    // 1. DÉTECTION DE RECORDS & ÉVÉNEMENTS SPÉCIFIQUES
+    if (winner) {
+        // Record de buts All-Time battu/égalé
+        const sortedScorers = Object.entries(statsAllTime).sort((a,b) => b[1].gf - a[1].gf);
+        if (sortedScorers[0] && winner === sortedScorers[0][0]) {
+            specialEvent = ` <br>⭐ <b>HISTORIQUE :</b> <b>${winner}</b> confirme sa place de meilleur buteur de l'histoire !`;
+        }
+
+        // Clean Sheet record (palier de 5)
+        if ((m.s1 === 0 || m.s2 === 0)) {
+            const currentCS = statsAllTime[winner]?.cs || 0;
+            if (currentCS % 5 === 0 && currentCS > 0) {
+                specialEvent = ` <br>🛡️ <b>LE MUR :</b> <b>${winner}</b> vient de signer sa ${currentCS}ème Clean Sheet all-time !`;
+            }
+        }
+
+        // Série de victoires
+        const streak = getStreak(winner);
+        if (streak.count >= 3 && streak.type === 'win') {
+            specialEvent = ` <br>🔥 <b>SÉRIE :</b> Personne n'arrête <b>${winner}</b> ! ${streak.count}ème victoire consécutive.`;
+        }
+    }
+
+    // 2. PHRASES DE BASE SELON LE SCÉNARIO
     const winPhrases = [
         `Victoire impériale de <b>${winner}</b> qui n'a laissé aucune chance à son adversaire.`,
         `<b>${winner}</b> dicte sa loi aujourd'hui ! Un succès précieux.`,
@@ -510,20 +538,21 @@ function generateMatchCommentary(m) {
         `Égalité parfaite. Les deux managers ont neutralisé leurs forces.`,
         `Spectacle décevant ou défense de fer ? Le score reste de parité.`
     ];
-    const cleanSheetExtra = " La défense a été héroïque, aucun but encaissé !";
 
-    let base = "";
     if (winner) {
-        if (diff >= 3) base = stompPhrases[Math.floor(Math.random() * stompPhrases.length)];
+        if (diff >= 4) base = stompPhrases[Math.floor(Math.random() * stompPhrases.length)];
         else if (diff === 1) base = tightPhrases[Math.floor(Math.random() * tightPhrases.length)];
         else base = winPhrases[Math.floor(Math.random() * winPhrases.length)];
         
-        if (m.s1 === 0 || m.s2 === 0) base += cleanSheetExtra;
+        if ((m.s1 === 0 || m.s2 === 0) && !specialEvent.includes("MUR")) {
+            base += " La défense a été héroïque, aucun but encaissé !";
+        }
     } else {
-        base = drawPhrases[Math.floor(Math.random() * drawPhrases.length)];
+        if (total >= 4) base = "Un match nul spectaculaire ! Les attaques ont pris le pas sur les défenses.";
+        else base = drawPhrases[Math.floor(Math.random() * drawPhrases.length)];
     }
     
-    return base;
+    return base + specialEvent;
 }
 
 function render() {
