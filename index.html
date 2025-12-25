@@ -20,6 +20,16 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
 
+/* --- STYLES EXPORT PDF --- */
+.pdf-export-content { background: white; color: black; padding: 40px; font-family: Arial, sans-serif; }
+.pdf-header { text-align: center; border-bottom: 2px solid #1e1b4b; margin-bottom: 20px; padding-bottom: 10px; }
+.pdf-season-block { margin-bottom: 30px; page-break-inside: avoid; }
+.pdf-season-title { color: #1e1b4b; background: #f0f0f0; padding: 8px 15px; border-left: 5px solid #238636; margin-bottom: 10px; }
+.pdf-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.pdf-table th, .pdf-table td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 9pt; }
+.pdf-table th { background: #e9ecef; font-weight: bold; }
+/* ------------------------- */
+
 #syncNotify { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--purple); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; z-index: 2000; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; }
 
 #loginOverlay, #pinOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
@@ -494,15 +504,12 @@ function generateMatchCommentary(m) {
     let base = "";
     let specialEvent = "";
 
-    // 1. DÉTECTION DE RECORDS & ÉVÉNEMENTS SPÉCIFIQUES
     if (winner) {
-        // Record de buts All-Time battu/égalé
         const sortedScorers = Object.entries(statsAllTime).sort((a,b) => b[1].gf - a[1].gf);
         if (sortedScorers[0] && winner === sortedScorers[0][0]) {
             specialEvent = ` <br>⭐ <b>HISTORIQUE :</b> <b>${winner}</b> confirme sa place de meilleur buteur de l'histoire !`;
         }
 
-        // Clean Sheet record (palier de 5)
         if ((m.s1 === 0 || m.s2 === 0)) {
             const currentCS = statsAllTime[winner]?.cs || 0;
             if (currentCS % 5 === 0 && currentCS > 0) {
@@ -510,14 +517,12 @@ function generateMatchCommentary(m) {
             }
         }
 
-        // Série de victoires
         const streak = getStreak(winner);
         if (streak.count >= 3 && streak.type === 'win') {
             specialEvent = ` <br>🔥 <b>SÉRIE :</b> Personne n'arrête <b>${winner}</b> ! ${streak.count}ème victoire consécutive.`;
         }
     }
 
-    // 2. PHRASES DE BASE SELON LE SCÉNARIO
     const winPhrases = [
         `Victoire impériale de <b>${winner}</b> qui n'a laissé aucune chance à son adversaire.`,
         `<b>${winner}</b> dicte sa loi aujourd'hui ! Un succès précieux.`,
@@ -553,6 +558,45 @@ function generateMatchCommentary(m) {
     }
     
     return base + specialEvent;
+}
+
+// --- NOUVELLE FONCTION EXPORT PDF STRUCTURÉ ---
+function exportFullHistoryPDF() {
+    const container = document.createElement('div');
+    container.className = 'pdf-export-content';
+    container.innerHTML = `<div class="pdf-header"><h1>RAPPORT HISTORIQUE - FC26 ELITE</h1><p>Date d'export : ${new Date().toLocaleDateString()}</p></div>`;
+
+    if(!state.archives || state.archives.length === 0) {
+        container.innerHTML += "<p style='text-align:center'>Aucune donnée archivée.</p>";
+    } else {
+        const grouped = {};
+        state.archives.flat().forEach(m => {
+            if(!grouped[m.seasonRef]) grouped[m.seasonRef] = [];
+            grouped[m.seasonRef].push(m);
+        });
+
+        Object.keys(grouped).sort((a,b)=>b-a).forEach(sNum => {
+            const winner = getSeasonWinner(sNum);
+            let html = `<div class="pdf-season-block">
+                <h2 class="pdf-season-title">SAISON ${sNum} — Vainqueur : ${winner} 🏆</h2>
+                <table class="pdf-table">
+                    <thead><tr><th>Match</th><th>Score</th><th>Équipes jouées</th><th>Date</th></tr></thead>
+                    <tbody>`;
+            grouped[sNum].forEach(m => {
+                html += `<tr>
+                    <td>${m.p1} vs ${m.p2}</td>
+                    <td style="font-weight:bold">${m.s1} - ${m.s2}</td>
+                    <td>${m.team1} / ${m.team2}</td>
+                    <td>${m.date || '-'}</td>
+                </tr>`;
+            });
+            html += `</tbody></table></div>`;
+            container.innerHTML += html;
+        });
+    }
+
+    const opt = { margin: 10, filename: `FC26_Historique_Complet.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+    html2pdf().from(container).set(opt).save();
 }
 
 function render() {
@@ -765,7 +809,9 @@ if (tab === "hof") {
 }
 
 if (tab === "archives") {
-    app.innerHTML = `<h3>🏆 Historique des Saisons</h3>`;
+    app.innerHTML = `<h3>🏆 Historique des Saisons</h3>
+    <button class="btn-primary" style="background:var(--purple); margin-bottom:15px;" onclick="exportFullHistoryPDF()"><i class="fas fa-file-pdf"></i> GÉNÉRER RAPPORT PDF HISTORIQUE</button>`;
+    
     if(!state.archives) return;
     const grouped = {}; 
     state.archives.forEach((d, globalIdx) => {
