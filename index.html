@@ -428,7 +428,11 @@ return `<tr>
 </tbody>
 </table>
 </div>
-</div>${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:10px" onclick="finishSeason()">TERMINER LA SAISON</button>` : ''}`;
+</div>${isAdmin() ? `
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px">
+    <button class="btn-primary" style="background:var(--danger)" onclick="finishSeason()">TERMINER SAISON</button>
+    <button class="btn-primary" style="background:var(--purple)" onclick="addSpecificSeason()">SAISON SPÉCIFIQUE</button>
+</div>` : ''}`;
 }
 
 if (tab === "analysis") {
@@ -496,7 +500,7 @@ app.innerHTML += `<div class="card" style="border: 1px dashed var(--purple); tex
 }
 
 if (tab === "players") {
-app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px" onfocus="isInteracting=true" onblur="isInteracting=false"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><div><strong>${p.name}</strong><br><small style="color:var(--blue)">${calculateValue(p)} M€ (Pts: ${p.points})</small></div>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.1rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--blue); margin-top:20px" onclick="addNewSeasonManual()">CRÉER LA SAISON ${state.season + 1} 🔥</button><button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
+app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px" onfocus="isInteracting=true" onblur="isInteracting=false"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><div><strong>${p.name}</strong><br><small style="color:var(--blue)">${calculateValue(p)} M€ (Pts: ${p.points})</small></div>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.1rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
 }
 
 if (tab === "hof") {
@@ -752,22 +756,16 @@ save();
 }
 }
 
-function addNewSeasonManual() {
-    if(isAdmin()) {
-        const nextS = state.season + 1;
-        if(confirm(`Voulez-vous clôturer la saison actuelle et passer à la SAISON ${nextS} ?`)) {
-            // Archive si des matchs sont en cours ou faits
-            if(state.currentDay && state.currentDay.some(m => m.done)) {
-                if(!state.archives) state.archives = [];
-                state.archives.push([...state.currentDay.filter(m => m.done)]);
-            }
-            state.season = nextS;
+function addSpecificSeason() {
+    if(isAdmin()){
+        const newSeasonNum = prompt("Quel numéro de saison souhaitez-vous créer ?", state.season + 1);
+        if (newSeasonNum !== null && !isNaN(newSeasonNum)) {
+            state.season = parseInt(newSeasonNum);
             state.players.forEach(p => { p.points = 0; p.gf = 0; p.ga = 0; });
-            state.currentDay = [];
+            state.currentDay = []; 
             state.rotationQueue = [];
+            alert("Mode Saison " + state.season + " activé. Les stats sont remises à 0 pour cette session.");
             save();
-            alert(`Saison ${nextS} créée !`);
-            render();
         }
     }
 }
