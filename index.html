@@ -161,7 +161,7 @@ const ADMIN_PIN = "1234";
 const TEAMS = ["Real Madrid", "Man City", "Barcelone", "Bayern Munich", "Liverpool", "PSG", "Arsenal", "Inter Milan", "Milan AC", "Atletico", "Leverkusen", "Dortmund", "Juventus", "Naples", "Chelsea", "Aston Villa"];
 
 let currentUser = localStorage.getItem("fc26_user") || null;
-let state = { season: 1, players: [], currentDay: [], archives: [], rotationQueue: [], longestStreakRecord: {name: "-", value: 0, season: 0} };
+let state = { season: 1, players: [], currentDay: [], archives: [], rotationQueue: [] };
 let isInteracting = false;
 let duelChartInstance = null;
 
@@ -176,10 +176,7 @@ try {
 const res = await fetch(FB_URL);
 const data = await res.json();
 if (data && JSON.stringify(data) !== JSON.stringify(state)) {
-state = data; 
-// Migration legacy data if record missing
-if(!state.longestStreakRecord) state.longestStreakRecord = {name: "-", value: 0, season: 0};
-render(); showNotify(); qs('#seasonBadge').innerText = `SAISON ${state.season}`;
+state = data; render(); showNotify(); qs('#seasonBadge').innerText = `SAISON ${state.season}`;
 }
 } catch (e) {}
 }
@@ -512,7 +509,9 @@ if (tab === "hof") {
     const hof = getHOFStats();
     const goat = getGoat();
     const sortedMedals = Object.entries(hof.medals).sort((a,b) => b[1].gold - a[1].gold || b[1].silver - a[1].silver || b[1].bronze - a[1].bronze);
+    const topScorer = Object.entries(hof.medals).sort((a,b) => b[1].goals - a[1].goals)[0];
     
+    // Modification demandée : Statistiques sur le nombre de saisons gagnées par joueur
     const titlesRanking = Object.entries(hof.medals)
         .filter(m => m[1].gold > 0)
         .sort((a,b) => b[1].gold - a[1].gold);
@@ -525,20 +524,6 @@ if (tab === "hof") {
         <div style="font-size:2.2rem; font-weight:800; text-transform:uppercase; color:white">${goat.name}</div>
         <div style="color:var(--gold); font-size:1.1rem; font-weight:bold; margin-top:5px">
             <i class="fas fa-trophy"></i> ${goat.titles} ${goat.titles > 1 ? 'SAISONS REMPORTÉES' : 'SAISON REMPORTÉE'}
-        </div>
-    </div>
-
-    <div class="card" style="border-left: 4px solid var(--danger); background: linear-gradient(90deg, #da363311, transparent)">
-        <strong style="font-size:0.75rem; color:var(--danger)"><i class="fas fa-fire"></i> RECORD DE SÉRIE HISTORIQUE</strong>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px">
-            <div>
-                <div style="font-size:1.3rem; font-weight:bold">${state.longestStreakRecord?.name || '-'}</div>
-                <div style="font-size:0.65rem; color:var(--muted)">ÉTABLI EN SAISON ${state.longestStreakRecord?.season || '?'}</div>
-            </div>
-            <div style="text-align:right">
-                <div style="font-size:1.8rem; font-weight:800; color:var(--danger)">${state.longestStreakRecord?.value || 0}</div>
-                <div style="font-size:0.6rem; color:var(--muted)">VICTOIRES DE SUITE</div>
-            </div>
         </div>
     </div>
 
@@ -571,16 +556,32 @@ if (tab === "hof") {
                             <span style="color:var(--gold); font-size:0.75rem"><i class="fas fa-award"></i> ${m[1].gold} Or</span>
                             <span style="color:var(--silver); font-size:0.75rem"><i class="fas fa-award"></i> ${m[1].silver} Arg.</span>
                             <span style="color:var(--bronze); font-size:0.75rem"><i class="fas fa-award"></i> ${m[1].bronze} Br.</span>
+                            <span style="color:var(--muted); font-size:0.7rem; margin-left:auto">Longévité: <b>${m[1].seasons.size} S.</b></span>
                         </div>
                     </div>
                 </div>
             `).join('')}
         </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+        <div class="card" style="margin-bottom:0">
+            <div class="hof-label">Pichichi All-Time</div>
+            <div class="hof-stat" style="font-size:1rem; color:var(--blue)">${topScorer ? topScorer[0] : '-'}</div>
+            <div style="font-size:0.7rem; color:var(--muted)">${topScorer ? topScorer[1].goals : 0} buts</div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+            <div class="hof-label">Record Match</div>
+            <div class="hof-stat" style="font-size:1rem; color:var(--purple)">${hof.highestScore.total} Buts</div>
+            <div style="font-size:0.7rem; color:var(--muted)">${hof.highestScore.p1} vs ${hof.highestScore.p2}</div>
+        </div>
     </div>`;
 }
 
 if (tab === "archives") {
+    const goat = getGoat();
     app.innerHTML = `<h3>🏆 Historique des Saisons</h3>`;
+
     if(!state.archives) return;
     const grouped = {}; 
     state.archives.forEach((d, globalIdx) => {
@@ -682,7 +683,7 @@ save();
 function rewardPlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points ajouter à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points += parseInt(pts); save(); } } }
 function penalizePlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points retirer à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points -= parseInt(pts); save(); } } }
 function deleteSeason(sNum) { if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} ?`)) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
-function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.rotationQueue = []; state.longestStreakRecord = {name: "-", value: 0, season: 0}; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
+function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.rotationQueue = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0;}); save(); } }
 function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value; const res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; }
 
 function renderDuelAnalysis() {
@@ -738,36 +739,10 @@ const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value);
 if(isNaN(s1)||isNaN(s2)) return;
 const m=state.currentDay[i];
 const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
-
-// Mise à jour Score/Stats
 p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
 if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
 m.s1=s1; m.s2=s2; m.done=true;
 m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
-
-// --- CALCUL DU STREAK & BONUS (Kill-Streak) ---
-const winnerName = s1 > s2 ? m.p1 : (s2 > s1 ? m.p2 : null);
-if(winnerName) {
-    const winnerObj = state.players.find(p => p.name === winnerName);
-    const currentStreak = getStreak(winnerName);
-    
-    // Bonus tous les 5 matchs (5, 10, 15...)
-    if(currentStreak > 0 && currentStreak % 5 === 0) {
-        winnerObj.points += 1;
-        alert(`🔥 KILL-STREAK ! ${winnerName} obtient +1 point bonus pour sa série de ${currentStreak} victoires !`);
-    }
-
-    // Mise à jour Record Historique
-    if(!state.longestStreakRecord) state.longestStreakRecord = {name: "-", value: 0, season: 0};
-    if(currentStreak > state.longestStreakRecord.value) {
-        state.longestStreakRecord = {
-            name: winnerName,
-            value: currentStreak,
-            season: state.season
-        };
-    }
-}
-
 if(state.rotationQueue && state.rotationQueue.length > 0) handleRotation(m);
 if(state.currentDay.every(x=>x.done)){
 if(!state.archives) state.archives=[];
