@@ -599,10 +599,6 @@ function exportFullHistoryPDF() {
     html2pdf().from(container).set(opt).save();
 }
 
-function updateDice(matchIdx, playerNum, val) {
-    state.currentDay[matchIdx][`dice${playerNum}`] = parseInt(val);
-}
-
 function render() {
 updateTicker();
 const tab = qs("nav button.active").dataset.tab;
@@ -726,7 +722,10 @@ if (tab === "matches") {
             ${state.currentDay.map((m, idx) => {
                 if(m.done) return '';
                 const brief = getMatchBriefing(m.p1, m.p2);
-                const isDraw = m.s1 !== "" && m.s2 !== "" && parseInt(m.s1) === parseInt(m.s2);
+                
+                // MODIF : On vérifie si c'est un nul pour afficher les dés
+                const isDraw = (m.s1 !== "" && m.s2 !== "" && parseInt(m.s1) === parseInt(m.s2));
+
                 return `
                 <div class="match-card">
                     <div class="team-row">
@@ -737,7 +736,7 @@ if (tab === "matches") {
                                 ${TEAMS.map(t => `<option ${m.team1 === t ? 'selected' : ''} value="${t}">${t}</option>`).join('')}
                             </select>
                         </div>
-                        <input type="number" class="score-input" value="${m.s1}" onchange="state.currentDay[${idx}].s1 = parseInt(this.value); render()">
+                        <input type="number" class="score-input" value="${m.s1}" onchange="state.currentDay[${idx}].s1 = this.value; render()">
                     </div>
                     
                     <div style="text-align:center; color:var(--muted); font-size:0.7rem; margin:5px 0">VS</div>
@@ -750,20 +749,19 @@ if (tab === "matches") {
                                 ${TEAMS.map(t => `<option ${m.team2 === t ? 'selected' : ''} value="${t}">${t}</option>`).join('')}
                             </select>
                         </div>
-                        <input type="number" class="score-input" value="${m.s2}" onchange="state.currentDay[${idx}].s2 = parseInt(this.value); render()">
+                        <input type="number" class="score-input" value="${m.s2}" onchange="state.currentDay[${idx}].s2 = this.value; render()">
                     </div>
 
                     ${isDraw ? `
-                    <div class="tab-container" style="margin-top:10px; text-align:center; padding:10px; background:rgba(212, 175, 55, 0.1); border-radius:8px; border: 1px dashed var(--gold);">
-                        <div style="font-size:0.6rem; color:var(--gold); margin-bottom:5px; font-weight:bold">LANCER DE DÉS (MATCH NUL)</div>
-                        <div style="display:flex; justify-content:center; align-items:center; gap:10px;">
-                            <input type="number" placeholder="Dé ${m.p1}" class="score-input" style="width:60px; border-color:var(--gold); font-size:0.9rem" 
-                                   onchange="updateDice(${idx}, 1, this.value)" value="${m.dice1 || ''}">
-                            <i class="fas fa-dice" style="color:var(--gold); font-size:1.2rem"></i>
-                            <input type="number" placeholder="Dé ${m.p2}" class="score-input" style="width:60px; border-color:var(--gold); font-size:0.9rem" 
-                                   onchange="updateDice(${idx}, 2, this.value)" value="${m.dice2 || ''}">
+                    <div style="background:#1e1b4b; padding:10px; border-radius:10px; margin:10px 0; border:1px solid var(--gold); text-align:center">
+                        <div style="font-size:0.6rem; color:var(--gold); font-weight:bold; margin-bottom:8px">MATCH NUL : LANCER DE DÉS</div>
+                        <div style="display:flex; justify-content:center; align-items:center; gap:10px">
+                            <input type="number" placeholder="Dé ${m.p1}" class="score-input" style="width:60px; border-color:var(--gold)" 
+                                   onchange="state.currentDay[${idx}].d1 = parseInt(this.value)" value="${m.d1 || ''}">
+                            <i class="fas fa-dice" style="color:var(--gold)"></i>
+                            <input type="number" placeholder="Dé ${m.p2}" class="score-input" style="width:60px; border-color:var(--gold)" 
+                                   onchange="state.currentDay[${idx}].d2 = parseInt(this.value)" value="${m.d2 || ''}">
                         </div>
-                        <div style="font-size:0.55rem; color:var(--muted); margin-top:5px">Le plus haut score de dé continue de jouer</div>
                     </div>
                     ` : ''}
 
@@ -863,7 +861,6 @@ if (tab === "archives") {
                     <span style="width:30%; text-align:center; font-weight:bold; color:var(--blue)">${m.s1} - ${m.s2}</span>
                     <span style="width:35%; text-align:right">${m.p2}</span>
                 </div>
-                ${m.dice1 !== undefined ? `<div style="text-align:center; font-size:0.6rem; color:var(--gold); margin-bottom:5px">(Dés: ${m.dice1} - ${m.dice2})</div>` : ''}
             `).join('')}
         </div>
     `).join('') : '<div class="card">Aucun historique disponible</div>'}`;
@@ -896,30 +893,27 @@ function rotateDay() {
 function validateMatch(idx) {
     const m = state.currentDay[idx];
     if(m.s1 === "" || m.s2 === "") return alert("Scores incomplets");
-    
-    // Logique des dés pour les matchs nuls
-    if(parseInt(m.s1) === parseInt(m.s2)) {
-        if(m.dice1 === undefined || m.dice2 === undefined) return alert("Match nul ! Veuillez saisir les résultats des lancers de dés.");
-        if(m.dice1 === m.dice2) return alert("Les dés ne peuvent pas être égaux. Relancez !");
+
+    // MODIF : Sécurité pour le match nul
+    const s1 = parseInt(m.s1);
+    const s2 = parseInt(m.s2);
+    if(s1 === s2) {
+        if(!m.d1 || !m.d2) return alert("Veuillez entrer les résultats des dés pour départager le gagnant.");
+        if(m.d1 === m.d2) return alert("Les dés ne peuvent pas être égaux.");
     }
 
     const p1 = state.players.find(p => p.name === m.p1);
     const p2 = state.players.find(p => p.name === m.p2);
 
-    p1.gf += m.s1; p1.ga += m.s2;
-    p2.gf += m.s2; p2.ga += m.s1;
+    p1.gf += s1; p1.ga += s2;
+    p2.gf += s2; p2.ga += s1;
 
-    if(m.s1 > m.s2) { p1.points += 3; p1.v++; p2.d++; }
-    else if(m.s2 > m.s1) { p2.points += 3; p2.v++; p1.d++; }
-    else { 
-        p1.points += 1; p2.points += 1; p1.n++; p2.n++; 
-        // Le gagnant aux dés est noté dans le commentaire
-        const diceWinner = m.dice1 > m.dice2 ? m.p1 : m.p2;
-        m.commentary = `Match nul, mais <b>${diceWinner}</b> prend l'avantage aux dés (${m.dice1}-${m.dice2}) !`;
-    }
+    if(s1 > s2) { p1.points += 3; p1.v++; p2.d++; }
+    else if(s2 > s1) { p2.points += 3; p2.v++; p1.d++; }
+    else { p1.points += 1; p2.points += 1; p1.n++; p2.n++; }
     
-    if(m.s2 === 0) p1.cs = (p1.cs || 0) + 1;
-    if(m.s1 === 0) p2.cs = (p2.cs || 0) + 1;
+    if(s2 === 0) p1.cs = (p1.cs || 0) + 1;
+    if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
 
     m.done = true;
     if(state.currentDay.every(match => match.done)) {
@@ -964,7 +958,6 @@ function editPlayerName(idx) {
     }
 }
 
-// Init si vide
 if(state.players.length === 0 && isAdmin()) {
     ["BVI", "NAD", "WIL", "BROOK"].forEach(n => state.players.push({ name: n, points: 0, v:0, n:0, d:0, gf:0, ga:0, cs:0 }));
     save();
