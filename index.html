@@ -120,6 +120,7 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
 .team-select { background: #000; color: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px; font-size: 0.7rem; width: 110px; }
 .score-input { width: 45px; height: 40px; background: #000; border: 1px solid var(--border); color: white; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
+.dice-input { width: 35px; height: 35px; background: var(--purple); border: none; color: white; text-align: center; border-radius: 50%; font-weight: bold; font-size: 0.9rem; margin-left: 5px; }
 
 .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
 .btn-rotation { background: var(--purple); margin-top: 10px; }
@@ -723,20 +724,28 @@ if (!state.currentDay || state.currentDay.length === 0) {
 let rotationBtn = (isAdmin() && state.players.length === 3) ? `<button class="btn-primary btn-rotation" onclick="startWinnerStays()">MODE 3 JOUEURS (WINNER STAYS) 🔄</button>` : '';
 app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE CLASSIQUE ⚽</button> ${rotationBtn}` : `<p>Attente de l'Admin...</p>`}</div>`;
 } else {
-app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => `
+app.innerHTML = `<h3>Matchs S${state.season} ${state.rotationQueue && state.rotationQueue.length > 0 ? '(Winner Stays)' : ''}</h3><div class="card">${state.currentDay.map((m, i) => {
+const isDraw = m.s1 !== null && m.s1 === m.s2;
+return `
 <div class="match-card">
     <div class="team-row">
         <span>${m.p1}</span>
         <select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select>
-        <input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">
+        <div style="display:flex; align-items:center">
+            <input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false" oninput="render()">
+            ${isAdmin() && !m.done && isDraw ? `<input type="number" id="d1_${i}" class="dice-input" placeholder="🎲" onfocus="isInteracting=true">` : ''}
+        </div>
     </div>
     <div class="team-row">
         <span>${m.p2}</span>
         <select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select>
-        <input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">
+        <div style="display:flex; align-items:center">
+            <input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false" oninput="render()">
+            ${isAdmin() && !m.done && isDraw ? `<input type="number" id="d2_${i}" class="dice-input" placeholder="🎲" onfocus="isInteracting=true">` : ''}
+        </div>
     </div>
-    ${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div><div class="match-commentary"><i class="fas fa-quote-left" style="font-size:0.5rem; vertical-align:top; margin-right:5px"></i>${generateMatchCommentary(m)}</div>` : ''}
-</div>`).join('')}</div>`;
+    ${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div><div class="match-commentary"><i class="fas fa-quote-left" style="font-size:0.5rem; vertical-align:top; margin-right:5px"></i>${generateMatchCommentary(m)} ${m.d1 ? `<br><small>Dés: ${m.d1}-${m.d2}</small>` : ''}</div>` : ''}
+</div>`}).join('')}</div>`;
 if(state.rotationQueue && state.rotationQueue.length > 0) {
 app.innerHTML += `<div class="card" style="border: 1px dashed var(--purple); text-align:center"><small style="color:var(--muted)">PROCHAIN MATCH : LE GAGNANT CONTRE</small><br><strong>${state.rotationQueue[0]}</strong></div>`;
 }
@@ -865,8 +874,18 @@ save();
 }
 
 function handleRotation(lastMatch) {
-const winner = lastMatch.s1 > lastMatch.s2 ? lastMatch.p1 : (lastMatch.s2 > lastMatch.s1 ? lastMatch.p2 : lastMatch.p1);
-const loser = winner === lastMatch.p1 ? lastMatch.p2 : lastMatch.p1;
+let winner, loser;
+if (lastMatch.s1 === lastMatch.s2) {
+    const d1 = parseInt(qs("#d1_" + (state.currentDay.length - 1))?.value);
+    const d2 = parseInt(qs("#d2_" + (state.currentDay.length - 1))?.value);
+    if (d1 > d2) { winner = lastMatch.p1; loser = lastMatch.p2; }
+    else if (d2 > d1) { winner = lastMatch.p2; loser = lastMatch.p1; }
+    else { alert("Égalité parfaite des dés ! Relancez."); return; }
+} else {
+    winner = lastMatch.s1 > lastMatch.s2 ? lastMatch.p1 : lastMatch.p2;
+    loser = winner === lastMatch.p1 ? lastMatch.p2 : lastMatch.p1;
+}
+
 const waiting = state.rotationQueue.shift();
 state.rotationQueue.push(loser);
 state.currentDay.push({
@@ -948,6 +967,15 @@ function validateMatch(i){
 if(isAdmin()){
 const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value);
 if(isNaN(s1)||isNaN(s2)) return;
+
+// VÉRIFICATION DÉS SI WINNER STAYS ET MATCH NUL
+if (state.rotationQueue && state.rotationQueue.length > 0 && s1 === s2) {
+    const d1 = parseInt(qs(`#d1_${i}`)?.value), d2 = parseInt(qs(`#d2_${i}`)?.value);
+    if (isNaN(d1) || isNaN(d2)) { alert("Saisissez les dés pour le départage."); return; }
+    if (d1 === d2) { alert("Les scores de dés doivent être différents."); return; }
+    state.currentDay[i].d1 = d1; state.currentDay[i].d2 = d2;
+}
+
 const m=state.currentDay[i];
 const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
 p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
@@ -956,11 +984,13 @@ if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
 if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
 m.s1=s1; m.s2=s2; m.done=true;
 m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
-if(state.rotationQueue && state.rotationQueue.length > 0) handleRotation(m);
-if(state.currentDay.every(x=>x.done)){
-if(!state.archives) state.archives=[];
-state.archives.push([...state.currentDay]);
-state.currentDay=[]; state.rotationQueue = [];
+
+if(state.rotationQueue && state.rotationQueue.length > 0) {
+    handleRotation(m);
+} else if(state.currentDay.every(x=>x.done)){
+    if(!state.archives) state.archives=[];
+    state.archives.push([...state.currentDay]);
+    state.currentDay=[]; state.rotationQueue = [];
 }
 isInteracting = false; save();
 }
