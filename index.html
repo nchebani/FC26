@@ -28,6 +28,7 @@ body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); col
 .pdf-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
 .pdf-table th, .pdf-table td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 9pt; }
 .pdf-table th { background: #e9ecef; font-weight: bold; }
+/* ------------------------- */
 
 #syncNotify { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--purple); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; z-index: 2000; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; }
 
@@ -56,6 +57,7 @@ nav button.active { color: var(--accent); }
 main { padding: 15px; max-width: 600px; margin: auto; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative; }
 
+/* PROGRESION - FIXED SCALE VERSION */
 .sparkline-box { display: flex; align-items: flex-end; gap: 3px; height: 24px; justify-content: center; overflow: hidden; }
 .spark-bar { width: 5px; background: var(--border); border-radius: 1px; transition: height 0.3s; min-height: 2px; }
 .spark-up { background: var(--accent) !important; }
@@ -66,7 +68,9 @@ main { padding: 15px; max-width: 600px; margin: auto; }
 .badge-sniper { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
 .badge-mur { background: #dcfce7; color: #166534; border: 1px solid #22c55e; }
 .badge-clutch { background: #ede9fe; color: #5b21b6; border: 1px solid #8b5cf6; }
+.badge-clean { background: #e0f2fe; color: #0369a1; border: 1px solid #0ea5e9; }
 
+/* HOF STYLES */
 .medal-card { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid transparent; }
 .medal-gold { background: linear-gradient(90deg, #d4af3722, transparent); border-left-color: var(--gold); }
 .medal-silver { background: linear-gradient(90deg, #bec2cb22, transparent); border-left-color: var(--silver); }
@@ -97,6 +101,10 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .loss { background: var(--danger); }
 .draw { background: var(--muted); }
 
+.duel-bar-container { height: 12px; background: #000; border-radius: 10px; margin: 15px 0; overflow: hidden; display: flex; border: 1px solid var(--border); }
+.duel-bar-left { background: var(--blue); height: 100%; transition: width 0.5s ease; border-right: 2px solid #fff; }
+.duel-bar-right { background: var(--purple); height: 100%; transition: width 0.5s ease; }
+
 .tactic-badge { background: #1e1b4b; color: var(--blue); padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: bold; display: inline-block; margin-bottom: 10px; }
 .tactic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.7rem; }
 .tactic-item { background: #0a0c10; padding: 8px; border-radius: 8px; border-left: 3px solid var(--purple); }
@@ -112,7 +120,6 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
 .team-select { background: #000; color: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px; font-size: 0.7rem; width: 110px; }
 .score-input { width: 45px; height: 40px; background: #000; border: 1px solid var(--border); color: white; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
-.dice-input { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--purple); background: #000; color: var(--purple); text-align: center; font-weight: bold; font-size: 0.9rem; margin-left: 10px; display: none; }
 
 .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
 .btn-rotation { background: var(--purple); margin-top: 10px; }
@@ -121,7 +128,18 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 
 #winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
 
-.match-commentary { background: rgba(88, 166, 255, 0.05); border: 1px solid #30363d; padding: 8px 12px; border-radius: 8px; margin-top: 10px; font-size: 0.7rem; color: var(--muted); font-style: italic; line-height: 1.3; }
+/* NOUVEAU STYLE COMMENTAIRE */
+.match-commentary { 
+    background: rgba(88, 166, 255, 0.05); 
+    border: 1px solid #30363d; 
+    padding: 8px 12px; 
+    border-radius: 8px; 
+    margin-top: 10px; 
+    font-size: 0.7rem; 
+    color: var(--muted); 
+    font-style: italic;
+    line-height: 1.3;
+}
 .match-commentary b { color: var(--blue); }
 </style>
 </head>
@@ -205,14 +223,19 @@ function showNotify() { const n = qs("#syncNotify"); n.style.display = "block"; 
 setInterval(pullData, 5000);
 
 function updateTicker() {
-    const ticker = qs("#resultTicker");
-    if (!state.archives || state.archives.length === 0) {
-        ticker.style.display = "none"; return;
-    }
-    ticker.style.display = "block";
-    const lastMatches = state.archives.flat().slice(-10).reverse();
-    const content = lastMatches.map(m => `<div class="ticker-item">${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2}</div>`).join('');
-    ticker.innerHTML = `<div class="ticker">${content}${content}</div>`;
+    const ticker = qs("#resultTicker");
+    if (!state.archives || state.archives.length === 0) {
+        ticker.style.display = "none";
+        return;
+    }
+    ticker.style.display = "block";
+    const lastMatches = state.archives.flat().slice(-10).reverse();
+    const content = lastMatches.map(m => `
+        <div class="ticker-item">
+            ${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2} 
+        </div>
+    `).join('');
+    ticker.innerHTML = `<div class="ticker">${content}${content}</div>`;
 }
 
 function checkPin() { qs('#pinOverlay').style.display = 'flex'; qs('#pinCode').focus(); }
@@ -222,295 +245,368 @@ function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
 function save() { if(isAdmin()) pushData(); render(); }
 
-// --- LOGIQUE CALCULS ---
-function calculateValue(p) { 
-    let base = 10;
-    let ptsValue = (p.points || 0) * 1.5;
-    let gdValue = ((p.gf || 0) - (p.ga || 0)) * 0.5;
-    let csValue = (p.cs || 0) * 1.0;
-    return (base + ptsValue + gdValue + csValue).toFixed(1); 
+// --- CALCULS ---
+function calculateValue(p) { 
+    let base = 10;
+    let ptsValue = (p.points || 0) * 1.5;
+    let gdValue = ((p.gf || 0) - (p.ga || 0)) * 0.5;
+    let csValue = (p.cs || 0) * 1.0;
+    return (base + ptsValue + gdValue + csValue).toFixed(1); 
 }
 
 function getPowerRankingTrend(p) {
-    const history = getForm(p.name);
-    if (history.length < 2) return '→';
-    const recent = history.slice(0, 3).reduce((acc, val) => acc + (val === 'win' ? 3 : (val === 'draw' ? 1 : 0)), 0) / 3;
-    const allStats = getAllTimeStats()[p.name];
-    const overall = allStats ? (allStats.pts / allStats.games) : 0;
-    if (recent > overall + 0.5) return '↑';
-    if (recent < overall - 0.5) return '↓';
-    return '→';
+    const history = getForm(p.name);
+    if (history.length < 2) return '→';
+    const recent = history.slice(0, 3).reduce((acc, val) => acc + (val === 'win' ? 3 : (val === 'draw' ? 1 : 0)), 0) / 3;
+    const allStats = getAllTimeStats()[p.name];
+    const overall = allStats ? (allStats.pts / allStats.games) : 0;
+    
+    if (recent > overall + 0.5) return '↑';
+    if (recent < overall - 0.5) return '↓';
+    return '→';
 }
 
 function getPlayerBadges(p) {
-    const badges = [];
-    const stats = getAllTimeStats()[p.name];
-    if(!stats || stats.games === 0) return badges;
-    if ((p.gf / Math.max(1, p.points/3)) > 3) badges.push({ class: 'badge-sniper', icon: 'fa-crosshairs', label: 'Sniper' });
-    if (p.cs > 0 && p.cs === Math.max(...state.players.map(pl => pl.cs || 0))) badges.push({ class: 'badge-mur', icon: 'fa-user-shield', label: 'Muraille' });
-    return badges;
+    const badges = [];
+    const stats = getAllTimeStats()[p.name];
+    if(!stats || stats.games === 0) return badges;
+    
+    const currentMoyenne = p.gf / Math.max(1, (p.points/3 + p.ga/10)); 
+    if (currentMoyenne > 3 || (stats.gf / stats.games) > 3) {
+        badges.push({ class: 'badge-sniper', icon: 'fa-crosshairs', label: 'Sniper' });
+    }
+    
+    const maxCS = Math.max(...state.players.map(pl => pl.cs || 0));
+    if (p.cs > 0 && p.cs === maxCS) {
+        badges.push({ class: 'badge-mur', icon: 'fa-user-shield', label: 'Muraille' });
+    }
+
+    const allMatches = state.archives ? state.archives.flat() : [];
+    const clutchWins = allMatches.filter(m => {
+        const isP1 = m.p1 === p.name;
+        const diff = Math.abs(m.s1 - m.s2);
+        return diff === 1 && ((isP1 && m.s1 > m.s2) || (!isP1 && m.s2 > m.s1));
+    }).length;
+    if (clutchWins >= 3) {
+        badges.push({ class: 'badge-clutch', icon: 'fa-bolt', label: 'Clutch' });
+    }
+    return badges;
 }
 
 function getProgressionData(playerName) {
-    if(!state.archives || state.archives.length < 1) return [40, 40, 40];
-    const history = [];
-    const last3Days = state.archives.slice(-3);
-    last3Days.forEach(day => {
-        let pts = 0;
-        day.forEach(m => {
-            if(m.p1 === playerName) pts += (m.s1 > m.s2 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-            if(m.p2 === playerName) pts += (m.s2 > m.s1 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-        });
-        history.push(Math.min(100, Math.max(10, (pts / 9) * 100)));
-    });
-    while(history.length < 3) history.unshift(30);
-    return history;
+    if(!state.archives || state.archives.length < 1) return [40, 40, 40];
+    const history = [];
+    const last3Days = state.archives.slice(-3);
+    
+    last3Days.forEach(day => {
+        let pts = 0;
+        day.forEach(m => {
+            if(m.p1 === playerName) pts += (m.s1 > m.s2 ? 3 : (m.s1 === m.s2 ? 1 : 0));
+            if(m.p2 === playerName) pts += (m.s2 > m.s1 ? 3 : (m.s1 === m.s2 ? 1 : 0));
+        });
+        let heightPercent = Math.min(100, Math.max(10, (pts / 9) * 100));
+        history.push(heightPercent);
+    });
+    while(history.length < 3) history.unshift(30);
+    return history;
 }
 
 function getStreak(playerName) {
-    const allMatches = state.archives ? state.archives.flat() : [];
-    const totalHistory = [...allMatches].reverse().filter(m => m.p1 === playerName || m.p2 === playerName);
-    if (totalHistory.length === 0) return { count: 0, type: 'none' };
-    let count = 0, type = null;
-    for (let i = 0; i < totalHistory.length; i++) {
-        const m = totalHistory[i];
-        const isP1 = m.p1 === playerName;
-        const res = m.s1 === m.s2 ? 'draw' : ((isP1 && m.s1 > m.s2) || (!isP1 && m.s2 > m.s1) ? 'win' : 'loss');
-        if (i === 0) { type = res; count = 1; } else { if (res === type) count++; else break; }
-    }
-    return { count, type };
+    const allMatches = state.archives ? state.archives.flat() : [];
+    const currentMatches = state.currentDay ? state.currentDay.filter(m => m.done) : [];
+    const totalHistory = [...allMatches, ...currentMatches]
+        .filter(m => m.p1 === playerName || m.p2 === playerName)
+        .reverse();
+
+    if (totalHistory.length === 0) return { count: 0, type: 'none' };
+    let count = 0;
+    let type = null;
+    for (let i = 0; i < totalHistory.length; i++) {
+        const m = totalHistory[i];
+        const isP1 = m.p1 === playerName;
+        const currentResult = m.s1 === m.s2 ? 'draw' : 
+                             ((isP1 && m.s1 > m.s2) || (!isP1 && m.s2 > m.s1) ? 'win' : 'loss');
+        if (i === 0) {
+            type = currentResult;
+            count = 1;
+        } else {
+            if (currentResult === type) count++;
+            else break;
+        }
+    }
+    return { count, type };
 }
 
 function getSeasonWinner(sNum) {
-    if(!state.archives) return "-";
-    let pts = {};
-    const matches = state.archives.flat().filter(m => m.seasonRef == sNum);
-    if(matches.length === 0) return "-";
-    matches.forEach(m => {
-        pts[m.p1] = (pts[m.p1] || 0) + (m.s1 > m.s2 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-        pts[m.p2] = (pts[m.p2] || 0) + (m.s2 > m.s1 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-    });
-    return Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b);
+    if(!state.archives) return "Inconnu";
+    let pts = {};
+    const matches = state.archives.flat().filter(m => m.seasonRef == sNum);
+    if(matches.length === 0) return "-";
+    matches.forEach(m => {
+        if(!pts[m.p1]) pts[m.p1] = 0;
+        if(!pts[m.p2]) pts[m.p2] = 0;
+        if(m.s1 > m.s2) pts[m.p1] += 3;
+        else if(m.s2 > m.s1) pts[m.p2] += 3;
+        else { pts[m.p1] += 1; pts[m.p2] += 1; }
+    });
+    return Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b);
 }
 
 function getHOFStats() {
-    const medals = {}; 
-    const allTimeStats = getAllTimeStats();
-    state.players.forEach(p => medals[p.name] = { gold: 0, silver: 0, bronze: 0, goals: allTimeStats[p.name]?.gf || 0, cs: allTimeStats[p.name]?.cs || 0 });
-    if(state.archives) {
-        const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
-        seasons.forEach(s => {
-            const matches = state.archives.flat().filter(m => m.seasonRef == s);
-            let pts = {};
-            matches.forEach(m => {
-                pts[m.p1] = (pts[m.p1] || 0) + (m.s1 > m.s2 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-                pts[m.p2] = (pts[m.p2] || 0) + (m.s2 > m.s1 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-            });
-            const sorted = Object.keys(pts).sort((a,b) => pts[b] - pts[a]);
-            if(sorted[0]) medals[sorted[0]].gold++;
-            if(sorted[1]) medals[sorted[1]].silver++;
-            if(sorted[2]) medals[sorted[2]].bronze++;
-        });
-    }
-    return { medals };
+    const medals = {}; 
+    const allTimeStats = getAllTimeStats();
+    const players = state.players.map(p => p.name);
+    players.forEach(p => medals[p] = { gold: 0, silver: 0, bronze: 0, goals: allTimeStats[p]?.gf || 0, cs: allTimeStats[p]?.cs || 0, seasons: new Set() });
+
+    if(state.archives) {
+        const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
+        seasons.forEach(s => {
+            const matches = state.archives.flat().filter(m => m.seasonRef == s);
+            let pts = {};
+            matches.forEach(m => {
+                if(!pts[m.p1]) pts[m.p1] = 0; if(!pts[m.p2]) pts[m.p2] = 0;
+                if(m.s1 > m.s2) pts[m.p1] += 3; else if(m.s2 > m.s1) pts[m.p2] += 3; else { pts[m.p1]++; pts[m.p2]++; }
+                if(medals[m.p1]) medals[m.p1].seasons.add(s);
+                if(medals[m.p2]) medals[m.p2].seasons.add(s);
+            });
+            const sorted = Object.keys(pts).sort((a,b) => pts[b] - pts[a]);
+            if(sorted[0] && medals[sorted[0]]) medals[sorted[0]].gold++;
+            if(sorted[1] && medals[sorted[1]]) medals[sorted[1]].silver++;
+            if(sorted[2] && medals[sorted[2]]) medals[sorted[2]].bronze++;
+        });
+    }
+
+    let highestScore = { p1: "-", p2: "-", s1: 0, s2: 0, total: 0 };
+    const allMatches = state.archives ? state.archives.flat() : [];
+    allMatches.forEach(m => {
+        if((m.s1 + m.s2) > highestScore.total) {
+            highestScore = { ...m, total: m.s1 + m.s2 };
+        }
+    });
+    return { medals, highestScore };
 }
 
 function getGoat() {
-    const hof = getHOFStats().medals;
-    const winnerName = Object.keys(hof).reduce((a, b) => hof[a].gold > hof[b].gold ? a : b, "-");
-    return { name: winnerName, titles: hof[winnerName]?.gold || 0 };
+    if(!state.archives || state.archives.length === 0) return { name: "-", titles: 0 };
+    const titles = {};
+    const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
+    seasons.forEach(s => {
+        const winner = getSeasonWinner(s);
+        if(winner !== "-" && winner !== "Inconnu") titles[winner] = (titles[winner] || 0) + 1;
+    });
+    const winnerName = Object.keys(titles).reduce((a, b) => titles[a] > titles[b] ? a : b, "-");
+    return { name: winnerName, titles: titles[winnerName] || 0 };
 }
 
 function getAllTimeStats() {
-    let stats = {}; if(!state.archives) return stats;
-    state.archives.flat().forEach(m => {
-        if(!stats[m.p1]) stats[m.p1] = { gf:0, ga:0, pts:0, cs:0, games:0 };
-        if(!stats[m.p2]) stats[m.p2] = { gf:0, ga:0, pts:0, cs:0, games:0 };
-        stats[m.p1].gf += m.s1; stats[m.p1].ga += m.s2; stats[m.p1].games++;
-        stats[m.p2].gf += m.s2; stats[m.p2].ga += m.s1; stats[m.p2].games++;
-        if(m.s2 === 0) stats[m.p1].cs++; if(m.s1 === 0) stats[m.p2].cs++;
-        if(m.s1 > m.s2) stats[m.p1].pts += 3; else if(m.s2 > m.s1) stats[m.p2].pts += 3; else { stats[m.p1].pts++; stats[m.p2].pts++; }
-    });
-    return stats;
+let stats = {}; if(!state.archives) return stats;
+state.archives.flat().forEach(m => {
+if(!stats[m.p1]) stats[m.p1] = { gf:0, ga:0, pts:0, cs:0, games:0 };
+if(!stats[m.p2]) stats[m.p2] = { gf:0, ga:0, pts:0, cs:0, games:0 };
+stats[m.p1].gf += m.s1; stats[m.p1].ga += m.s2; stats[m.p1].games++;
+stats[m.p2].gf += m.s2; stats[m.p2].ga += m.s1; stats[m.p2].games++;
+if(m.s2 === 0) stats[m.p1].cs++;
+if(m.s1 === 0) stats[m.p2].cs++;
+if(m.s1 > m.s2) stats[m.p1].pts += 3; else if(m.s2 > m.s1) stats[m.p2].pts += 3; else { stats[m.p1].pts++; stats[m.p2].pts++; }
+});
+return stats;
 }
 
+function getLivePrediction() {
+if(!state.players || state.players.length === 0) return null;
+let scores = state.players.map(p => {
+let power = p.points + ((p.gf - p.ga) * 0.5) + (p.cs * 0.5);
+return { name: p.name, power: power };
+});
+scores.sort((a,b) => b.power - a.power);
+let totalPower = scores.reduce((acc, curr) => acc + Math.max(0.1, curr.power), 0);
+let top = scores[0];
+let proba = Math.round((Math.max(0.1, top.power) / (totalPower || 1)) * 100);
+return { name: top.name, proba: proba };
+}
+
+function getSeasonRecord() {
+let record = { name: "-", goals: 0, season: 0 }; if(!state.archives) return record;
+const seasons = {};
+state.archives.flat().forEach(m => {
+const key1 = `S${m.seasonRef}_${m.p1}`; const key2 = `S${m.seasonRef}_${m.p2}`;
+seasons[key1] = (seasons[key1] || 0) + m.s1; seasons[key2] = (seasons[key2] || 0) + m.s2;
+});
+Object.keys(seasons).forEach(k => { if(seasons[k] > record.goals) { record.goals = seasons[k]; record.name = k.split('_')[1]; record.season = k.split('_')[0]; } });
+return record;
+}
 function getForm(name) {
-    const history = []; const allMatches = state.archives ? state.archives.flat() : [];
-    [...allMatches].reverse().forEach(m => {
-        if((m.p1 === name || m.p2 === name) && history.length < 5) {
-            const win = (m.p1 === name) ? m.s1 > m.s2 : m.s2 > m.s1;
-            const draw = m.s1 === m.s2;
-            history.push(win ? 'win' : (draw ? 'draw' : 'loss'));
-        }
-    });
-    return history;
+const history = []; const allMatches = state.archives ? state.archives.flat() : [];
+[...allMatches].reverse().forEach(m => {
+if((m.p1 === name || m.p2 === name) && history.length < 5) {
+const win = (m.p1 === name) ? m.s1 > m.s2 : m.s2 > m.s1;
+const draw = m.s1 === m.s2;
+history.push(win ? 'win' : (draw ? 'draw' : 'loss'));
+}
+});
+return history;
+}
+function getPrediction() {
+const allTime = getAllTimeStats(); if (Object.keys(allTime).length === 0) return { name: "N/A", proba: 0 };
+let best = Object.keys(allTime).reduce((a, b) => (allTime[a]?.pts||0) > (allTime[b]?.pts||0) ? a : b);
+let total = Object.values(allTime).reduce((a, b) => a + (b.pts||0), 0);
+return { name: best, proba: Math.round(((allTime[best]?.pts||0)/(total||1))*100) };
+}
+function getTactic(playerName) {
+const stats = getAllTimeStats()[playerName] || {gf:0, ga:0, games:1};
+const avgGf = stats.gf / stats.games; const avgGa = stats.ga / stats.games;
+if(avgGf > 2.5) return { form: "4-3-3 OFFENSIF", style: "Construction Rapide", def: "Pressing Constant", width: "65 / 70", role: "Faux 9 / Ailiers Intérieurs" };
+if(avgGa < 1.5) return { form: "5-2-1-2", style: "Contre-Attaque", def: "Reculer", width: "40 / 30", role: "Piston Offensif" };
+return { form: "4-2-3-1 (2)", style: "Équilibré", def: "Équilibré", width: "50 / 50", role: "MOC Libre / Pivot" };
 }
 
+function getMatchBriefing(p1Name, p2Name) {
+    const allMatches = state.archives ? state.archives.flat() : [];
+    const stats = getAllTimeStats();
+    let headToHead = { p1Wins: 0, p2Wins: 0, draws: 0, p1Goals: 0, p2Goals: 0 };
+    allMatches.forEach(m => {
+        if((m.p1 === p1Name && m.p2 === p2Name) || (m.p1 === p2Name && m.p2 === p1Name)) {
+            const p1IsM1 = m.p1 === p1Name;
+            if(m.s1 === m.s2) headToHead.draws++;
+            else if((p1IsM1 && m.s1 > m.s2) || (!p1IsM1 && m.s2 > m.s1)) headToHead.p1Wins++;
+            else headToHead.p2Wins++;
+            headToHead.p1Goals += p1IsM1 ? m.s1 : m.s2;
+            headToHead.p2Goals += p1IsM1 ? m.s2 : m.s1;
+        }
+    });
+    const totalGames = headToHead.p1Wins + headToHead.p2Wins + headToHead.draws;
+    const p1Form = getForm(p1Name);
+    const p2Form = getForm(p2Name);
+    let analysis = "";
+    if(totalGames === 0) analysis = "Premier duel historique ! ";
+    else {
+        const leader = headToHead.p1Wins > headToHead.p2Wins ? p1Name : (headToHead.p2Wins > headToHead.p1Wins ? p2Name : null);
+        analysis = leader ? `**${leader}** a l'avantage psychologique (${Math.max(headToHead.p1Wins, headToHead.p2Wins)} victoires). ` : "Égalité parfaite sur leurs duels passés. ";
+    }
+    if(p1Form[0] === 'win' && p1Form[1] === 'win') analysis += `**${p1Name}** est sur une série de feu. `;
+    if(p2Form[0] === 'loss' && p2Form[1] === 'loss') analysis += `Attention, **${p2Name}** semble en plein doute. `;
+    let advice = "IA : ";
+    const avgGaP2 = (stats[p2Name]?.ga / stats[p2Name]?.games) || 0;
+    if(avgGaP2 > 2.5) advice += `La défense de **${p2Name}** prend l'eau (${avgGaP2.toFixed(1)} buts/m), **${p1Name}** doit tout miser sur l'attaque.`;
+    else if(totalGames > 0 && headToHead.p1Goals / totalGames > 2) advice += `**${p1Name}** sait comment marquer face à ce bloc, patience et contres rapides recommandés.`;
+    else advice += "Match fermé en vue. Le premier but sera probablement décisif.";
+    return { analysis, advice };
+}
+
+// --- FONCTION COMMENTAIRE AUTOMATIQUE ENRICHIE ---
 function generateMatchCommentary(m) {
-    const winner = m.s1 > m.s2 ? m.p1 : (m.s2 > m.s1 ? m.p2 : null);
-    if (!winner) return "Match nul équilibré. Les deux tactiques se sont neutralisées.";
-    return `Victoire de <b>${winner}</b> ! Une performance solide qui confirme la forme du moment.`;
+    const winner = m.s1 > m.s2 ? m.p1 : (m.s2 > m.s1 ? m.p2 : null);
+    const loser = winner === m.p1 ? m.p2 : m.p1;
+    const diff = Math.abs(m.s1 - m.s2);
+    const total = m.s1 + m.s2;
+    const statsAllTime = getAllTimeStats();
+    
+    let base = "";
+    let specialEvent = "";
+
+    if (winner) {
+        const sortedScorers = Object.entries(statsAllTime).sort((a,b) => b[1].gf - a[1].gf);
+        if (sortedScorers[0] && winner === sortedScorers[0][0]) {
+            specialEvent = ` <br>⭐ <b>HISTORIQUE :</b> <b>${winner}</b> confirme sa place de meilleur buteur de l'histoire !`;
+        }
+
+        if ((m.s1 === 0 || m.s2 === 0)) {
+            const currentCS = statsAllTime[winner]?.cs || 0;
+            if (currentCS % 5 === 0 && currentCS > 0) {
+                specialEvent = ` <br>🛡️ <b>LE MUR :</b> <b>${winner}</b> vient de signer sa ${currentCS}ème Clean Sheet all-time !`;
+            }
+        }
+
+        const streak = getStreak(winner);
+        if (streak.count >= 3 && streak.type === 'win') {
+            specialEvent = ` <br>🔥 <b>SÉRIE :</b> Personne n'arrête <b>${winner}</b> ! ${streak.count}ème victoire consécutive.`;
+        }
+    }
+
+    const winPhrases = [
+        `Victoire impériale de <b>${winner}</b> qui n'a laissé aucune chance à son adversaire.`,
+        `<b>${winner}</b> dicte sa loi aujourd'hui ! Un succès précieux.`,
+        `Quel réalisme de <b>${winner}</b> ! Le plan de jeu a fonctionné à merveille.`
+    ];
+    const tightPhrases = [
+        `<b>${winner}</b> l'emporte de justesse au terme d'un duel tactique intense.`,
+        `Match sous haute tension ! <b>${winner}</b> arrache les 3 points sur le fil.`,
+        `Cruel pour <b>${loser}</b>, mais c'est <b>${winner}</b> qui sort vainqueur de ce combat.`
+    ];
+    const stompPhrases = [
+        `Démonstration de force ! <b>${winner}</b> a littéralement humilié <b>${loser}</b>.`,
+        `Festival offensif ! <b>${winner}</b> était sur une autre planète.`,
+        `<b>${loser}</b> va devoir oublier ce cauchemar au plus vite...`
+    ];
+    const drawPhrases = [
+        `Un nul qui n'arrange personne. <b>${m.p1}</b> et <b>${m.p2}</b> se quittent dos à dos.`,
+        `Égalité parfaite. Les deux managers ont neutralisé leurs forces.`,
+        `Spectacle décevant ou défense de fer ? Le score reste de parité.`
+    ];
+
+    if (winner) {
+        if (diff >= 4) base = stompPhrases[Math.floor(Math.random() * stompPhrases.length)];
+        else if (diff === 1) base = tightPhrases[Math.floor(Math.random() * tightPhrases.length)];
+        else base = winPhrases[Math.floor(Math.random() * winPhrases.length)];
+        
+        if ((m.s1 === 0 || m.s2 === 0) && !specialEvent.includes("MUR")) {
+            base += " La défense a été héroïque, aucun but encaissé !";
+        }
+    } else {
+        if (total >= 4) base = "Un match nul spectaculaire ! Les attaques ont pris le pas sur les défenses.";
+        else base = drawPhrases[Math.floor(Math.random() * drawPhrases.length)];
+    }
+    
+    return base + specialEvent;
 }
 
-// --- RENDERING ---
+// --- NOUVELLE FONCTION EXPORT PDF STRUCTURÉ ---
+function exportFullHistoryPDF() {
+    const container = document.createElement('div');
+    container.className = 'pdf-export-content';
+    container.innerHTML = `<div class="pdf-header"><h1>RAPPORT HISTORIQUE - FC26 ELITE</h1><p>Date d'export : ${new Date().toLocaleDateString()}</p></div>`;
+
+    if(!state.archives || state.archives.length === 0) {
+        container.innerHTML += "<p style='text-align:center'>Aucune donnée archivée.</p>";
+    } else {
+        const grouped = {};
+        state.archives.flat().forEach(m => {
+            if(!grouped[m.seasonRef]) grouped[m.seasonRef] = [];
+            grouped[m.seasonRef].push(m);
+        });
+
+        Object.keys(grouped).sort((a,b)=>b-a).forEach(sNum => {
+            const winner = getSeasonWinner(sNum);
+            let html = `<div class="pdf-season-block">
+                <h2 class="pdf-season-title">SAISON ${sNum} — Vainqueur : ${winner} 🏆</h2>
+                <table class="pdf-table">
+                    <thead><tr><th>Match</th><th>Score</th><th>Équipes jouées</th><th>Date</th></tr></thead>
+                    <tbody>`;
+            grouped[sNum].forEach(m => {
+                html += `<tr>
+                    <td>${m.p1} vs ${m.p2}</td>
+                    <td style="font-weight:bold">${m.s1} - ${m.s2}</td>
+                    <td>${m.team1} / ${m.team2}</td>
+                    <td>${m.date || '-'}</td>
+                </tr>`;
+            });
+            html += `</tbody></table></div>`;
+            container.innerHTML += html;
+        });
+    }
+
+    const opt = { margin: 10, filename: `FC26_Historique_Complet.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+    html2pdf().from(container).set(opt).save();
+}
+
 function render() {
-    updateTicker();
-    const tab = qs("nav button.active").dataset.tab;
-    const app = qs("#app"); app.innerHTML = "";
+updateTicker();
+const tab = qs("nav button.active").dataset.tab;
+const app = qs("#app"); app.innerHTML = "";
 
-    if (tab === "dashboard") {
-        const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
-        app.innerHTML = `<div id="pdf-area">
-            <h3>Classement S${state.season}</h3>
-            <div class="card">
-                <table>
-                <thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">Prog.</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr></thead>
-                <tbody>
-                ${sorted.map(p => {
-                    const trend = getPowerRankingTrend(p);
-                    const prog = getProgressionData(p.name);
-                    return `<tr>
-                        <td class="col-player"><strong>${p.name}</strong><span class="power-trend">${trend}</span></td>
-                        <td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
-                        <td class="col-center"><div class="sparkline-box">${prog.map(v => `<div class="spark-bar" style="height:${v}%"></div>`).join('')}</div></td>
-                        <td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
-                        <td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td>
-                    </tr>`}).join('')}
-                </tbody>
-                </table>
-            </div>
-        </div>
-        ${isAdmin() ? `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px"><button class="btn-primary" style="background:var(--danger)" onclick="finishSeason()">FINIR SAISON</button><button class="btn-primary" style="background:var(--purple)" onclick="addSpecificSeason()">NOUV. SAISON</button></div>` : ''}`;
-    }
-
-    if (tab === "matches") {
-        if (!state.currentDay || state.currentDay.length === 0) {
-            app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE ⚽</button>` : `<p>Attente de l'Admin...</p>`}</div>`;
-        } else {
-            app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => `
-                <div class="match-card">
-                    <div class="team-row">
-                        <span>${m.p1}</span>
-                        <select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select>
-                        <input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''}>
-                    </div>
-                    <div class="team-row">
-                        <span>${m.p2}</span>
-                        <select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select>
-                        <input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''}>
-                    </div>
-                    ${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div class="match-commentary">${generateMatchCommentary(m)}</div>` : ''}
-                </div>`).join('')}</div>`;
-        }
-    }
-
-    if (tab === "players") {
-        app.innerHTML = `<h3>Effectif 👥</h3>
-        ${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}
-        ${state.players.map(p => `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center">
-                <div><strong>${p.name}</strong><br><small style="color:var(--blue)">${calculateValue(p)} M€ (Pts: ${p.points || 0})</small></div>
-                ${isAdmin() ? `
-                <div style="display:flex; gap:12px">
-                    <button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.3rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button>
-                    <button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.3rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button>
-                    <button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button>
-                </div>` : ''}
-            </div>`).join('')}`;
-    }
-
-    if (tab === "hof") {
-        const goat = getGoat();
-        app.innerHTML = `<h3>🏛️ Hall of Fame</h3><div class="card predict-card" style="text-align:center">
-            <div style="color:var(--gold)">THE G.O.A.T</div>
-            <div style="font-size:2rem; font-weight:bold">${goat.name}</div>
-            <div>${goat.titles} TITRES 🏆</div>
-        </div>`;
-    }
-
-    if (tab === "archives") {
-        app.innerHTML = `<h3>🏆 Historique</h3>`;
-        if(state.archives) {
-            state.archives.forEach((day, i) => {
-                app.innerHTML += `<div class="card"><summary>Journée ${i+1} (S${day[0].seasonRef})</summary>
-                ${day.map(m => `<div style="font-size:0.8rem">${m.p1} ${m.s1}-${m.s2} ${m.p2}</div>`).join('')}</div>`;
-            });
-        }
-    }
-}
-
-// --- ACTIONS ADMIN ---
-function rewardPlayer(id) { 
-    if(isAdmin()) { 
-        const p = state.players.find(x => x.id === id); 
-        const pts = prompt(`Combien de points AJOUTER à ${p.name} ?`, "1"); 
-        if(pts !== null && pts !== "" && !isNaN(pts)) { 
-            p.points = parseInt(p.points || 0) + parseInt(pts); 
-            save(); 
-        } 
-    } 
-}
-
-function penalizePlayer(id) { 
-    if(isAdmin()) { 
-        const p = state.players.find(x => x.id === id); 
-        const pts = prompt(`Combien de points RETIRER à ${p.name} ?`, "1"); 
-        if(pts !== null && pts !== "" && !isNaN(pts)) { 
-            p.points = parseInt(p.points || 0) - parseInt(pts); 
-            save(); 
-        } 
-    } 
-}
-
-function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0, cs:0}); save();}} }
-function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
-
-function startDay(){ 
-    if(isAdmin() && state.players.length >= 2){ 
-        state.currentDay=[]; 
-        for(let i=0; i<state.players.length; i++) 
-            for(let j=i+1; j<state.players.length; j++) 
-                state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, team1:"Real Madrid", team2:"Man City"}); 
-        save(); 
-    } 
-}
-
-function validateMatch(i){
-    if(isAdmin()){
-        const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value);
-        if(isNaN(s1)||isNaN(s2)) return;
-        const m=state.currentDay[i];
-        const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
-        p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
-        if(s2 === 0) p1.cs = (p1.cs || 0) + 1;
-        if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
-        if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
-        m.s1=s1; m.s2=s2; m.done=true;
-        m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
-        if(state.currentDay.every(x=>x.done)){ if(!state.archives) state.archives=[]; state.archives.push([...state.currentDay]); state.currentDay=[]; }
-        save();
-    }
-}
-
-function finishSeason(){
-    if(isAdmin()){
-        const s=[...state.players].sort((a,b)=>b.points-a.points);
-        if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";}
-        save();
-    }
-}
-
-function addSpecificSeason() {
-    if(isAdmin()){
-        const newS = prompt("Numéro de la saison ?", state.season + 1);
-        if(newS) { state.season = parseInt(newS); state.players.forEach(p=>{p.points=0;p.gf=0;p.ga=0;p.cs=0;}); save(); }
-    }
-}
-
-function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0;p.gf=0;p.ga=0;p.cs=0;}); state.currentDay=[]; qs("#winnerModal").style.display="none"; save(); }
-
-document.querySelectorAll("nav button").forEach(btn => { btn.onclick = () => { document.querySelectorAll("nav button").forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }; });
-pullData();
-</script>
-</body>
-</html>
+if (tab === "dashboard") {
+const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
+const pichichi = [...state.players].sort((a,b) => b.gf - a.gf)[0];
+const defense = [...state.players].sort((a,b) => (a.ga/Math.max(1,a.points)) - (b.ga/Math.max(1,b.points)))[0];
+const topCS = [...state.players].sort((a,b) => (b.cs || 0) - (a.cs || 0))[0];
+const topVal = sorted.length ? [...state.players].sort((a,b) => calculateValue(b) -
