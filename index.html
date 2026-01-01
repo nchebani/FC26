@@ -56,28 +56,16 @@ nav button.active { color: var(--accent); }
 main { padding: 15px; max-width: 600px; margin: auto; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative; }
 
-.sparkline-box { display: flex; align-items: flex-end; gap: 3px; height: 24px; justify-content: center; overflow: hidden; }
-.spark-bar { width: 5px; background: var(--border); border-radius: 1px; transition: height 0.3s; min-height: 2px; }
-.spark-up { background: var(--accent) !important; }
-.spark-down { background: var(--danger) !important; }
-
 .badge-container { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
 .prestige-badge { font-size: 0.55rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; gap: 3px; }
 .badge-sniper { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
 .badge-mur { background: #dcfce7; color: #166534; border: 1px solid #22c55e; }
 .badge-clutch { background: #ede9fe; color: #5b21b6; border: 1px solid #8b5cf6; }
-.badge-clean { background: #e0f2fe; color: #0369a1; border: 1px solid #0ea5e9; }
 
 .medal-card { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid transparent; }
 .medal-gold { background: linear-gradient(90deg, #d4af3722, transparent); border-left-color: var(--gold); }
 .medal-silver { background: linear-gradient(90deg, #bec2cb22, transparent); border-left-color: var(--silver); }
 .medal-bronze { background: linear-gradient(90deg, #cd7f3222, transparent); border-left-color: var(--bronze); }
-.hof-stat { font-size: 1.2rem; font-weight: bold; }
-.hof-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; }
-
-.awards-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
-.award-card { min-width: 130px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; transition: 0.3s; }
-.award-winner { font-size: 0.8rem; font-weight: bold; color: var(--gold); display: block; margin-top: 5px; }
 
 table { width: 100%; border-collapse: collapse; }
 th { color: var(--muted); font-size: 0.6rem; text-transform: uppercase; padding-bottom: 10px; }
@@ -86,21 +74,12 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 .col-center { text-align: center; }
 
 .val-badge { background: #1e1b4b; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
-.power-trend { font-size: 0.7rem; margin-left: 3px; }
-
-.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #ffffff05; }
-.stat-label { font-size: 0.75rem; color: var(--muted); }
-.stat-value { font-size: 0.85rem; font-weight: 600; }
 
 .form-container { display: flex; gap: 4px; justify-content: center; }
 .dot { width: 9px; height: 9px; border-radius: 50%; }
 .win { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
 .loss { background: var(--danger); }
 .draw { background: var(--muted); }
-
-.brief-box { background: #0a0c10; border-left: 4px solid var(--gold); padding: 12px; margin-top: 10px; font-size: 0.75rem; border-radius: 4px; line-height: 1.4; }
-.brief-title { color: var(--gold); font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; font-size: 0.7rem; }
-.brief-advice { color: var(--muted); font-style: italic; display: block; margin-top: 5px; border-top: 1px solid #333; padding-top: 5px; }
 
 .match-card { border-bottom: 1px solid var(--border); padding: 15px 0; }
 .team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
@@ -109,25 +88,12 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 
 .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
 .btn-rotation { background: var(--purple); margin-top: 10px; }
-.btn-edit { background: none; border: 1px solid var(--blue); color: var(--blue); padding: 4px 8px; border-radius: 6px; font-size: 0.6rem; cursor: pointer; }
-.edit-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px dashed var(--blue); text-align: center; }
 
 #winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
 
-.match-commentary { 
-    background: rgba(88, 166, 255, 0.05); 
-    border: 1px solid #30363d; 
-    padding: 8px 12px; 
-    border-radius: 8px; 
-    margin-top: 10px; 
-    font-size: 0.7rem; 
-    color: var(--muted); 
-    font-style: italic;
-    line-height: 1.3;
-}
+.match-commentary { background: rgba(88, 166, 255, 0.05); border: 1px solid #30363d; padding: 8px 12px; border-radius: 8px; margin-top: 10px; font-size: 0.7rem; color: var(--muted); font-style: italic; }
 .match-commentary b { color: var(--blue); }
 
-/* ZONE DÉS */
 .dice-zone { display: none; align-items: center; justify-content: center; gap: 15px; margin: 15px 0; padding: 10px; border: 1px dashed var(--gold); border-radius: 12px; background: rgba(212, 175, 55, 0.05); }
 .dice-input { width: 40px; background: #000; border: 1px solid var(--gold); color: var(--gold); text-align: center; border-radius: 5px; padding: 5px; font-weight: bold; }
 </style>
@@ -190,7 +156,6 @@ const TEAMS = ["Real Madrid", "Man City", "Barcelone", "Bayern Munich", "Liverpo
 let currentUser = localStorage.getItem("fc26_user") || null;
 let state = { season: 1, players: [], currentDay: [], archives: [], rotationQueue: [] };
 let isInteracting = false;
-let duelChartInstance = null;
 
 const notifySound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
 const qs = (s) => document.querySelector(s);
@@ -213,28 +178,19 @@ setInterval(pullData, 5000);
 
 function updateTicker() {
     const ticker = qs("#resultTicker");
-    if (!state.archives || state.archives.length === 0) {
-        ticker.style.display = "none";
-        return;
-    }
+    if (!state.archives || state.archives.length === 0) { ticker.style.display = "none"; return; }
     ticker.style.display = "block";
     const lastMatches = state.archives.flat().slice(-10).reverse();
-    const content = lastMatches.map(m => `
-        <div class="ticker-item">
-            ${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2} 
-        </div>
-    `).join('');
+    const content = lastMatches.map(m => `<div class="ticker-item">${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2} </div>`).join('');
     ticker.innerHTML = `<div class="ticker">${content}${content}</div>`;
 }
 
 function checkPin() { qs('#pinOverlay').style.display = 'flex'; qs('#pinCode').focus(); }
 function validatePin() { if(qs('#pinCode').value === ADMIN_PIN) { qs('#pinOverlay').style.display = 'none'; login('ADMIN'); } else { alert("PIN Incorrect"); } }
-function login(user) { currentUser = user; localStorage.setItem("fc26_user", user); qs('#loginOverlay').style.display = 'none'; qs('#userDisplay').innerText = user; pullData(); }
+function login(user) { currentUser = user; localStorage.setItem("fc26_user", user); qs('#loginOverlay').style.display = 'none'; qs('#userDisplay').innerText = user; pullData(); render(); }
 function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
-function save() { if(isAdmin()) pushData(); render(); }
 
-// --- CALCULS ---
 function calculateValue(p) { 
     let base = 10;
     let ptsValue = (p.points || 0) * 1.5;
@@ -243,113 +199,23 @@ function calculateValue(p) {
     return (base + ptsValue + gdValue + csValue).toFixed(1); 
 }
 
-function getPowerRankingTrend(p) {
-    const history = getForm(p.name);
-    if (history.length < 2) return '→';
-    const recent = history.slice(0, 3).reduce((acc, val) => acc + (val === 'win' ? 3 : (val === 'draw' ? 1 : 0)), 0) / 3;
-    const allStats = getAllTimeStats()[p.name];
-    const overall = allStats ? (allStats.pts / allStats.games) : 0;
-    if (recent > overall + 0.5) return '↑';
-    if (recent < overall - 0.5) return '↓';
-    return '→';
-}
-
 function getPlayerBadges(p) {
     const badges = [];
-    const stats = getAllTimeStats()[p.name];
-    if(!stats || stats.games === 0) return badges;
-    const currentMoyenne = p.gf / Math.max(1, (p.points/3 + p.ga/10)); 
-    if (currentMoyenne > 3 || (stats.gf / stats.games) > 3) badges.push({ class: 'badge-sniper', icon: 'fa-crosshairs', label: 'Sniper' });
-    const maxCS = Math.max(...state.players.map(pl => pl.cs || 0));
-    if (p.cs > 0 && p.cs === maxCS) badges.push({ class: 'badge-mur', icon: 'fa-user-shield', label: 'Muraille' });
-    const allMatches = state.archives ? state.archives.flat() : [];
-    const clutchWins = allMatches.filter(m => {
-        const isP1 = m.p1 === p.name;
-        const diff = Math.abs(m.s1 - m.s2);
-        return diff === 1 && ((isP1 && m.s1 > m.s2) || (!isP1 && m.s2 > m.s1));
-    }).length;
-    if (clutchWins >= 3) badges.push({ class: 'badge-clutch', icon: 'fa-bolt', label: 'Clutch' });
+    if (p.gf / Math.max(1, p.points) > 2) badges.push({ class: 'badge-sniper', icon: 'fa-crosshairs', label: 'Sniper' });
+    if (p.cs > 2) badges.push({ class: 'badge-mur', icon: 'fa-user-shield', label: 'Muraille' });
     return badges;
 }
 
-function getProgressionData(playerName) {
-    if(!state.archives || state.archives.length < 1) return [40, 40, 40];
-    const history = [];
-    const last3Days = state.archives.slice(-3);
-    last3Days.forEach(day => {
-        let pts = 0;
-        day.forEach(m => {
-            if(m.p1 === playerName) pts += (m.s1 > m.s2 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-            if(m.p2 === playerName) pts += (m.s2 > m.s1 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-        });
-        let heightPercent = Math.min(100, Math.max(10, (pts / 9) * 100));
-        history.push(heightPercent);
+function getForm(name) {
+    const history = []; const allMatches = state.archives ? state.archives.flat() : [];
+    [...allMatches].reverse().forEach(m => {
+        if((m.p1 === name || m.p2 === name) && history.length < 5) {
+            const win = (m.p1 === name) ? m.s1 > m.s2 : m.s2 > m.s1;
+            const draw = m.s1 === m.s2;
+            history.push(win ? 'win' : (draw ? 'draw' : 'loss'));
+        }
     });
-    while(history.length < 3) history.unshift(30);
     return history;
-}
-
-function getStreak(playerName) {
-    const allMatches = state.archives ? state.archives.flat() : [];
-    const currentMatches = state.currentDay ? state.currentDay.filter(m => m.done) : [];
-    const totalHistory = [...allMatches, ...currentMatches].filter(m => m.p1 === playerName || m.p2 === playerName).reverse();
-    if (totalHistory.length === 0) return { count: 0, type: 'none' };
-    let count = 0; let type = null;
-    for (let i = 0; i < totalHistory.length; i++) {
-        const m = totalHistory[i];
-        const isP1 = m.p1 === playerName;
-        const currentResult = m.s1 === m.s2 ? 'draw' : ((isP1 && m.s1 > m.s2) || (!isP1 && m.s2 > m.s1) ? 'win' : 'loss');
-        if (i === 0) { type = currentResult; count = 1; } 
-        else { if (currentResult === type) count++; else break; }
-    }
-    return { count, type };
-}
-
-function getSeasonWinner(sNum) {
-    if(!state.archives) return "Inconnu";
-    let pts = {};
-    const matches = state.archives.flat().filter(m => m.seasonRef == sNum);
-    if(matches.length === 0) return "-";
-    matches.forEach(m => {
-        if(!pts[m.p1]) pts[m.p1] = 0; if(!pts[m.p2]) pts[m.p2] = 0;
-        if(m.s1 > m.s2) pts[m.p1] += 3; else if(m.s2 > m.s1) pts[m.p2] += 3; else { pts[m.p1] += 1; pts[m.p2] += 1; }
-    });
-    return Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b);
-}
-
-function getHOFStats() {
-    const medals = {}; 
-    const allTimeStats = getAllTimeStats();
-    const players = state.players.map(p => p.name);
-    players.forEach(p => medals[p] = { gold: 0, silver: 0, bronze: 0, goals: allTimeStats[p]?.gf || 0, cs: allTimeStats[p]?.cs || 0, seasons: new Set() });
-    if(state.archives) {
-        const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
-        seasons.forEach(s => {
-            const matches = state.archives.flat().filter(m => m.seasonRef == s);
-            let pts = {};
-            matches.forEach(m => {
-                if(!pts[m.p1]) pts[m.p1] = 0; if(!pts[m.p2]) pts[m.p2] = 0;
-                if(m.s1 > m.s2) pts[m.p1] += 3; else if(m.s2 > m.s1) pts[m.p2] += 3; else { pts[m.p1]++; pts[m.p2]++; }
-            });
-            const sorted = Object.keys(pts).sort((a,b) => pts[b] - pts[a]);
-            if(sorted[0] && medals[sorted[0]]) medals[sorted[0]].gold++;
-            if(sorted[1] && medals[sorted[1]]) medals[sorted[1]].silver++;
-            if(sorted[2] && medals[sorted[2]]) medals[sorted[2]].bronze++;
-        });
-    }
-    return { medals };
-}
-
-function getGoat() {
-    if(!state.archives || state.archives.length === 0) return { name: "-", titles: 0 };
-    const titles = {};
-    const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
-    seasons.forEach(s => {
-        const winner = getSeasonWinner(s);
-        if(winner !== "-" && winner !== "Inconnu") titles[winner] = (titles[winner] || 0) + 1;
-    });
-    const winnerName = Object.keys(titles).reduce((a, b) => titles[a] > titles[b] ? a : b, "-");
-    return { name: winnerName, titles: titles[winnerName] || 0 };
 }
 
 function getAllTimeStats() {
@@ -365,82 +231,10 @@ function getAllTimeStats() {
     return stats;
 }
 
-function getLivePrediction() {
-    if(!state.players || state.players.length === 0) return null;
-    let scores = state.players.map(p => ({ name: p.name, power: p.points + ((p.gf - p.ga) * 0.5) + (p.cs * 0.5) }));
-    scores.sort((a,b) => b.power - a.power);
-    let totalPower = scores.reduce((acc, curr) => acc + Math.max(0.1, curr.power), 0);
-    let top = scores[0];
-    return { name: top.name, proba: Math.round((Math.max(0.1, top.power) / (totalPower || 1)) * 100) };
-}
-
-function getSeasonRecord() {
-    let record = { name: "-", goals: 0, season: 0 }; if(!state.archives) return record;
-    const seasons = {};
-    state.archives.flat().forEach(m => {
-        const key1 = `S${m.seasonRef}_${m.p1}`; const key2 = `S${m.seasonRef}_${m.p2}`;
-        seasons[key1] = (seasons[key1] || 0) + m.s1; seasons[key2] = (seasons[key2] || 0) + m.s2;
-    });
-    Object.keys(seasons).forEach(k => { if(seasons[k] > record.goals) { record.goals = seasons[k]; record.name = k.split('_')[1]; record.season = k.split('_')[0]; } });
-    return record;
-}
-
-function getForm(name) {
-    const history = []; const allMatches = state.archives ? state.archives.flat() : [];
-    [...allMatches].reverse().forEach(m => {
-        if((m.p1 === name || m.p2 === name) && history.length < 5) {
-            const win = (m.p1 === name) ? m.s1 > m.s2 : m.s2 > m.s1;
-            const draw = m.s1 === m.s2;
-            history.push(win ? 'win' : (draw ? 'draw' : 'loss'));
-        }
-    });
-    return history;
-}
-
-function getPrediction() {
-    const allTime = getAllTimeStats(); if (Object.keys(allTime).length === 0) return { name: "N/A", proba: 0 };
-    let best = Object.keys(allTime).reduce((a, b) => (allTime[a]?.pts||0) > (allTime[b]?.pts||0) ? a : b);
-    let total = Object.values(allTime).reduce((a, b) => a + (b.pts||0), 0);
-    return { name: best, proba: Math.round(((allTime[best]?.pts||0)/(total||1))*100) };
-}
-
-function getTactic(playerName) {
-    const stats = getAllTimeStats()[playerName] || {gf:0, ga:0, games:1};
-    const avgGf = stats.gf / stats.games; const avgGa = stats.ga / stats.games;
-    if(avgGf > 2.5) return { form: "4-3-3 OFFENSIF", style: "Construction Rapide", def: "Pressing Constant", width: "65 / 70", role: "Faux 9 / Ailiers Intérieurs" };
-    if(avgGa < 1.5) return { form: "5-2-1-2", style: "Contre-Attaque", def: "Reculer", width: "40 / 30", role: "Piston Offensif" };
-    return { form: "4-2-3-1 (2)", style: "Équilibré", def: "Équilibré", width: "50 / 50", role: "MOC Libre / Pivot" };
-}
-
-function getMatchBriefing(p1Name, p2Name) {
-    const allMatches = state.archives ? state.archives.flat() : [];
-    const stats = getAllTimeStats();
-    let headToHead = { p1Wins: 0, p2Wins: 0, draws: 0, p1Goals: 0, p2Goals: 0 };
-    allMatches.forEach(m => {
-        if((m.p1 === p1Name && m.p2 === p2Name) || (m.p1 === p2Name && m.p2 === p1Name)) {
-            const p1IsM1 = m.p1 === p1Name;
-            if(m.s1 === m.s2) headToHead.draws++;
-            else if((p1IsM1 && m.s1 > m.s2) || (!p1IsM1 && m.s2 > m.s1)) headToHead.p1Wins++;
-            else headToHead.p2Wins++;
-            headToHead.p1Goals += p1IsM1 ? m.s1 : m.s2; headToHead.p2Goals += p1IsM1 ? m.s2 : m.s1;
-        }
-    });
-    let analysis = headToHead.p1Wins > headToHead.p2Wins ? `**${p1Name}** a l'avantage. ` : "Égalité parfaite. ";
-    return { analysis, advice: "IA: Match serré." };
-}
-
 function generateMatchCommentary(m) {
     const winner = m.s1 > m.s2 ? m.p1 : (m.s2 > m.s1 ? m.p2 : null);
-    if (!winner) return m.d1 ? `Égalité FIFA, mais <b>${m.d1 > m.d2 ? m.p1 : m.p2}</b> gagne aux dés !` : "Match nul équilibré.";
+    if (!winner) return m.d1 ? `Égalité, mais <b>${m.d1 > m.d2 ? m.p1 : m.p2}</b> gagne aux dés !` : "Match nul.";
     return `Victoire de <b>${winner}</b>.`;
-}
-
-function exportFullHistoryPDF() {
-    const container = document.createElement('div');
-    container.className = 'pdf-export-content';
-    container.innerHTML = `<div class="pdf-header"><h1>RAPPORT HISTORIQUE</h1></div>`;
-    const opt = { margin: 10, filename: `FC26_Historique.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-    html2pdf().from(container).set(opt).save();
 }
 
 function render() {
@@ -450,28 +244,20 @@ const app = qs("#app"); app.innerHTML = "";
 
 if (tab === "dashboard") {
 const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
-app.innerHTML = `<div id="pdf-area">
-<div style="display:flex; justify-content:space-between; margin:15px 0"><h3>Classement S${state.season}</h3></div>
-<div class="card">
-<table>
+app.innerHTML = `<h3>Classement S${state.season}</h3>
+<div class="card"><table>
 <thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr></thead>
-<tbody>
-${sorted.map(p => `<tr>
+<tbody>${sorted.map(p => `<tr>
 <td class="col-player"><strong>${p.name}</strong><div class="badge-container">${getPlayerBadges(p).map(b => `<span class="prestige-badge ${b.class}"><i class="fas ${b.icon}"></i> ${b.label}</span>`).join('')}</div></td>
 <td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
 <td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
 <td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td>
-</tr>`).join('')}
-</tbody></table></div></div>
-${isAdmin() ? `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px"><button class="btn-primary" style="background:var(--danger)" onclick="finishSeason()">TERMINER SAISON</button><button class="btn-primary" style="background:var(--purple)" onclick="addSpecificSeason()">SAISON SPÉCIFIQUE</button></div>` : ''}`;
+</tr>`).join('')}</tbody></table></div>
+${isAdmin() ? `<button class="btn-primary" style="background:var(--danger)" onclick="finishSeason()">TERMINER SAISON</button>` : ''}`;
 }
 
 if (tab === "analysis") {
-    const livePred = getLivePrediction();
-    app.innerHTML = `<h3>🧠 Analyse IA</h3><div class="card live-predict-card">
-    <div style="color:var(--accent); font-size:0.7rem; font-weight:bold">PRÉDICTION TITRE</div>
-    <div style="font-size:1.6rem; font-weight:700">${livePred ? livePred.name : '-'} (${livePred ? livePred.proba : 0}%)</div>
-    </div><div class="card"><strong>📋 CONSEIL TACTIQUE</strong><select id="tacticPlayer" class="team-select" style="width:100%" onchange="renderTacticAdvice()"><option value="">Joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div>`;
+    app.innerHTML = `<h3>🧠 Analyse IA</h3><div class="card">Selectionnez un joueur pour un conseil tactique.</div>`;
 }
 
 if (tab === "matches") {
@@ -486,13 +272,11 @@ app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.curre
         <select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select>
         <input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} oninput="checkDraw(${i})">
     </div>
-    
     <div id="dice_row_${i}" class="dice-zone" style="display:${m.done && m.s1 === m.s2 ? 'flex' : 'none'}">
         <input type="number" id="d1_${i}" class="dice-input" placeholder="Dé" value="${m.d1??''}" ${m.done ? 'disabled':''}>
         <div style="font-size:0.6rem; color:var(--gold)">DÉS (NUL)</div>
         <input type="number" id="d2_${i}" class="dice-input" placeholder="Dé" value="${m.d2??''}" ${m.done ? 'disabled':''}>
     </div>
-
     <div class="team-row">
         <span>${m.p2}</span>
         <select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select>
@@ -508,22 +292,17 @@ app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><input i
 }
 
 if (tab === "hof") {
-    const goat = getGoat();
-    app.innerHTML = `<h3>🏛️ Hall of Fame</h3><div class="card" style="text-align:center">👑 GOAT: ${goat.name} (${goat.titles} Titres)</div>`;
+    app.innerHTML = `<h3>🏛️ Hall of Fame</h3><div class="card">Historique des titres en cours de calcul...</div>`;
 }
 
 if (tab === "archives") {
-    app.innerHTML = `<h3>🏆 Historique</h3>`;
+    app.innerHTML = `<h3>🏆 Historique</h3><div class="card">Données bientôt disponibles...</div>`;
 }
 }
 
-// --- LOGIQUE DÉS ---
 function checkDraw(i) {
-    const s1 = qs(`#s1_${i}`).value;
-    const s2 = qs(`#s2_${i}`).value;
-    const diceRow = qs(`#dice_row_${i}`);
-    if (s1 !== "" && s2 !== "" && s1 === s2) diceRow.style.display = "flex";
-    else diceRow.style.display = "none";
+    const s1 = qs(`#s1_${i}`).value, s2 = qs(`#s2_${i}`).value;
+    qs(`#dice_row_${i}`).style.display = (s1 !== "" && s2 !== "" && s1 === s2) ? "flex" : "none";
 }
 
 function startWinnerStays() {
@@ -536,16 +315,7 @@ save();
 }
 
 function handleRotation(lastMatch) {
-    let winner;
-    if (lastMatch.s1 > lastMatch.s2) {
-        winner = lastMatch.p1;
-    } else if (lastMatch.s2 > lastMatch.s1) {
-        winner = lastMatch.p2;
-    } else {
-        // En cas de nul, le gagnant du dé continue
-        winner = (parseInt(lastMatch.d1 || 0) > parseInt(lastMatch.d2 || 0)) ? lastMatch.p1 : lastMatch.p2;
-    }
-
+    let winner = (lastMatch.s1 > lastMatch.s2) ? lastMatch.p1 : (lastMatch.s2 > lastMatch.s1 ? lastMatch.p2 : (parseInt(lastMatch.d1 || 0) > parseInt(lastMatch.d2 || 0) ? lastMatch.p1 : lastMatch.p2));
     const loser = winner === lastMatch.p1 ? lastMatch.p2 : lastMatch.p1;
     const waiting = state.rotationQueue.shift();
     state.rotationQueue.push(loser);
@@ -554,51 +324,31 @@ function handleRotation(lastMatch) {
 
 function validateMatch(i) {
     if(isAdmin()){
-        const s1 = parseInt(qs(`#s1_${i}`).value);
-        const s2 = parseInt(qs(`#s2_${i}`).value);
+        const s1 = parseInt(qs(`#s1_${i}`).value), s2 = parseInt(qs(`#s2_${i}`).value);
         if(isNaN(s1) || isNaN(s2)) return;
-
         const m = state.currentDay[i];
-        
-        // Vérification dés si nul
         if (s1 === s2) {
-            const d1 = parseInt(qs(`#d1_${i}`).value);
-            const d2 = parseInt(qs(`#d2_${i}`).value);
-            if(isNaN(d1) || isNaN(d2)) { alert("Saisissez les dés !"); return; }
-            if(d1 === d2) { alert("Les dés ne peuvent pas être égaux !"); return; }
+            const d1 = parseInt(qs(`#d1_${i}`).value), d2 = parseInt(qs(`#d2_${i}`).value);
+            if(isNaN(d1) || isNaN(d2) || d1 === d2) { alert("Dés invalides !"); return; }
             m.d1 = d1; m.d2 = d2;
         }
-
-        const p1 = state.players.find(p => p.name === m.p1);
-        const p2 = state.players.find(p => p.name === m.p2);
+        const p1 = state.players.find(p => p.name === m.p1), p2 = state.players.find(p => p.name === m.p2);
         p1.gf += s1; p1.ga += s2; p2.gf += s2; p2.ga += s1;
-        if(s2 === 0) p1.cs = (p1.cs || 0) + 1;
-        if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
+        if(s2 === 0) p1.cs = (p1.cs || 0) + 1; if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
         if(s1 > s2) p1.points += 3; else if(s2 > s1) p2.points += 3; else { p1.points += 1; p2.points += 1; }
-
         m.s1 = s1; m.s2 = s2; m.done = true;
         m.team1 = qs(`#t1_${i}`).value; m.team2 = qs(`#t2_${i}`).value;
-
         if(state.rotationQueue && state.rotationQueue.length > 0) handleRotation(m);
-        if(state.currentDay.every(x => x.done)){
-            if(!state.archives) state.archives = [];
-            state.archives.push([...state.currentDay]);
-            state.currentDay = []; state.rotationQueue = [];
-        }
+        if(state.currentDay.every(x => x.done)){ if(!state.archives) state.archives = []; state.archives.push([...state.currentDay]); state.currentDay = []; state.rotationQueue = []; }
         save();
     }
 }
 
-// --- RESTE DES FONCTIONS ---
+function save() { if(isAdmin()) pushData(); render(); }
 function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value; if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0, cs:0}); save();}} }
 function startDay(){ if(isAdmin() && state.players.length >= 2){ state.rotationQueue = []; state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
-function finishSeason(){ if(isAdmin()){ const s=[...state.players].sort((a,b)=>b.points-a.points); if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";} save(); } }
+function finishSeason(){ if(isAdmin()){ const s=[...state.players].sort((a,b)=>b.points-a.points); if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";} } }
 function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0; p.cs=0;}); state.currentDay=[]; qs("#winnerModal").style.display="none"; save(); }
-function checkPin() { qs('#pinOverlay').style.display = 'flex'; qs('#pinCode').focus(); }
-function validatePin() { if(qs('#pinCode').value === ADMIN_PIN) { qs('#pinOverlay').style.display = 'none'; login('ADMIN'); } else alert("Faux"); }
-function login(u) { currentUser=u; localStorage.setItem("fc26_user", u); qs('#loginOverlay').style.display='none'; qs('#userDisplay').innerText=u; render(); }
-function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
-function renderTacticAdvice() { const p = qs("#tacticPlayer").value; if(p) qs("#tacticResult").innerText = getTactic(p).form; }
 
 document.querySelectorAll("nav button").forEach(btn => { btn.onclick = () => { document.querySelectorAll("nav button").forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }; });
 pullData();
