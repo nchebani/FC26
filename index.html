@@ -1,525 +1,316 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>FC26 Manager - Ultimate Data Edition</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <title>FC26 Manager - Elite Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
-:root {
---bg: #05070a; --card: #111418; --border: #30363d;
---accent: #238636; --blue: #58a6ff; --gold: #d4af37;
---silver: #bec2cb; --bronze: #cd7f32;
---text: #f8fafc; --muted: #8b949e; --danger: #da3633;
---purple: #8957e5;
-}
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+    <style>
+        :root {
+            --bg: #05070a; --card: #111418; --border: #30363d;
+            --accent: #238636; --blue: #58a6ff; --gold: #d4af37;
+            --silver: #bec2cb; --bronze: #cd7f32;
+            --text: #f8fafc; --muted: #8b949e; --danger: #da3633;
+            --purple: #8957e5;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
 
-/* --- STYLES EXPORT PDF --- */
-.pdf-export-content { background: white; color: black; padding: 40px; font-family: Arial, sans-serif; }
-.pdf-header { text-align: center; border-bottom: 2px solid #1e1b4b; margin-bottom: 20px; padding-bottom: 10px; }
-.pdf-season-block { margin-bottom: 30px; page-break-inside: avoid; }
-.pdf-season-title { color: #1e1b4b; background: #f0f0f0; padding: 8px 15px; border-left: 5px solid #238636; margin-bottom: 10px; }
-.pdf-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-.pdf-table th, .pdf-table td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 9pt; }
-.pdf-table th { background: #e9ecef; font-weight: bold; }
+        #syncNotify { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--purple); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; z-index: 2000; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
 
-#syncNotify { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--purple); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; z-index: 2000; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; }
+        #loginOverlay, #pinOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        #pinOverlay { display: none; background: rgba(5, 7, 10, 0.98); }
+        .login-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 400px; margin-top: 30px; }
+        .user-btn { background: var(--card); border: 1px solid var(--border); color: white; padding: 20px; border-radius: 15px; cursor: pointer; text-align: center; transition: 0.3s; }
+        .admin-lock { border-color: var(--gold); }
+        .pin-input { background: #000; border: 2px solid var(--border); color: var(--gold); font-size: 2rem; width: 150px; text-align: center; border-radius: 12px; margin: 20px 0; letter-spacing: 10px; padding: 10px; }
 
-#loginOverlay, #pinOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-#pinOverlay { display: none; background: rgba(5, 7, 10, 0.98); }
-.login-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 400px; margin-top: 30px; }
-.user-btn { background: var(--card); border: 1px solid var(--border); color: white; padding: 20px; border-radius: 15px; cursor: pointer; text-align: center; transition: 0.3s; }
-.user-btn:hover { border-color: var(--purple); transform: translateY(-5px); }
-.admin-lock { border-color: var(--gold); }
-.pin-input { background: #000; border: 2px solid var(--border); color: var(--gold); font-size: 2rem; width: 150px; text-align: center; border-radius: 12px; margin: 20px 0; letter-spacing: 10px; padding: 10px; }
+        header { background: #010409; padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; }
+        .season-badge { background: var(--gold); color: #000; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        
+        nav { position: fixed; bottom: 0; left: 0; right: 0; background: #111418; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 1000; }
+        nav button { background: none; border: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; gap: 5px; cursor: pointer; }
+        nav button.active { color: var(--accent); }
 
-header { background: #010409; padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; }
-.season-badge { background: var(--gold); color: #000; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
-.sync-status { font-size: 0.6rem; color: var(--accent); display: flex; align-items: center; gap: 5px; }
+        main { padding: 15px; max-width: 600px; margin: auto; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative; }
 
-.ticker-wrap { background: #010409; border-bottom: 1px solid var(--border); overflow: hidden; white-space: nowrap; padding: 5px 0; }
-.ticker { display: inline-block; animation: ticker 40s linear infinite; }
-.ticker-item { display: inline-block; padding: 0 20px; font-size: 0.65rem; color: var(--muted); border-right: 1px solid var(--border); }
-.ticker-item b { color: var(--blue); margin: 0 5px; }
-@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .badge-container { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+        .prestige-badge { font-size: 0.55rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; gap: 3px; }
+        .badge-sniper { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+        .badge-mur { background: #dcfce7; color: #166534; border: 1px solid #22c55e; }
 
-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #111418; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 1000; }
-nav button { background: none; border: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; gap: 5px; cursor: pointer; }
-nav button.active { color: var(--accent); }
+        .medal-card { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid transparent; }
+        .medal-gold { background: linear-gradient(90deg, #d4af3722, transparent); border-left-color: var(--gold); }
+        .medal-silver { background: linear-gradient(90deg, #bec2cb22, transparent); border-left-color: var(--silver); }
 
-main { padding: 15px; max-width: 600px; margin: auto; }
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative; }
+        table { width: 100%; border-collapse: collapse; }
+        th { color: var(--muted); font-size: 0.6rem; text-transform: uppercase; padding-bottom: 10px; }
+        td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; }
+        .col-player { text-align: left; width: 40%; }
+        .col-center { text-align: center; }
 
-.sparkline-box { display: flex; align-items: flex-end; gap: 3px; height: 24px; justify-content: center; overflow: hidden; }
-.spark-bar { width: 5px; background: var(--border); border-radius: 1px; transition: height 0.3s; min-height: 2px; }
-.spark-up { background: var(--accent) !important; }
-.spark-down { background: var(--danger) !important; }
+        .val-badge { background: #1e1b4b; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
+        .form-container { display: flex; gap: 4px; justify-content: center; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .win { background: var(--accent); } .loss { background: var(--danger); } .draw { background: var(--muted); }
 
-.badge-container { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
-.prestige-badge { font-size: 0.55rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; gap: 3px; }
-.badge-sniper { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
-.badge-mur { background: #dcfce7; color: #166534; border: 1px solid #22c55e; }
-.badge-clutch { background: #ede9fe; color: #5b21b6; border: 1px solid #8b5cf6; }
-
-.medal-card { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid transparent; }
-.medal-gold { background: linear-gradient(90deg, #d4af3722, transparent); border-left-color: var(--gold); }
-.medal-silver { background: linear-gradient(90deg, #bec2cb22, transparent); border-left-color: var(--silver); }
-.medal-bronze { background: linear-gradient(90deg, #cd7f3222, transparent); border-left-color: var(--bronze); }
-.hof-stat { font-size: 1.2rem; font-weight: bold; }
-.hof-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; }
-
-.awards-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
-.award-card { min-width: 130px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; transition: 0.3s; }
-.award-winner { font-size: 0.8rem; font-weight: bold; color: var(--gold); display: block; margin-top: 5px; }
-
-table { width: 100%; border-collapse: collapse; }
-th { color: var(--muted); font-size: 0.6rem; text-transform: uppercase; padding-bottom: 10px; }
-td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; vertical-align: middle; }
-.col-player { text-align: left; padding-left: 5px; width: 35%; }
-.col-center { text-align: center; }
-
-.val-badge { background: #1e1b4b; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
-.power-trend { font-size: 0.7rem; margin-left: 3px; }
-
-.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #ffffff05; }
-.stat-label { font-size: 0.75rem; color: var(--muted); }
-.stat-value { font-size: 0.85rem; font-weight: 600; }
-
-.form-container { display: flex; gap: 4px; justify-content: center; }
-.dot { width: 9px; height: 9px; border-radius: 50%; }
-.win { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
-.loss { background: var(--danger); }
-.draw { background: var(--muted); }
-
-.tactic-badge { background: #1e1b4b; color: var(--blue); padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: bold; display: inline-block; margin-bottom: 10px; }
-.tactic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.7rem; }
-.tactic-item { background: #0a0c10; padding: 8px; border-radius: 8px; border-left: 3px solid var(--purple); }
-
-.predict-card { background: linear-gradient(135deg, #1e1b4b 0%, #111418 100%); border: 1px solid var(--purple); padding: 20px; margin-bottom:15px; }
-.live-predict-card { background: linear-gradient(135deg, #0f172a 0%, #020617 100%); border: 1px solid var(--accent); padding: 15px; }
-
-.brief-box { background: #0a0c10; border-left: 4px solid var(--gold); padding: 12px; margin-top: 10px; font-size: 0.75rem; border-radius: 4px; line-height: 1.4; }
-.brief-title { color: var(--gold); font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; font-size: 0.7rem; }
-.brief-advice { color: var(--muted); font-style: italic; display: block; margin-top: 5px; border-top: 1px solid #333; padding-top: 5px; }
-
-.match-card { border-bottom: 1px solid var(--border); padding: 15px 0; }
-.team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
-.team-select { background: #000; color: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px; font-size: 0.7rem; width: 110px; }
-.score-input { width: 45px; height: 40px; background: #000; border: 1px solid var(--border); color: white; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
-.dice-input { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--purple); background: #000; color: var(--purple); text-align: center; font-weight: bold; font-size: 0.9rem; margin-left: 10px; display: none; }
-
-.btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
-.btn-rotation { background: var(--purple); margin-top: 10px; }
-.btn-edit { background: none; border: 1px solid var(--blue); color: var(--blue); padding: 4px 8px; border-radius: 6px; font-size: 0.6rem; cursor: pointer; }
-.edit-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px dashed var(--blue); text-align: center; }
-
-#winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
-
-.match-commentary { background: rgba(88, 166, 255, 0.05); border: 1px solid #30363d; padding: 8px 12px; border-radius: 8px; margin-top: 10px; font-size: 0.7rem; color: var(--muted); font-style: italic; line-height: 1.3; }
-.match-commentary b { color: var(--blue); }
-</style>
+        .brief-box { background: #0a0c10; border-left: 4px solid var(--gold); padding: 12px; margin-top: 10px; font-size: 0.75rem; border-radius: 4px; }
+        .match-card { border-bottom: 1px solid var(--border); padding: 15px 0; }
+        .team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
+        .score-input { width: 45px; height: 35px; background: #000; border: 1px solid var(--border); color: white; text-align: center; border-radius: 8px; font-weight: bold; }
+        .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        
+        #winnerModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; }
+    </style>
 </head>
 <body>
 
-<div id="syncNotify"><i class="fas fa-sync-alt fa-spin"></i> Mise à jour Live...</div>
+<div id="syncNotify"><i class="fas fa-sync-alt fa-spin"></i> Live...</div>
 
 <div id="loginOverlay">
-<i class="fas fa-shield-halved" style="font-size: 3rem; color: var(--purple); margin-bottom: 10px;"></i>
-<h2 style="margin:0">FC26 ELITE</h2>
-<div class="login-grid">
-<div class="user-btn admin-lock" onclick="checkPin()"><i class="fas fa-user-crown" style="color:var(--gold)"></i>ADMIN</div>
-<div class="user-btn" onclick="login('BVI')"><i class="fas fa-user"></i>BVI</div>
-<div class="user-btn" onclick="login('NAD')"><i class="fas fa-user"></i>NAD</div>
-<div class="user-btn" onclick="login('WIL')"><i class="fas fa-user"></i>WIL</div>
-<div class="user-btn" onclick="login('BROOK')"><i class="fas fa-user"></i>BROOK</div>
-</div>
+    <h2 style="margin-bottom:30px">FC26 ELITE</h2>
+    <div class="login-grid">
+        <div class="user-btn admin-lock" onclick="checkPin()"><i class="fas fa-crown"></i><br>ADMIN</div>
+        <div class="user-btn" onclick="login('BVI')">BVI</div>
+        <div class="user-btn" onclick="login('NAD')">NAD</div>
+        <div class="user-btn" onclick="login('WIL')">WIL</div>
+        <div class="user-btn" onclick="login('BROOK')">BROOK</div>
+    </div>
 </div>
 
 <div id="pinOverlay">
-<input type="password" id="pinCode" class="pin-input" maxlength="4" placeholder="••••">
-<button class="btn-primary" onclick="validatePin()">OK</button>
+    <input type="password" id="pinCode" class="pin-input" maxlength="4" placeholder="••••">
+    <button class="btn-primary" onclick="validatePin()">ACCÉDER</button>
 </div>
 
 <div id="winnerModal">
-<div style="background: var(--card); padding: 40px; border-radius: 30px; border: 2px solid var(--gold);">
-<i class="fas fa-trophy" style="font-size: 4rem; color: var(--gold); margin-bottom: 20px;"></i>
-<h1 id="winnerName">-</h1>
-<button class="btn-primary" onclick="closeWinner()">NOUVELLE SAISON 🔥</button>
-</div>
+    <div style="background: var(--card); padding: 40px; border-radius: 30px; border: 2px solid var(--gold);">
+        <i class="fas fa-trophy" style="font-size: 4rem; color: var(--gold);"></i>
+        <h1 id="winnerName">-</h1>
+        <button class="btn-primary" onclick="closeWinner()">NOUVELLE SAISON 🔥</button>
+    </div>
 </div>
 
 <header>
-<div onclick="logout()" style="cursor:pointer"><i class="fas fa-power-off"></i> <span id="userDisplay" style="font-size:0.7rem; color:var(--muted); margin-left:5px"></span></div>
-<div style="display:flex; align-items:center; gap:10px">
-<div class="sync-status" id="syncStatus"><i class="fas fa-circle" style="font-size:0.5rem"></i> LIVE</div>
-<div id="seasonBadge" class="season-badge">Saison 1</div>
-</div>
+    <div onclick="logout()" style="cursor:pointer"><i class="fas fa-power-off"></i> <span id="userDisplay" style="font-size:0.7rem; margin-left:5px"></span></div>
+    <div id="seasonBadge" class="season-badge">Saison 1</div>
 </header>
-
-<div id="resultTicker" class="ticker-wrap"></div>
 
 <main id="app"></main>
 
 <nav>
-<button class="active" data-tab="dashboard"><i class="fas fa-chart-line"></i><span>Stats</span></button>
-<button data-tab="analysis"><i class="fas fa-brain"></i><span>IA</span></button>
-<button data-tab="matches"><i class="fas fa-gamepad"></i><span>Jouer</span></button>
-<button data-tab="players"><i class="fas fa-users"></i><span>Joueurs</span></button>
-<button data-tab="hof"><i class="fas fa-crown"></i><span>H.O.F</span></button>
-<button data-tab="archives"><i class="fas fa-history"></i><span>Palmarès</span></button>
+    <button class="active" data-tab="dashboard"><i class="fas fa-chart-line"></i><span>Stats</span></button>
+    <button data-tab="analysis"><i class="fas fa-brain"></i><span>IA</span></button>
+    <button data-tab="matches"><i class="fas fa-gamepad"></i><span>Jouer</span></button>
+    <button data-tab="players"><i class="fas fa-users"></i><span>Joueurs</span></button>
+    <button data-tab="hof"><i class="fas fa-crown"></i><span>H.O.F</span></button>
 </nav>
 
 <script>
 const FB_URL = "https://fc26-e596e-default-rtdb.europe-west1.firebasedatabase.app/data.json";
 const ADMIN_PIN = "1234";
-const TEAMS = ["Real Madrid", "Man City", "Barcelone", "Bayern Munich", "Liverpool", "PSG", "Arsenal", "Inter Milan", "Milan AC", "Atletico", "Leverkusen", "Dortmund", "Juventus", "Naples", "Chelsea", "Aston Villa"];
+const TEAMS = ["Real Madrid", "Man City", "Barcelone", "Bayern Munich", "Liverpool", "PSG", "Arsenal", "Inter Milan", "Milan AC", "Atletico", "Leverkusen", "Dortmund"];
 
 let currentUser = localStorage.getItem("fc26_user") || null;
-let state = { season: 1, players: [], currentDay: [], archives: [], rotationQueue: [] };
+let state = { season: 1, players: [], currentDay: [], archives: [] };
 let isInteracting = false;
-let duelChartInstance = null;
 
-const notifySound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
 const qs = (s) => document.querySelector(s);
 const isAdmin = () => currentUser === 'ADMIN';
 
-async function pushData() { if (isAdmin()) { try { await fetch(FB_URL, { method: 'PUT', body: JSON.stringify(state) }); } catch (e) {} } }
+async function pushData() { if (isAdmin()) await fetch(FB_URL, { method: 'PUT', body: JSON.stringify(state) }); }
 async function pullData() {
-if (isInteracting) return;
-try {
-const res = await fetch(FB_URL);
-const data = await res.json();
-if (data && JSON.stringify(data) !== JSON.stringify(state)) {
-state = data; render(); showNotify(); qs('#seasonBadge').innerText = `SAISON ${state.season}`;
-}
-} catch (e) {}
-}
-
-function showNotify() { const n = qs("#syncNotify"); n.style.display = "block"; notifySound.play().catch(e => {}); setTimeout(() => { n.style.display = "none"; }, 3000); }
-
-// CORRECTION : Le pullData ne s'exécute pas si l'utilisateur est en train d'interagir (fenêtre ouverte)
-setInterval(() => {
-    if(!isInteracting) pullData();
-}, 5000);
-
-function updateTicker() {
-    const ticker = qs("#resultTicker");
-    if (!state.archives || state.archives.length === 0) {
-        ticker.style.display = "none"; return;
-    }
-    ticker.style.display = "block";
-    const lastMatches = state.archives.flat().slice(-10).reverse();
-    const content = lastMatches.map(m => `<div class="ticker-item">${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2}</div>`).join('');
-    ticker.innerHTML = `<div class="ticker">${content}${content}</div>`;
+    if (isInteracting) return;
+    try {
+        const res = await fetch(FB_URL);
+        const data = await res.json();
+        if (data && JSON.stringify(data) !== JSON.stringify(state)) {
+            state = data; 
+            render(); 
+            qs('#seasonBadge').innerText = `SAISON ${state.season}`;
+        }
+    } catch (e) {}
 }
 
+setInterval(pullData, 5000);
+
+// --- AUTH ---
 function checkPin() { qs('#pinOverlay').style.display = 'flex'; qs('#pinCode').focus(); }
-function validatePin() { if(qs('#pinCode').value === ADMIN_PIN) { qs('#pinOverlay').style.display = 'none'; login('ADMIN'); } else { alert("PIN Incorrect"); } }
-function login(user) { currentUser = user; localStorage.setItem("fc26_user", user); qs('#loginOverlay').style.display = 'none'; qs('#userDisplay').innerText = user; pullData(); }
+function validatePin() { if(qs('#pinCode').value === ADMIN_PIN) { qs('#pinOverlay').style.display = 'none'; login('ADMIN'); } else { alert("Code erroné"); } }
+function login(user) { currentUser = user; localStorage.setItem("fc26_user", user); qs('#loginOverlay').style.display = 'none'; qs('#userDisplay').innerText = user; pullData(); render(); }
 function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
+
 function save() { if(isAdmin()) pushData(); render(); }
 
 // --- LOGIQUE CALCULS ---
 function calculateValue(p) { 
-    let base = 10;
-    let ptsValue = (p.points || 0) * 1.5;
-    let gdValue = ((p.gf || 0) - (p.ga || 0)) * 0.5;
-    let csValue = (p.cs || 0) * 1.0;
-    return (base + ptsValue + gdValue + csValue).toFixed(1); 
-}
-
-function getPowerRankingTrend(p) {
-    const history = getForm(p.name);
-    if (history.length < 2) return '→';
-    const recent = history.slice(0, 3).reduce((acc, val) => acc + (val === 'win' ? 3 : (val === 'draw' ? 1 : 0)), 0) / 3;
-    const allStats = getAllTimeStats()[p.name];
-    const overall = allStats ? (allStats.pts / allStats.games) : 0;
-    if (recent > overall + 0.5) return '↑';
-    if (recent < overall - 0.5) return '↓';
-    return '→';
-}
-
-function getPlayerBadges(p) {
-    const badges = [];
-    const stats = getAllTimeStats()[p.name];
-    if(!stats || stats.games === 0) return badges;
-    if ((p.gf / Math.max(1, p.points/3)) > 3) badges.push({ class: 'badge-sniper', icon: 'fa-crosshairs', label: 'Sniper' });
-    if (p.cs > 0 && p.cs === Math.max(...state.players.map(pl => pl.cs || 0))) badges.push({ class: 'badge-mur', icon: 'fa-user-shield', label: 'Muraille' });
-    return badges;
-}
-
-function getProgressionData(playerName) {
-    if(!state.archives || state.archives.length < 1) return [40, 40, 40];
-    const history = [];
-    const last3Days = state.archives.slice(-3);
-    last3Days.forEach(day => {
-        let pts = 0;
-        day.forEach(m => {
-            if(m.p1 === playerName) pts += (m.s1 > m.s2 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-            if(m.p2 === playerName) pts += (m.s2 > m.s1 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-        });
-        history.push(Math.min(100, Math.max(10, (pts / 9) * 100)));
-    });
-    while(history.length < 3) history.unshift(30);
-    return history;
-}
-
-function getStreak(playerName) {
-    const allMatches = state.archives ? state.archives.flat() : [];
-    const totalHistory = [...allMatches].reverse().filter(m => m.p1 === playerName || m.p2 === playerName);
-    if (totalHistory.length === 0) return { count: 0, type: 'none' };
-    let count = 0, type = null;
-    for (let i = 0; i < totalHistory.length; i++) {
-        const m = totalHistory[i];
-        const isP1 = m.p1 === playerName;
-        const res = m.s1 === m.s2 ? 'draw' : ((isP1 && m.s1 > m.s2) || (!isP1 && m.s2 > m.s1) ? 'win' : 'loss');
-        if (i === 0) { type = res; count = 1; } else { if (res === type) count++; else break; }
-    }
-    return { count, type };
-}
-
-function getSeasonWinner(sNum) {
-    if(!state.archives) return "-";
-    let pts = {};
-    const matches = state.archives.flat().filter(m => m.seasonRef == sNum);
-    if(matches.length === 0) return "-";
-    matches.forEach(m => {
-        pts[m.p1] = (pts[m.p1] || 0) + (m.s1 > m.s2 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-        pts[m.p2] = (pts[m.p2] || 0) + (m.s2 > m.s1 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-    });
-    return Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b);
-}
-
-function getHOFStats() {
-    const medals = {}; 
-    const allTimeStats = getAllTimeStats();
-    state.players.forEach(p => medals[p.name] = { gold: 0, silver: 0, bronze: 0, goals: allTimeStats[p.name]?.gf || 0, cs: allTimeStats[p.name]?.cs || 0 });
-    if(state.archives) {
-        const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
-        seasons.forEach(s => {
-            const matches = state.archives.flat().filter(m => m.seasonRef == s);
-            let pts = {};
-            matches.forEach(m => {
-                pts[m.p1] = (pts[m.p1] || 0) + (m.s1 > m.s2 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-                pts[m.p2] = (pts[m.p2] || 0) + (m.s2 > m.s1 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-            });
-            const sorted = Object.keys(pts).sort((a,b) => pts[b] - pts[a]);
-            if(sorted[0]) medals[sorted[0]].gold++;
-            if(sorted[1]) medals[sorted[1]].silver++;
-            if(sorted[2]) medals[sorted[2]].bronze++;
-        });
-    }
-    return { medals };
-}
-
-function getGoat() {
-    const hof = getHOFStats().medals;
-    const winnerName = Object.keys(hof).reduce((a, b) => hof[a].gold > hof[b].gold ? a : b, "-");
-    return { name: winnerName, titles: hof[winnerName]?.gold || 0 };
-}
-
-function getAllTimeStats() {
-    let stats = {}; if(!state.archives) return stats;
-    state.archives.flat().forEach(m => {
-        if(!stats[m.p1]) stats[m.p1] = { gf:0, ga:0, pts:0, cs:0, games:0 };
-        if(!stats[m.p2]) stats[m.p2] = { gf:0, ga:0, pts:0, cs:0, games:0 };
-        stats[m.p1].gf += m.s1; stats[m.p1].ga += m.s2; stats[m.p1].games++;
-        stats[m.p2].gf += m.s2; stats[m.p2].ga += m.s1; stats[m.p2].games++;
-        if(m.s2 === 0) stats[m.p1].cs++; if(m.s1 === 0) stats[m.p2].cs++;
-        if(m.s1 > m.s2) stats[m.p1].pts += 3; else if(m.s2 > m.s1) stats[m.p2].pts += 3; else { stats[m.p1].pts++; stats[m.p2].pts++; }
-    });
-    return stats;
+    return (10 + (parseInt(p.points)||0)*1.5 + ((parseInt(p.gf)||0)-(parseInt(p.ga)||0))*0.5).toFixed(1); 
 }
 
 function getForm(name) {
-    const history = []; const allMatches = state.archives ? state.archives.flat() : [];
-    [...allMatches].reverse().forEach(m => {
+    const history = []; const all = state.archives ? state.archives.flat() : [];
+    [...all].reverse().forEach(m => {
         if((m.p1 === name || m.p2 === name) && history.length < 5) {
             const win = (m.p1 === name) ? m.s1 > m.s2 : m.s2 > m.s1;
-            const draw = m.s1 === m.s2;
-            history.push(win ? 'win' : (draw ? 'draw' : 'loss'));
+            history.push(m.s1 === m.s2 ? 'draw' : (win ? 'win' : 'loss'));
         }
     });
     return history;
 }
 
-function generateMatchCommentary(m) {
-    const winner = m.s1 > m.s2 ? m.p1 : (m.s2 > m.s1 ? m.p2 : null);
-    if (!winner) return "Match nul équilibré. Les deux tactiques se sont neutralisées.";
-    return `Victoire de <b>${winner}</b> ! Une performance solide qui confirme la forme du moment.`;
+function getPlayerBadges(p) {
+    const b = [];
+    if ((parseInt(p.gf)/Math.max(1, parseInt(p.points)/3)) > 3.5) b.push({class:'badge-sniper', icon:'fa-crosshairs', label:'Sniper'});
+    if (parseInt(p.cs) > 2) b.push({class:'badge-mur', icon:'fa-user-shield', label:'Mur'});
+    return b;
 }
 
 // --- RENDERING ---
 function render() {
-    updateTicker();
     const tab = qs("nav button.active").dataset.tab;
     const app = qs("#app"); app.innerHTML = "";
 
     if (tab === "dashboard") {
         const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
-        app.innerHTML = `<div id="pdf-area">
-            <h3>Classement S${state.season}</h3>
+        app.innerHTML = `<h3>Classement</h3>
             <div class="card">
                 <table>
-                <thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">Prog.</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr></thead>
+                <thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr></thead>
                 <tbody>
-                ${sorted.map(p => {
-                    const trend = getPowerRankingTrend(p);
-                    const prog = getProgressionData(p.name);
-                    return `<tr>
-                        <td class="col-player"><strong>${p.name}</strong><span class="power-trend">${trend}</span></td>
-                        <td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
-                        <td class="col-center"><div class="sparkline-box">${prog.map(v => `<div class="spark-bar" style="height:${v}%"></div>`).join('')}</div></td>
-                        <td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
-                        <td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td>
-                    </tr>`}).join('')}
+                ${sorted.map(p => `<tr>
+                    <td class="col-player"><strong>${p.name}</strong><div class="badge-container">${getPlayerBadges(p).map(x => `<span class="prestige-badge ${x.class}"><i class="fas ${x.icon}"></i></span>`).join('')}</div></td>
+                    <td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
+                    <td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
+                    <td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td>
+                </tr>`).join('')}
                 </tbody>
                 </table>
             </div>
-        </div>
-        ${isAdmin() ? `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px"><button class="btn-primary" style="background:var(--danger)" onclick="finishSeason()">FINIR SAISON</button><button class="btn-primary" style="background:var(--purple)" onclick="addSpecificSeason()">NOUV. SAISON</button></div>` : ''}`;
+            ${isAdmin() ? `<button class="btn-primary" style="background:var(--danger)" onclick="finishSeason()">TERMINER LA SAISON</button>` : ''}`;
+    }
+
+    if (tab === "analysis") {
+        app.innerHTML = `<h3>Analyse IA</h3>`;
+        state.players.forEach(p => {
+            const form = getForm(p.name).filter(f => f==='win').length;
+            app.innerHTML += `<div class="card"><strong>${p.name}</strong><div class="brief-box">${form >= 3 ? "Grande forme offensive." : "Doit stabiliser sa défense."}</div></div>`;
+        });
     }
 
     if (tab === "matches") {
         if (!state.currentDay || state.currentDay.length === 0) {
-            app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE ⚽</button>` : `<p>Attente de l'Admin...</p>`}</div>`;
+            app.innerHTML = `<div class="card" style="text-align:center">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">GÉNÉRER JOURNÉE</button>` : `<p>Attente de l'admin...</p>`}</div>`;
         } else {
-            app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => `
+            app.innerHTML = `<h3>Matchs Live</h3><div class="card">${state.currentDay.map((m, i) => `
                 <div class="match-card">
-                    <div class="team-row">
-                        <span>${m.p1}</span>
-                        <select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select>
-                        <input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''}>
-                    </div>
-                    <div class="team-row">
-                        <span>${m.p2}</span>
-                        <select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''}>${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select>
-                        <input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''}>
-                    </div>
-                    ${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div class="match-commentary">${generateMatchCommentary(m)}</div>` : ''}
+                    <div class="team-row"><span>${m.p1}</span><input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin()?'disabled':''}></div>
+                    <div class="team-row"><span>${m.p2}</span><input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin()?'disabled':''}></div>
+                    ${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER</button>` : ''}
                 </div>`).join('')}</div>`;
         }
     }
 
     if (tab === "players") {
-        app.innerHTML = `<h3>Effectif 👥</h3>
-        ${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}
+        app.innerHTML = `<h3>Gestion</h3>
+        ${isAdmin() ? `<div class="card"><input id="pName" placeholder="Nouveau..." style="width:70%; padding:8px; background:#000; border:1px solid #333; color:#fff"> <button onclick="addPlayer()" style="padding:8px">+</button></div>` : ''}
         ${state.players.map(p => `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center">
-                <div><strong>${p.name}</strong><br><small style="color:var(--blue)">${calculateValue(p)} M€ (Pts: ${p.points || 0})</small></div>
-                ${isAdmin() ? `
-                <div style="display:flex; gap:12px">
-                    <button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.3rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button>
-                    <button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.3rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button>
-                    <button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button>
+            <div class="card" style="display:flex; justify-content:space-between">
+                <div><strong>${p.name}</strong><br><small>Points: ${p.points}</small></div>
+                ${isAdmin() ? `<div>
+                    <button onclick="rewardPlayer('${p.id}')" style="color:var(--accent); background:none; border:none; font-size:1.2rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button>
+                    <button onclick="penalizePlayer('${p.id}')" style="color:var(--danger); background:none; border:none; font-size:1.2rem; cursor:pointer; margin-left:10px"><i class="fas fa-minus-circle"></i></button>
                 </div>` : ''}
             </div>`).join('')}`;
     }
 
     if (tab === "hof") {
-        const goat = getGoat();
-        app.innerHTML = `<h3>🏛️ Hall of Fame</h3><div class="card predict-card" style="text-align:center">
-            <div style="color:var(--gold)">THE G.O.A.T</div>
-            <div style="font-size:2rem; font-weight:bold">${goat.name}</div>
-            <div>${goat.titles} TITRES 🏆</div>
-        </div>`;
-    }
-
-    if (tab === "archives") {
-        app.innerHTML = `<h3>🏆 Historique</h3>`;
-        if(state.archives) {
-            state.archives.forEach((day, i) => {
-                app.innerHTML += `<div class="card"><summary>Journée ${i+1} (S${day[0].seasonRef})</summary>
-                ${day.map(m => `<div style="font-size:0.8rem">${m.p1} ${m.s1}-${m.s2} ${m.p2}</div>`).join('')}</div>`;
-            });
-        }
+        app.innerHTML = `<h3>Hall of Fame</h3>`;
+        // Logique simplifiée du HOF
+        state.players.forEach(p => {
+            app.innerHTML += `<div class="medal-card medal-gold"><strong>${p.name}</strong><span style="margin-left:auto">Valeur: ${calculateValue(p)}M</span></div>`;
+        });
     }
 }
 
-// --- ACTIONS ADMIN CORRIGÉES ---
+// --- ACTIONS ADMIN ---
 function rewardPlayer(id) { 
-    if(isAdmin()) { 
-        isInteracting = true; // Bloque la sync auto
-        const p = state.players.find(x => x.id === id); 
-        const pts = prompt(`Combien de points AJOUTER à ${p.name} ?`, "1"); 
-        if(pts !== null && pts !== "" && !isNaN(pts)) { 
-            p.points = parseInt(p.points || 0) + parseInt(pts); 
-            save(); 
-        } 
-        isInteracting = false; // Relance la sync
-    } 
+    if(!isAdmin()) return;
+    const p = state.players.find(x => x.id === id); 
+    const pts = prompt(`Points à ajouter à ${p.name} ?`, "1");
+    if(pts) { p.points = (parseInt(p.points)||0) + parseInt(pts); save(); }
 }
 
 function penalizePlayer(id) { 
-    if(isAdmin()) { 
-        isInteracting = true; // Bloque la sync auto
-        const p = state.players.find(x => x.id === id); 
-        const pts = prompt(`Combien de points RETIRER à ${p.name} ?`, "1"); 
-        if(pts !== null && pts !== "" && !isNaN(pts)) { 
-            p.points = parseInt(p.points || 0) - parseInt(pts); 
-            save(); 
-        } 
-        isInteracting = false; // Relance la sync
-    } 
+    if(!isAdmin()) return;
+    const p = state.players.find(x => x.id === id); 
+    const pts = prompt(`Points à retirer à ${p.name} ?`, "1");
+    if(pts) { p.points = (parseInt(p.points)||0) - parseInt(pts); save(); }
 }
 
-function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0, cs:0}); save();}} }
-function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
-
-function startDay(){ 
-    if(isAdmin() && state.players.length >= 2){ 
-        state.currentDay=[]; 
-        for(let i=0; i<state.players.length; i++) 
-            for(let j=i+1; j<state.players.length; j++) 
-                state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, team1:"Real Madrid", team2:"Man City"}); 
-        save(); 
-    } 
+function addPlayer() { 
+    const n = qs("#pName").value; 
+    if(n) { state.players.push({id:Date.now().toString(), name:n, points:0, gf:0, ga:0, cs:0}); save(); } 
 }
 
-function validateMatch(i){
-    if(isAdmin()){
-        const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value);
-        if(isNaN(s1)||isNaN(s2)) return;
-        const m=state.currentDay[i];
-        const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
-        p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
-        if(s2 === 0) p1.cs = (p1.cs || 0) + 1;
-        if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
-        if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
-        m.s1=s1; m.s2=s2; m.done=true;
-        m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
-        if(state.currentDay.every(x=>x.done)){ if(!state.archives) state.archives=[]; state.archives.push([...state.currentDay]); state.currentDay=[]; }
-        save();
+function startDay() {
+    state.currentDay = [];
+    for(let i=0; i<state.players.length; i++) {
+        for(let j=i+1; j<state.players.length; j++) {
+            state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season});
+        }
     }
+    save();
 }
 
-function finishSeason(){
-    if(isAdmin()){
-        const s=[...state.players].sort((a,b)=>b.points-a.points);
-        if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";}
-        save();
+function validateMatch(i) {
+    const s1 = parseInt(qs(`#s1_${i}`).value);
+    const s2 = parseInt(qs(`#s2_${i}`).value);
+    if(isNaN(s1) || isNaN(s2)) return;
+    
+    const m = state.currentDay[i];
+    const p1 = state.players.find(p => p.name === m.p1);
+    const p2 = state.players.find(p => p.name === m.p2);
+    
+    p1.gf += s1; p1.ga += s2; p2.gf += s2; p2.ga += s1;
+    if(s1 > s2) p1.points += 3; else if(s2 > s1) p2.points += 3; else { p1.points += 1; p2.points += 1; }
+    if(s2 === 0) p1.cs = (p1.cs||0)+1; if(s1 === 0) p2.cs = (p2.cs||0)+1;
+    
+    m.s1 = s1; m.s2 = s2; m.done = true;
+    if(state.currentDay.every(x => x.done)) {
+        if(!state.archives) state.archives = [];
+        state.archives.push([...state.currentDay]);
+        state.currentDay = [];
     }
+    save();
 }
 
-function addSpecificSeason() {
-    if(isAdmin()){
-        isInteracting = true;
-        const newS = prompt("Numéro de la saison ?", state.season + 1);
-        if(newS) { state.season = parseInt(newS); state.players.forEach(p=>{p.points=0;p.gf=0;p.ga=0;p.cs=0;}); save(); }
-        isInteracting = false;
-    }
+function finishSeason() {
+    const sorted = [...state.players].sort((a,b) => b.points - a.points);
+    qs("#winnerName").innerText = sorted[0].name;
+    qs("#winnerModal").style.display = "flex";
 }
 
-function closeWinner(){ state.season++; state.players.forEach(p=>{p.points=0;p.gf=0;p.ga=0;p.cs=0;}); state.currentDay=[]; qs("#winnerModal").style.display="none"; save(); }
+function closeWinner() {
+    state.season++;
+    state.players.forEach(p => { p.points = 0; p.gf = 0; p.ga = 0; p.cs = 0; });
+    state.currentDay = [];
+    qs("#winnerModal").style.display = "none";
+    save();
+}
 
-document.querySelectorAll("nav button").forEach(btn => { btn.onclick = () => { document.querySelectorAll("nav button").forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }; });
+document.querySelectorAll("nav button").forEach(btn => {
+    btn.onclick = () => {
+        document.querySelectorAll("nav button").forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        render();
+    };
+});
+
 pullData();
 </script>
 </body>
