@@ -20,16 +20,6 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
 
-/* --- STYLES EXPORT PDF --- */
-.pdf-export-content { background: white; color: black; padding: 40px; font-family: Arial, sans-serif; }
-.pdf-header { text-align: center; border-bottom: 2px solid #1e1b4b; margin-bottom: 20px; padding-bottom: 10px; }
-.pdf-season-block { margin-bottom: 30px; page-break-inside: avoid; }
-.pdf-season-title { color: #1e1b4b; background: #f0f0f0; padding: 8px 15px; border-left: 5px solid #238636; margin-bottom: 10px; }
-.pdf-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-.pdf-table th, .pdf-table td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 9pt; }
-.pdf-table th { background: #e9ecef; font-weight: bold; }
-/* ------------------------- */
-
 #syncNotify { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--purple); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; z-index: 2000; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; }
 
 #loginOverlay, #pinOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
@@ -42,7 +32,6 @@ body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); col
 
 header { background: #010409; padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; }
 .season-badge { background: var(--gold); color: #000; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
-.sync-status { font-size: 0.6rem; color: var(--accent); display: flex; align-items: center; gap: 5px; }
 
 .ticker-wrap { background: #010409; border-bottom: 1px solid var(--border); overflow: hidden; white-space: nowrap; padding: 5px 0; }
 .ticker { display: inline-block; animation: ticker 40s linear infinite; }
@@ -57,7 +46,6 @@ nav button.active { color: var(--accent); }
 main { padding: 15px; max-width: 600px; margin: auto; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative; }
 
-/* PROGRESION - FIXED SCALE VERSION */
 .sparkline-box { display: flex; align-items: flex-end; gap: 3px; height: 24px; justify-content: center; overflow: hidden; }
 .spark-bar { width: 5px; background: var(--border); border-radius: 1px; transition: height 0.3s; min-height: 2px; }
 .spark-up { background: var(--accent) !important; }
@@ -68,80 +56,27 @@ main { padding: 15px; max-width: 600px; margin: auto; }
 .badge-sniper { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
 .badge-mur { background: #dcfce7; color: #166534; border: 1px solid #22c55e; }
 .badge-clutch { background: #ede9fe; color: #5b21b6; border: 1px solid #8b5cf6; }
-.badge-clean { background: #e0f2fe; color: #0369a1; border: 1px solid #0ea5e9; }
 
-/* HOF STYLES */
-.medal-card { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid transparent; }
-.medal-gold { background: linear-gradient(90deg, #d4af3722, transparent); border-left-color: var(--gold); }
-.medal-silver { background: linear-gradient(90deg, #bec2cb22, transparent); border-left-color: var(--silver); }
-.medal-bronze { background: linear-gradient(90deg, #cd7f3222, transparent); border-left-color: var(--bronze); }
-.hof-stat { font-size: 1.2rem; font-weight: bold; }
-.hof-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; }
-
-.awards-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
-.award-card { min-width: 130px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; transition: 0.3s; }
-.award-winner { font-size: 0.8rem; font-weight: bold; color: var(--gold); display: block; margin-top: 5px; }
+.match-card { border-bottom: 1px solid var(--border); padding: 15px 0; }
+.team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
+.team-select { background: #000; color: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px; font-size: 0.7rem; width: 110px; }
+.score-input { width: 45px; height: 40px; background: #000; border: 1px solid var(--border); color: white; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
+.btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
 table { width: 100%; border-collapse: collapse; }
 th { color: var(--muted); font-size: 0.6rem; text-transform: uppercase; padding-bottom: 10px; }
 td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; vertical-align: middle; }
 .col-player { text-align: left; padding-left: 5px; width: 35%; }
 .col-center { text-align: center; }
-
 .val-badge { background: #1e1b4b; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
-.power-trend { font-size: 0.7rem; margin-left: 3px; }
-
-.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #ffffff05; }
-.stat-label { font-size: 0.75rem; color: var(--muted); }
-.stat-value { font-size: 0.85rem; font-weight: 600; }
-
 .form-container { display: flex; gap: 4px; justify-content: center; }
 .dot { width: 9px; height: 9px; border-radius: 50%; }
-.win { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+.win { background: var(--accent); }
 .loss { background: var(--danger); }
 .draw { background: var(--muted); }
 
-.duel-bar-container { height: 12px; background: #000; border-radius: 10px; margin: 15px 0; overflow: hidden; display: flex; border: 1px solid var(--border); }
-.duel-bar-left { background: var(--blue); height: 100%; transition: width 0.5s ease; border-right: 2px solid #fff; }
-.duel-bar-right { background: var(--purple); height: 100%; transition: width 0.5s ease; }
-
-.tactic-badge { background: #1e1b4b; color: var(--blue); padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: bold; display: inline-block; margin-bottom: 10px; }
-.tactic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.7rem; }
-.tactic-item { background: #0a0c10; padding: 8px; border-radius: 8px; border-left: 3px solid var(--purple); }
-
-.predict-card { background: linear-gradient(135deg, #1e1b4b 0%, #111418 100%); border: 1px solid var(--purple); padding: 20px; margin-bottom:15px; }
-.live-predict-card { background: linear-gradient(135deg, #0f172a 0%, #020617 100%); border: 1px solid var(--accent); padding: 15px; }
-
-.brief-box { background: #0a0c10; border-left: 4px solid var(--gold); padding: 12px; margin-top: 10px; font-size: 0.75rem; border-radius: 4px; line-height: 1.4; }
-.brief-title { color: var(--gold); font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; font-size: 0.7rem; }
-.brief-advice { color: var(--muted); font-style: italic; display: block; margin-top: 5px; border-top: 1px solid #333; padding-top: 5px; }
-
-.match-card { border-bottom: 1px solid var(--border); padding: 15px 0; }
-.team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
-.team-select { background: #000; color: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px; font-size: 0.7rem; width: 110px; }
-.score-input { width: 45px; height: 40px; background: #000; border: 1px solid var(--border); color: white; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
-.dice-input { width: 35px; height: 35px; background: var(--purple); border: none; color: white; text-align: center; border-radius: 50%; font-weight: bold; font-size: 0.9rem; margin-left: 5px; }
-
-.btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
-.btn-rotation { background: var(--purple); margin-top: 10px; }
-.btn-edit { background: none; border: 1px solid var(--blue); color: var(--blue); padding: 4px 8px; border-radius: 6px; font-size: 0.6rem; cursor: pointer; }
-.edit-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px dashed var(--blue); text-align: center; }
-
+.match-commentary { background: rgba(88, 166, 255, 0.05); border: 1px solid #30363d; padding: 8px 12px; border-radius: 8px; margin-top: 10px; font-size: 0.7rem; color: var(--muted); font-style: italic; }
 #winnerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; text-align:center; padding: 20px; }
-
-/* NOUVEAU STYLE COMMENTAIRE */
-.match-commentary { 
-    background: rgba(88, 166, 255, 0.05); 
-    border: 1px solid #30363d; 
-    padding: 8px 12px; 
-    border-radius: 8px; 
-    margin-top: 10px; 
-    font-size: 0.7rem; 
-    color: var(--muted); 
-    font-style: italic;
-    line-height: 1.3;
-}
-.match-commentary b { color: var(--blue); }
 </style>
 </head>
 <body>
@@ -149,36 +84,33 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 <div id="syncNotify"><i class="fas fa-sync-alt fa-spin"></i> Mise à jour Live...</div>
 
 <div id="loginOverlay">
-<i class="fas fa-shield-halved" style="font-size: 3rem; color: var(--purple); margin-bottom: 10px;"></i>
-<h2 style="margin:0">FC26 ELITE</h2>
-<div class="login-grid">
-<div class="user-btn admin-lock" onclick="checkPin()"><i class="fas fa-user-crown" style="color:var(--gold)"></i>ADMIN</div>
-<div class="user-btn" onclick="login('BVI')"><i class="fas fa-user"></i>BVI</div>
-<div class="user-btn" onclick="login('NAD')"><i class="fas fa-user"></i>NAD</div>
-<div class="user-btn" onclick="login('WIL')"><i class="fas fa-user"></i>WIL</div>
-<div class="user-btn" onclick="login('BROOK')"><i class="fas fa-user"></i>BROOK</div>
-</div>
+    <i class="fas fa-shield-halved" style="font-size: 3rem; color: var(--purple); margin-bottom: 10px;"></i>
+    <h2 style="margin:0 text-align:center">FC26 ELITE</h2>
+    <div class="login-grid">
+        <div class="user-btn admin-lock" onclick="checkPin()"><i class="fas fa-user-crown" style="color:var(--gold)"></i> ADMIN</div>
+        <div class="user-btn" onclick="login('BVI')">BVI</div>
+        <div class="user-btn" onclick="login('NAD')">NAD</div>
+        <div class="user-btn" onclick="login('WIL')">WIL</div>
+        <div class="user-btn" onclick="login('BROOK')">BROOK</div>
+    </div>
 </div>
 
 <div id="pinOverlay">
-<input type="password" id="pinCode" class="pin-input" maxlength="4" placeholder="••••">
-<button class="btn-primary" onclick="validatePin()">OK</button>
+    <input type="password" id="pinCode" class="pin-input" maxlength="4" placeholder="••••">
+    <button class="btn-primary" onclick="validatePin()">OK</button>
 </div>
 
 <div id="winnerModal">
-<div style="background: var(--card); padding: 40px; border-radius: 30px; border: 2px solid var(--gold);">
-<i class="fas fa-trophy" style="font-size: 4rem; color: var(--gold); margin-bottom: 20px;"></i>
-<h1 id="winnerName">-</h1>
-<button class="btn-primary" onclick="closeWinner()">NOUVELLE SAISON 🔥</button>
-</div>
+    <div style="background: var(--card); padding: 40px; border-radius: 30px; border: 2px solid var(--gold);">
+        <i class="fas fa-trophy" style="font-size: 4rem; color: var(--gold); margin-bottom: 20px;"></i>
+        <h1 id="winnerName">-</h1>
+        <button class="btn-primary" onclick="closeWinner()">NOUVELLE SAISON 🔥</button>
+    </div>
 </div>
 
 <header>
-<div onclick="logout()" style="cursor:pointer"><i class="fas fa-power-off"></i> <span id="userDisplay" style="font-size:0.7rem; color:var(--muted); margin-left:5px"></span></div>
-<div style="display:flex; align-items:center; gap:10px">
-<div class="sync-status" id="syncStatus"><i class="fas fa-circle" style="font-size:0.5rem"></i> LIVE</div>
-<div id="seasonBadge" class="season-badge">Saison 1</div>
-</div>
+    <div onclick="logout()" style="cursor:pointer"><i class="fas fa-power-off"></i> <span id="userDisplay" style="font-size:0.7rem; color:var(--muted); margin-left:5px"></span></div>
+    <div id="seasonBadge" class="season-badge">Saison 1</div>
 </header>
 
 <div id="resultTicker" class="ticker-wrap"></div>
@@ -186,12 +118,10 @@ td { padding: 12px 2px; border-bottom: 1px solid #30363d55; font-size: 0.85rem; 
 <main id="app"></main>
 
 <nav>
-<button class="active" data-tab="dashboard"><i class="fas fa-chart-line"></i><span>Stats</span></button>
-<button data-tab="analysis"><i class="fas fa-brain"></i><span>IA</span></button>
-<button data-tab="matches"><i class="fas fa-gamepad"></i><span>Jouer</span></button>
-<button data-tab="players"><i class="fas fa-users"></i><span>Joueurs</span></button>
-<button data-tab="hof"><i class="fas fa-crown"></i><span>H.O.F</span></button>
-<button data-tab="archives"><i class="fas fa-history"></i><span>Palmarès</span></button>
+    <button class="active" data-tab="dashboard"><i class="fas fa-chart-line"></i><span>Stats</span></button>
+    <button data-tab="matches"><i class="fas fa-gamepad"></i><span>Jouer</span></button>
+    <button data-tab="players"><i class="fas fa-users"></i><span>Joueurs</span></button>
+    <button data-tab="hof"><i class="fas fa-crown"></i><span>H.O.F</span></button>
 </nav>
 
 <script>
@@ -202,835 +132,143 @@ const TEAMS = ["Real Madrid", "Man City", "Barcelone", "Bayern Munich", "Liverpo
 let currentUser = localStorage.getItem("fc26_user") || null;
 let state = { season: 1, players: [], currentDay: [], archives: [], rotationQueue: [] };
 let isInteracting = false;
-let duelChartInstance = null;
 
-const notifySound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
 const qs = (s) => document.querySelector(s);
 const isAdmin = () => currentUser === 'ADMIN';
 
 async function pushData() { if (isAdmin()) { try { await fetch(FB_URL, { method: 'PUT', body: JSON.stringify(state) }); } catch (e) {} } }
 async function pullData() {
-if (isInteracting) return;
-try {
-const res = await fetch(FB_URL);
-const data = await res.json();
-if (data && JSON.stringify(data) !== JSON.stringify(state)) {
-state = data; render(); showNotify(); qs('#seasonBadge').innerText = `SAISON ${state.season}`;
-}
-} catch (e) {}
+    if (isInteracting) return;
+    try {
+        const res = await fetch(FB_URL);
+        const data = await res.json();
+        if (data && JSON.stringify(data) !== JSON.stringify(state)) {
+            state = data; render(); qs('#seasonBadge').innerText = `SAISON ${state.season}`;
+        }
+    } catch (e) {}
 }
 
-function showNotify() { const n = qs("#syncNotify"); n.style.display = "block"; notifySound.play().catch(e => {}); setTimeout(() => { n.style.display = "none"; }, 3000); }
 setInterval(pullData, 5000);
 
-function updateTicker() {
-    const ticker = qs("#resultTicker");
-    if (!state.archives || state.archives.length === 0) {
-        ticker.style.display = "none";
-        return;
-    }
-    ticker.style.display = "block";
-    const lastMatches = state.archives.flat().slice(-10).reverse();
-    const content = lastMatches.map(m => `
-        <div class="ticker-item">
-            ${m.p1} <b>${m.s1}-${m.s2}</b> ${m.p2} 
-        </div>
-    `).join('');
-    ticker.innerHTML = `<div class="ticker">${content}${content}</div>`;
-}
-
-function checkPin() { qs('#pinOverlay').style.display = 'flex'; qs('#pinCode').focus(); }
-function validatePin() { if(qs('#pinCode').value === ADMIN_PIN) { qs('#pinOverlay').style.display = 'none'; login('ADMIN'); } else { alert("PIN Incorrect"); } }
 function login(user) { currentUser = user; localStorage.setItem("fc26_user", user); qs('#loginOverlay').style.display = 'none'; qs('#userDisplay').innerText = user; pullData(); }
 function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
+function checkPin() { qs('#pinOverlay').style.display = 'flex'; qs('#pinCode').focus(); }
+function validatePin() { if(qs('#pinCode').value === ADMIN_PIN) { qs('#pinOverlay').style.display = 'none'; login('ADMIN'); } else { alert("PIN Incorrect"); } }
+
 if(currentUser) login(currentUser);
-function save() { if(isAdmin()) pushData(); render(); }
 
-// --- CALCULS ---
-function calculateValue(p) { 
-    let base = 10;
-    let ptsValue = (p.points || 0) * 1.5;
-    let gdValue = ((p.gf || 0) - (p.ga || 0)) * 0.5;
-    let csValue = (p.cs || 0) * 1.0;
-    return (base + ptsValue + gdValue + csValue).toFixed(1); 
-}
-
-function getPowerRankingTrend(p) {
-    const history = getForm(p.name);
-    if (history.length < 2) return '→';
-    const recent = history.slice(0, 3).reduce((acc, val) => acc + (val === 'win' ? 3 : (val === 'draw' ? 1 : 0)), 0) / 3;
-    const allStats = getAllTimeStats()[p.name];
-    const overall = allStats ? (allStats.pts / allStats.games) : 0;
-    
-    if (recent > overall + 0.5) return '↑';
-    if (recent < overall - 0.5) return '↓';
-    return '→';
-}
-
-function getPlayerBadges(p) {
-    const badges = [];
-    const stats = getAllTimeStats()[p.name];
-    if(!stats || stats.games === 0) return badges;
-    
-    const currentMoyenne = p.gf / Math.max(1, (p.points/3 + p.ga/10)); 
-    if (currentMoyenne > 3 || (stats.gf / stats.games) > 3) {
-        badges.push({ class: 'badge-sniper', icon: 'fa-crosshairs', label: 'Sniper' });
-    }
-    
-    const maxCS = Math.max(...state.players.map(pl => pl.cs || 0));
-    if (p.cs > 0 && p.cs === maxCS) {
-        badges.push({ class: 'badge-mur', icon: 'fa-user-shield', label: 'Muraille' });
-    }
-
-    const allMatches = state.archives ? state.archives.flat() : [];
-    const clutchWins = allMatches.filter(m => {
-        const isP1 = m.p1 === p.name;
-        const diff = Math.abs(m.s1 - m.s2);
-        return diff === 1 && ((isP1 && m.s1 > m.s2) || (!isP1 && m.s2 > m.s1));
-    }).length;
-    if (clutchWins >= 3) {
-        badges.push({ class: 'badge-clutch', icon: 'fa-bolt', label: 'Clutch' });
-    }
-    return badges;
-}
-
-function getProgressionData(playerName) {
-    if(!state.archives || state.archives.length < 1) return [40, 40, 40];
-    const history = [];
-    const last3Days = state.archives.slice(-3);
-    
-    last3Days.forEach(day => {
-        let pts = 0;
-        day.forEach(m => {
-            if(m.p1 === playerName) pts += (m.s1 > m.s2 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-            if(m.p2 === playerName) pts += (m.s2 > m.s1 ? 3 : (m.s1 === m.s2 ? 1 : 0));
-        });
-        let heightPercent = Math.min(100, Math.max(10, (pts / 9) * 100));
-        history.push(heightPercent);
-    });
-    while(history.length < 3) history.unshift(30);
-    return history;
-}
-
-function getStreak(playerName) {
-    const allMatches = state.archives ? state.archives.flat() : [];
-    const currentMatches = state.currentDay ? state.currentDay.filter(m => m.done) : [];
-    const totalHistory = [...allMatches, ...currentMatches]
-        .filter(m => m.p1 === playerName || m.p2 === playerName)
-        .reverse();
-
-    if (totalHistory.length === 0) return { count: 0, type: 'none' };
-    let count = 0;
-    let type = null;
-    for (let i = 0; i < totalHistory.length; i++) {
-        const m = totalHistory[i];
-        const isP1 = m.p1 === playerName;
-        const currentResult = m.s1 === m.s2 ? 'draw' : 
-                             ((isP1 && m.s1 > m.s2) || (!isP1 && m.s2 > m.s1) ? 'win' : 'loss');
-        if (i === 0) {
-            type = currentResult;
-            count = 1;
-        } else {
-            if (currentResult === type) count++;
-            else break;
-        }
-    }
-    return { count, type };
-}
-
-function getSeasonWinner(sNum) {
-    if(!state.archives) return "Inconnu";
-    let pts = {};
-    const matches = state.archives.flat().filter(m => m.seasonRef == sNum);
-    if(matches.length === 0) return "-";
-    matches.forEach(m => {
-        if(!pts[m.p1]) pts[m.p1] = 0;
-        if(!pts[m.p2]) pts[m.p2] = 0;
-        if(m.s1 > m.s2) pts[m.p1] += 3;
-        else if(m.s2 > m.s1) pts[m.p2] += 3;
-        else { pts[m.p1] += 1; pts[m.p2] += 1; }
-    });
-    return Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b);
-}
-
-function getHOFStats() {
-    const medals = {}; 
-    const allTimeStats = getAllTimeStats();
-    const players = state.players.map(p => p.name);
-    players.forEach(p => medals[p] = { gold: 0, silver: 0, bronze: 0, goals: allTimeStats[p]?.gf || 0, cs: allTimeStats[p]?.cs || 0, seasons: new Set() });
-
-    if(state.archives) {
-        const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
-        seasons.forEach(s => {
-            const matches = state.archives.flat().filter(m => m.seasonRef == s);
-            let pts = {};
-            matches.forEach(m => {
-                if(!pts[m.p1]) pts[m.p1] = 0; if(!pts[m.p2]) pts[m.p2] = 0;
-                if(m.s1 > m.s2) pts[m.p1] += 3; else if(m.s2 > m.s1) pts[m.p2] += 3; else { pts[m.p1]++; pts[m.p2]++; }
-                if(medals[m.p1]) medals[m.p1].seasons.add(s);
-                if(medals[m.p2]) medals[m.p2].seasons.add(s);
-            });
-            const sorted = Object.keys(pts).sort((a,b) => pts[b] - pts[a]);
-            if(sorted[0] && medals[sorted[0]]) medals[sorted[0]].gold++;
-            if(sorted[1] && medals[sorted[1]]) medals[sorted[1]].silver++;
-            if(sorted[2] && medals[sorted[2]]) medals[sorted[2]].bronze++;
-        });
-    }
-
-    let highestScore = { p1: "-", p2: "-", s1: 0, s2: 0, total: 0 };
-    const allMatches = state.archives ? state.archives.flat() : [];
-    allMatches.forEach(m => {
-        if((m.s1 + m.s2) > highestScore.total) {
-            highestScore = { ...m, total: m.s1 + m.s2 };
-        }
-    });
-    return { medals, highestScore };
-}
-
-function getGoat() {
-    if(!state.archives || state.archives.length === 0) return { name: "-", titles: 0 };
-    const titles = {};
-    const seasons = [...new Set(state.archives.flat().map(m => m.seasonRef))];
-    seasons.forEach(s => {
-        const winner = getSeasonWinner(s);
-        if(winner !== "-" && winner !== "Inconnu") titles[winner] = (titles[winner] || 0) + 1;
-    });
-    const winnerName = Object.keys(titles).reduce((a, b) => titles[a] > titles[b] ? a : b, "-");
-    return { name: winnerName, titles: titles[winnerName] || 0 };
-}
-
-function getAllTimeStats() {
-let stats = {}; if(!state.archives) return stats;
-state.archives.flat().forEach(m => {
-if(!stats[m.p1]) stats[m.p1] = { gf:0, ga:0, pts:0, cs:0, games:0 };
-if(!stats[m.p2]) stats[m.p2] = { gf:0, ga:0, pts:0, cs:0, games:0 };
-stats[m.p1].gf += m.s1; stats[m.p1].ga += m.s2; stats[m.p1].games++;
-stats[m.p2].gf += m.s2; stats[m.p2].ga += m.s1; stats[m.p2].games++;
-if(m.s2 === 0) stats[m.p1].cs++;
-if(m.s1 === 0) stats[m.p2].cs++;
-if(m.s1 > m.s2) stats[m.p1].pts += 3; else if(m.s2 > m.s1) stats[m.p2].pts += 3; else { stats[m.p1].pts++; stats[m.p2].pts++; }
-});
-return stats;
-}
-
-function getLivePrediction() {
-if(!state.players || state.players.length === 0) return null;
-let scores = state.players.map(p => {
-let power = p.points + ((p.gf - p.ga) * 0.5) + (p.cs * 0.5);
-return { name: p.name, power: power };
-});
-scores.sort((a,b) => b.power - a.power);
-let totalPower = scores.reduce((acc, curr) => acc + Math.max(0.1, curr.power), 0);
-let top = scores[0];
-let proba = Math.round((Math.max(0.1, top.power) / (totalPower || 1)) * 100);
-return { name: top.name, proba: proba };
-}
-
-function getSeasonRecord() {
-let record = { name: "-", goals: 0, season: 0 }; if(!state.archives) return record;
-const seasons = {};
-state.archives.flat().forEach(m => {
-const key1 = `S${m.seasonRef}_${m.p1}`; const key2 = `S${m.seasonRef}_${m.p2}`;
-seasons[key1] = (seasons[key1] || 0) + m.s1; seasons[key2] = (seasons[key2] || 0) + m.s2;
-});
-Object.keys(seasons).forEach(k => { if(seasons[k] > record.goals) { record.goals = seasons[k]; record.name = k.split('_')[1]; record.season = k.split('_')[0]; } });
-return record;
-}
-function getForm(name) {
-const history = []; const allMatches = state.archives ? state.archives.flat() : [];
-[...allMatches].reverse().forEach(m => {
-if((m.p1 === name || m.p2 === name) && history.length < 5) {
-const win = (m.p1 === name) ? m.s1 > m.s2 : m.s2 > m.s1;
-const draw = m.s1 === m.s2;
-history.push(win ? 'win' : (draw ? 'draw' : 'loss'));
-}
-});
-return history;
-}
-function getPrediction() {
-const allTime = getAllTimeStats(); if (Object.keys(allTime).length === 0) return { name: "N/A", proba: 0 };
-let best = Object.keys(allTime).reduce((a, b) => (allTime[a]?.pts||0) > (allTime[b]?.pts||0) ? a : b);
-let total = Object.values(allTime).reduce((a, b) => a + (b.pts||0), 0);
-return { name: best, proba: Math.round(((allTime[best]?.pts||0)/(total||1))*100) };
-}
-function getTactic(playerName) {
-const stats = getAllTimeStats()[playerName] || {gf:0, ga:0, games:1};
-const avgGf = stats.gf / stats.games; const avgGa = stats.ga / stats.games;
-if(avgGf > 2.5) return { form: "4-3-3 OFFENSIF", style: "Construction Rapide", def: "Pressing Constant", width: "65 / 70", role: "Faux 9 / Ailiers Intérieurs" };
-if(avgGa < 1.5) return { form: "5-2-1-2", style: "Contre-Attaque", def: "Reculer", width: "40 / 30", role: "Piston Offensif" };
-return { form: "4-2-3-1 (2)", style: "Équilibré", def: "Équilibré", width: "50 / 50", role: "MOC Libre / Pivot" };
-}
-
-function getMatchBriefing(p1Name, p2Name) {
-    const allMatches = state.archives ? state.archives.flat() : [];
-    const stats = getAllTimeStats();
-    let headToHead = { p1Wins: 0, p2Wins: 0, draws: 0, p1Goals: 0, p2Goals: 0 };
-    allMatches.forEach(m => {
-        if((m.p1 === p1Name && m.p2 === p2Name) || (m.p1 === p2Name && m.p2 === p1Name)) {
-            const p1IsM1 = m.p1 === p1Name;
-            if(m.s1 === m.s2) headToHead.draws++;
-            else if((p1IsM1 && m.s1 > m.s2) || (!p1IsM1 && m.s2 > m.s1)) headToHead.p1Wins++;
-            else headToHead.p2Wins++;
-            headToHead.p1Goals += p1IsM1 ? m.s1 : m.s2;
-            headToHead.p2Goals += p1IsM1 ? m.s2 : m.s1;
-        }
-    });
-    const totalGames = headToHead.p1Wins + headToHead.p2Wins + headToHead.draws;
-    const p1Form = getForm(p1Name);
-    const p2Form = getForm(p2Name);
-    let analysis = "";
-    if(totalGames === 0) analysis = "Premier duel historique ! ";
-    else {
-        const leader = headToHead.p1Wins > headToHead.p2Wins ? p1Name : (headToHead.p2Wins > headToHead.p1Wins ? p2Name : null);
-        analysis = leader ? `**${leader}** a l'avantage psychologique (${Math.max(headToHead.p1Wins, headToHead.p2Wins)} victoires). ` : "Égalité parfaite sur leurs duels passés. ";
-    }
-    if(p1Form[0] === 'win' && p1Form[1] === 'win') analysis += `**${p1Name}** est sur une série de feu. `;
-    if(p2Form[0] === 'loss' && p2Form[1] === 'loss') analysis += `Attention, **${p2Name}** semble en plein doute. `;
-    let advice = "IA : ";
-    const avgGaP2 = (stats[p2Name]?.ga / stats[p2Name]?.games) || 0;
-    if(avgGaP2 > 2.5) advice += `La défense de **${p2Name}** prend l'eau (${avgGaP2.toFixed(1)} buts/m), **${p1Name}** doit tout miser sur l'attaque.`;
-    else if(totalGames > 0 && headToHead.p1Goals / totalGames > 2) advice += `**${p1Name}** sait comment marquer face à ce bloc, patience et contres rapides recommandés.`;
-    else advice += "Match fermé en vue. Le premier but sera probablement décisif.";
-    return { analysis, advice };
-}
-
-// --- FONCTION COMMENTAIRE AUTOMATIQUE ENRICHIE ---
-function generateMatchCommentary(m) {
-    const winner = m.s1 > m.s2 ? m.p1 : (m.s2 > m.s1 ? m.p2 : null);
-    const loser = winner === m.p1 ? m.p2 : m.p1;
-    const diff = Math.abs(m.s1 - m.s2);
-    const total = m.s1 + m.s2;
-    const statsAllTime = getAllTimeStats();
-    
-    let base = "";
-    let specialEvent = "";
-
-    if (winner) {
-        const sortedScorers = Object.entries(statsAllTime).sort((a,b) => b[1].gf - a[1].gf);
-        if (sortedScorers[0] && winner === sortedScorers[0][0]) {
-            specialEvent = ` <br>⭐ <b>HISTORIQUE :</b> <b>${winner}</b> confirme sa place de meilleur buteur de l'histoire !`;
-        }
-
-        if ((m.s1 === 0 || m.s2 === 0)) {
-            const currentCS = statsAllTime[winner]?.cs || 0;
-            if (currentCS % 5 === 0 && currentCS > 0) {
-                specialEvent = ` <br>🛡️ <b>LE MUR :</b> <b>${winner}</b> vient de signer sa ${currentCS}ème Clean Sheet all-time !`;
-            }
-        }
-
-        const streak = getStreak(winner);
-        if (streak.count >= 3 && streak.type === 'win') {
-            specialEvent = ` <br>🔥 <b>SÉRIE :</b> Personne n'arrête <b>${winner}</b> ! ${streak.count}ème victoire consécutive.`;
-        }
-    }
-
-    const winPhrases = [
-        `Victoire impériale de <b>${winner}</b> qui n'a laissé aucune chance à son adversaire.`,
-        `<b>${winner}</b> dicte sa loi aujourd'hui ! Un succès précieux.`,
-        `Quel réalisme de <b>${winner}</b> ! Le plan de jeu a fonctionné à merveille.`
-    ];
-    const tightPhrases = [
-        `<b>${winner}</b> l'emporte de justesse au terme d'un duel tactique intense.`,
-        `Match sous haute tension ! <b>${winner}</b> arrache les 3 points sur le fil.`,
-        `Cruel pour <b>${loser}</b>, mais c'est <b>${winner}</b> qui sort vainqueur de ce combat.`
-    ];
-    const stompPhrases = [
-        `Démonstration de force ! <b>${winner}</b> a littéralement humilié <b>${loser}</b>.`,
-        `Festival offensif ! <b>${winner}</b> était sur une autre planète.`,
-        `<b>${loser}</b> va devoir oublier ce cauchemar au plus vite...`
-    ];
-    const drawPhrases = [
-        `Un nul qui n'arrange personne. <b>${m.p1}</b> et <b>${m.p2}</b> se quittent dos à dos.`,
-        `Égalité parfaite. Les deux managers ont neutralisé leurs forces.`,
-        `Spectacle décevant ou défense de fer ? Le score reste de parité.`
-    ];
-
-    if (winner) {
-        if (diff >= 4) base = stompPhrases[Math.floor(Math.random() * stompPhrases.length)];
-        else if (diff === 1) base = tightPhrases[Math.floor(Math.random() * tightPhrases.length)];
-        else base = winPhrases[Math.floor(Math.random() * winPhrases.length)];
-        
-        if ((m.s1 === 0 || m.s2 === 0) && !specialEvent.includes("MUR")) {
-            base += " La défense a été héroïque, aucun but encaissé !";
-        }
-    } else {
-        if (total >= 4) base = "Un match nul spectaculaire ! Les attaques ont pris le pas sur les défenses.";
-        else base = drawPhrases[Math.floor(Math.random() * drawPhrases.length)];
-    }
-    
-    return base + specialEvent;
-}
-
-// --- NOUVELLE FONCTION EXPORT PDF STRUCTURÉ ---
-function exportFullHistoryPDF() {
-    const container = document.createElement('div');
-    container.className = 'pdf-export-content';
-    container.innerHTML = `<div class="pdf-header"><h1>RAPPORT HISTORIQUE - FC26 ELITE</h1><p>Date d'export : ${new Date().toLocaleDateString()}</p></div>`;
-
-    if(!state.archives || state.archives.length === 0) {
-        container.innerHTML += "<p style='text-align:center'>Aucune donnée archivée.</p>";
-    } else {
-        const grouped = {};
-        state.archives.flat().forEach(m => {
-            if(!grouped[m.seasonRef]) grouped[m.seasonRef] = [];
-            grouped[m.seasonRef].push(m);
-        });
-
-        Object.keys(grouped).sort((a,b)=>b-a).forEach(sNum => {
-            const winner = getSeasonWinner(sNum);
-            let html = `<div class="pdf-season-block">
-                <h2 class="pdf-season-title">SAISON ${sNum} — Vainqueur : ${winner} 🏆</h2>
-                <table class="pdf-table">
-                    <thead><tr><th>Match</th><th>Score</th><th>Équipes jouées</th><th>Date</th></tr></thead>
-                    <tbody>`;
-            grouped[sNum].forEach(m => {
-                html += `<tr>
-                    <td>${m.p1} vs ${m.p2}</td>
-                    <td style="font-weight:bold">${m.s1} - ${m.s2}</td>
-                    <td>${m.team1} / ${m.team2}</td>
-                    <td>${m.date || '-'}</td>
-                </tr>`;
-            });
-            html += `</tbody></table></div>`;
-            container.innerHTML += html;
-        });
-    }
-
-    const opt = { margin: 10, filename: `FC26_Historique_Complet.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-    html2pdf().from(container).set(opt).save();
-}
+function calculateValue(p) { return (10 + (p.points*1.5) + ((p.gf-p.ga)*0.5)).toFixed(1); }
 
 function render() {
-updateTicker();
-const tab = qs("nav button.active").dataset.tab;
-const app = qs("#app"); app.innerHTML = "";
+    const tab = qs("nav button.active").dataset.tab;
+    const app = qs("#app"); app.innerHTML = "";
 
-if (tab === "dashboard") {
-const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
-const pichichi = [...state.players].sort((a,b) => b.gf - a.gf)[0];
-const defense = [...state.players].sort((a,b) => (a.ga/Math.max(1,a.points)) - (b.ga/Math.max(1,b.points)))[0];
-const topCS = [...state.players].sort((a,b) => (b.cs || 0) - (a.cs || 0))[0];
-const topVal = sorted.length ? [...state.players].sort((a,b) => calculateValue(b) - calculateValue(a))[0] : null;
-
-app.innerHTML = `<div id="pdf-area">
-<div class="awards-scroll">
-<div class="award-card">⚽ <div class="award-winner">${pichichi?.gf > 0 ? pichichi.name : '-'}</div><div style="font-size:0.5rem">PICHICHI (${pichichi?.gf || 0})</div></div>
-<div class="award-card" style="border-color: var(--blue)">🧤 <div class="award-winner">${topCS?.cs > 0 ? topCS.name : '-'}</div><div style="font-size:0.5rem">GANTS D'OR (${topCS?.cs || 0} CS)</div></div>
-<div class="award-card">🛡️ <div class="award-winner">${defense?.name || '-'}</div><div style="font-size:0.5rem">LE ROC</div></div>
-<div class="award-card">💎 <div class="award-winner">${topVal ? calculateValue(topVal) : '0'}M</div><div style="font-size:0.5rem">VALEUR TOP</div></div>
-</div>
-<div style="display:flex; justify-content:space-between; margin:15px 0">
-<h3>Classement S${state.season}</h3>
-<button class="btn-primary" style="width:auto; padding:5px 15px; font-size:0.7rem" onclick="exportPDF()">PDF</button>
-</div>
-<div class="card">
-<table>
-<thead>
-<tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">Prog.</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr>
-</thead>
-<tbody>
-${sorted.map(p => {
-const trend = getPowerRankingTrend(p);
-const trendColor = trend === '↑' ? 'var(--accent)' : (trend === '↓' ? 'var(--danger)' : 'var(--muted)');
-const s = getStreak(p.name);
-const prog = getProgressionData(p.name);
-const badges = getPlayerBadges(p);
-let streakIcon = "";
-if(s.count >= 2) {
-    if(s.type === 'win') streakIcon = `<span style="color:var(--gold); font-size:0.7rem; margin-left:5px"><i class="fas fa-fire"></i> ${s.count}</span>`;
-    else if(s.type === 'loss') streakIcon = `<span style="color:var(--danger); font-size:0.7rem; margin-left:5px"><i class="fas fa-arrow-down"></i> ${s.count}</span>`;
-}
-return `<tr>
-<td class="col-player">
-    <strong>${p.name}</strong><span class="power-trend" style="color:${trendColor}">${trend}</span>${streakIcon}
-    <div class="badge-container">
-        ${badges.map(b => `<span class="prestige-badge ${b.class}"><i class="fas ${b.icon}"></i> ${b.label}</span>`).join('')}
-    </div>
-</td>
-<td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
-<td class="col-center">
-    <div class="sparkline-box">
-        ${prog.map((v, i) => {
-            const isUp = i > 0 && v > prog[i-1];
-            const isDown = i > 0 && v < prog[i-1];
-            return `<div class="spark-bar ${isUp?'spark-up':isDown?'spark-down':''}" style="height:${v}%"></div>`;
-        }).join('')}
-    </div>
-</td>
-<td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
-<td class="col-center"><div class="form-container">${getForm(p.name).map(f => `<div class="dot ${f}"></div>`).join('')}</div></td>
-</tr>`}).join('')}
-</tbody>
-</table>
-</div>
-</div>${isAdmin() ? `
-<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px">
-    <button class="btn-primary" style="background:var(--danger)" onclick="finishSeason()">TERMINER SAISON</button>
-    <button class="btn-primary" style="background:var(--purple)" onclick="addSpecificSeason()">SAISON SPÉCIFIQUE</button>
-</div>` : ''}`;
-}
-
-if (tab === "analysis") {
-const allTime = getAllTimeStats();
-const pred = getPrediction();
-const livePred = getLivePrediction();
-const seasonRecord = getSeasonRecord();
-const upcomingMatches = state.currentDay ? state.currentDay.filter(m => !m.done) : [];
-const playersByGoals = Object.keys(allTime).sort((a,b) => allTime[b].gf - allTime[a].gf);
-const playersByCS = Object.keys(allTime).sort((a,b) => allTime[b].cs - allTime[a].cs);
-
-app.innerHTML = `<h3>🧠 Analyse IA</h3>
-<div class="card live-predict-card">
-<div style="color:var(--accent); font-size:0.7rem; font-weight:bold"><i class="fas fa-chart-line"></i> PRÉDICTION TITRE (SAISON ${state.season})</div>
-<div style="font-size:1.6rem; font-weight:700; margin:5px 0">${livePred ? livePred.name : '-'}</div>
-<div style="font-size:0.7rem; color:var(--muted); margin-bottom:10px">Basée sur le Power Ranking actuel</div>
-<div style="display:flex; align-items:center; gap:10px">
-<div style="flex:1; height:6px; background:#000; border-radius:10px; overflow:hidden">
-<div style="width:${livePred ? livePred.proba : 0}%; height:100%; background:var(--accent)"></div>
-</div>
-<span style="font-weight:bold">${livePred ? livePred.proba : 0}%</span>
-</div>
-</div>
-${upcomingMatches.length > 0 ? `
-<div class="card" style="border: 1px solid var(--gold)">
-<strong style="color:var(--gold); font-size:0.8rem"><i class="fas fa-bolt"></i> BRIEFING DES MATCHS</strong>
-${upcomingMatches.map(m => {
-const brief = getMatchBriefing(m.p1, m.p2);
-return `
-<div class="brief-box">
-<div class="brief-title"><i class="fas fa-vs"></i> ${m.p1} VS ${m.p2}</div>
-${brief.analysis.replace(/\*\*/g, '<b>').replace(/\*\*/g, '</b>')}
-<span class="brief-advice">${brief.advice.replace(/\*\*/g, '<b>').replace(/\*\*/g, '</b>')}</span>
-</div>`;
-}).join('')}
-</div>` : ''}
-<div class="card predict-card">
-<div style="color:var(--purple); font-size:0.7rem">FAVORI HISTORIQUE (ALL-TIME) 🔥</div>
-<div style="font-size:1.4rem; font-weight:700; margin:10px 0">${pred.name}</div>
-<div style="display:flex; align-items:center; gap:10px">
-<div style="flex:1; height:6px; background:#000; border-radius:10px; overflow:hidden">
-<div style="width:${pred.proba}%; height:100%; background:var(--purple)"></div>
-</div>
-<span>${pred.proba}%</span>
-</div>
-</div>
-<div class="card"><strong>📋 CONSEIL TACTIQUE</strong><select id="tacticPlayer" class="team-select" style="width:100%; margin-top:10px" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderTacticAdvice()"><option value="">Sélectionner un joueur...</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><div id="tacticResult"></div></div>
-<div class="card"><strong>⚔️ COMPARATEUR</strong><div style="display:flex; gap:10px; margin-top:10px"><select id="duel1" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 1</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select><select id="duel2" class="team-select" style="flex:1" onfocus="isInteracting=true" onblur="isInteracting=false" onchange="renderDuelAnalysis()"><option value="">Joueur 2</option>${state.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}</select></div><div id="duelResult"></div></div>
-<div class="card"><strong>🏆 PANTHÉON</strong><div class="stat-row"><span class="stat-label">⚽ BUTEUR ALL-TIME</span><span class="stat-value">${playersByGoals[0] || '-'} (${allTime[playersByGoals[0]]?.gf || 0} buts)</span></div><div class="stat-row"><span class="stat-label">🧤 CLEAN SHEETS ALL-TIME</span><span class="stat-value">${playersByCS[0] || '-'} (${allTime[playersByCS[0]]?.cs || 0})</span></div><div class="stat-row"><span class="stat-label">🔥 RECORD / SAISON</span><span class="stat-value">${seasonRecord.name} (${seasonRecord.goals})</span></div></div>`;
-}
-
-if (tab === "matches") {
-if (!state.currentDay || state.currentDay.length === 0) {
-let rotationBtn = (isAdmin() && state.players.length === 3) ? `<button class="btn-primary btn-rotation" onclick="startWinnerStays()">MODE 3 JOUEURS (WINNER STAYS) 🔄</button>` : '';
-app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE CLASSIQUE ⚽</button> ${rotationBtn}` : `<p>Attente de l'Admin...</p>`}</div>`;
-} else {
-app.innerHTML = `<h3>Matchs S${state.season} ${state.rotationQueue && state.rotationQueue.length > 0 ? '(Winner Stays)' : ''}</h3><div class="card">${state.currentDay.map((m, i) => {
-const isDraw = m.s1 !== null && m.s1 === m.s2;
-return `
-<div class="match-card">
-    <div class="team-row">
-        <span>${m.p1}</span>
-        <select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select>
-        <div style="display:flex; align-items:center">
-            <input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false" oninput="render()">
-            ${isAdmin() && !m.done && isDraw ? `<input type="number" id="d1_${i}" class="dice-input" placeholder="🎲" onfocus="isInteracting=true">` : ''}
+    if (tab === "dashboard") {
+        const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
+        app.innerHTML = `<h3>Classement S${state.season}</h3>
+        <div class="card">
+            <table>
+                <thead><tr><th class="col-player">Joueur</th><th class="col-center">Pts</th><th class="col-center">Valeur</th><th class="col-center">Forme</th></tr></thead>
+                <tbody>
+                    ${sorted.map(p => `<tr>
+                        <td class="col-player"><strong>${p.name}</strong></td>
+                        <td class="col-center" style="color:var(--blue); font-weight:bold">${p.points}</td>
+                        <td class="col-center"><span class="val-badge">${calculateValue(p)}M</span></td>
+                        <td class="col-center">...</td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
         </div>
-    </div>
-    <div class="team-row">
-        <span>${m.p2}</span>
-        <select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select>
-        <div style="display:flex; align-items:center">
-            <input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false" oninput="render()">
-            ${isAdmin() && !m.done && isDraw ? `<input type="number" id="d2_${i}" class="dice-input" placeholder="🎲" onfocus="isInteracting=true">` : ''}
-        </div>
-    </div>
-    ${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div><div class="match-commentary"><i class="fas fa-quote-left" style="font-size:0.5rem; vertical-align:top; margin-right:5px"></i>${generateMatchCommentary(m)} ${m.d1 ? `<br><small>Dés: ${m.d1}-${m.d2}</small>` : ''}</div>` : ''}
-</div>`}).join('')}</div>`;
-if(state.rotationQueue && state.rotationQueue.length > 0) {
-app.innerHTML += `<div class="card" style="border: 1px dashed var(--purple); text-align:center"><small style="color:var(--muted)">PROCHAIN MATCH : LE GAGNANT CONTRE</small><br><strong>${state.rotationQueue[0]}</strong></div>`;
-}
-}
-}
+        ${isAdmin() ? `<button class="btn-primary" style="background:var(--danger)" onclick="finishSeason()">TERMINER SAISON</button>` : ''}`;
+    }
 
-if (tab === "players") {
-app.innerHTML = `<h3>Effectif 👥</h3>${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px" onfocus="isInteracting=true" onblur="isInteracting=false"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><div><strong>${p.name}</strong><br><small style="color:var(--blue)">${calculateValue(p)} M€ (Pts: ${p.points})</small></div>${isAdmin() ? `<div style="display:flex; gap:12px"><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent); font-size:1.1rem; cursor:pointer"><i class="fas fa-plus-circle"></i></button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--gold); font-size:1.1rem; cursor:pointer"><i class="fas fa-minus-circle"></i></button><button onclick="removePlayer('${p.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash"></i></button></div>` : ''}</div>`).join('')}${isAdmin() ? `<button class="btn-primary" style="background:var(--danger); margin-top:30px" onclick="initSystem()">⚠️ RÉINITIALISER TOUT</button>` : ''}`;
-}
-
-if (tab === "hof") {
-    const hof = getHOFStats();
-    const goat = getGoat();
-    const sortedMedals = Object.entries(hof.medals).sort((a,b) => b[1].gold - a[1].gold || b[1].silver - a[1].silver || b[1].bronze - a[1].bronze);
-    const topScorer = Object.entries(hof.medals).sort((a,b) => b[1].goals - a[1].goals)[0];
-    const topCSAll = Object.entries(hof.medals).sort((a,b) => b[1].cs - a[1].cs)[0];
-    const titlesRanking = Object.entries(hof.medals).filter(m => m[1].gold > 0).sort((a,b) => b[1].gold - a[1].gold);
-
-    app.innerHTML = `<h3>🏛️ Hall of Fame</h3>
-    <div class="card predict-card" style="border: 2px solid var(--gold); text-align:center; background: linear-gradient(135deg, #1e1b4b 0%, #05070a 100%);">
-        <div style="color:var(--gold); font-size:0.8rem; font-weight:bold; letter-spacing:2px">THE G.O.A.T</div>
-        <i class="fas fa-crown" style="font-size:3.5rem; color:var(--gold); margin:15px 0; filter: drop-shadow(0 0 10px rgba(212,175,55,0.5))"></i>
-        <div style="font-size:2.2rem; font-weight:800; text-transform:uppercase; color:white">${goat.name}</div>
-        <div style="color:var(--gold); font-size:1.1rem; font-weight:bold; margin-top:5px">
-            <i class="fas fa-trophy"></i> ${goat.titles} ${goat.titles > 1 ? 'SAISONS REMPORTÉES' : 'SAISON REMPORTÉE'}
-        </div>
-    </div>
-    <div class="card" style="border-left: 4px solid var(--gold)">
-        <strong style="font-size:0.8rem; color:var(--gold)"><i class="fas fa-list-ol"></i> CLASSEMENT DES TITRES</strong>
-        <div style="margin-top:12px">
-            ${titlesRanking.length > 0 ? titlesRanking.map((m, idx) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom: 1px solid #ffffff05">
-                    <span style="font-size:0.9rem"><span style="color:var(--muted); margin-right:8px">#${idx + 1}</span><b>${m[0]}</b></span>
-                    <span style="background:rgba(212,175,55,0.1); color:var(--gold); padding:4px 10px; border-radius:12px; font-weight:bold; font-size:0.8rem">${m[1].gold} 🏆</span>
-                </div>
-            `).join('') : '<div style="color:var(--muted); font-size:0.7rem; text-align:center; padding:10px">Aucun titre de saison décerné.</div>'}
-        </div>
-    </div>
-    <div class="card">
-        <strong>🥇 TABLEAU DES MÉDAILLES (TOP 3)</strong>
-        <div style="margin-top:15px">
-            ${sortedMedals.map((m, idx) => `
-                <div class="medal-card ${idx==0?'medal-gold':idx==1?'medal-silver':idx==2?'medal-bronze':''}" style="background:rgba(255,255,255,0.02); margin-bottom:8px">
-                    <div style="font-size:1.1rem; font-weight:bold; width:30px; color:var(--muted)">${idx+1}</div>
-                    <div style="flex:1">
-                        <div style="font-weight:bold; font-size:0.9rem">${m[0]}</div>
-                        <div style="display:flex; gap:12px; margin-top:4px">
-                            <span style="color:var(--gold); font-size:0.75rem"><i class="fas fa-award"></i> ${m[1].gold} Or</span>
-                            <span style="color:var(--silver); font-size:0.75rem"><i class="fas fa-award"></i> ${m[1].silver} Arg.</span>
-                            <span style="color:var(--bronze); font-size:0.75rem"><i class="fas fa-award"></i> ${m[1].bronze} Br.</span>
-                            <span style="color:var(--muted); font-size:0.7rem; margin-left:auto">CS: <b>${m[1].cs}</b></span>
-                        </div>
+    if (tab === "matches") {
+        if (!state.currentDay || state.currentDay.length === 0) {
+            app.innerHTML = `<div class="card" style="text-align:center">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE ⚽</button>` : `<p>Attente de l'Admin...</p>`}</div>`;
+        } else {
+            app.innerHTML = `<h3>Matchs en cours</h3><div class="card">
+            ${state.currentDay.map((m, i) => `
+                <div class="match-card">
+                    <div class="team-row">
+                        <span>${m.p1}</span>
+                        <input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">
                     </div>
+                    <div class="team-row">
+                        <span>${m.p2}</span>
+                        <input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">
+                    </div>
+                    ${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent)">Terminé 🔒</div>` : ''}
                 </div>
-            `).join('')}
-        </div>
-    </div>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
-        <div class="card" style="margin-bottom:0">
-            <div class="hof-label">Pichichi All-Time</div>
-            <div class="hof-stat" style="font-size:1rem; color:var(--blue)">${topScorer ? topScorer[0] : '-'}</div>
-            <div style="font-size:0.7rem; color:var(--muted)">${topScorer ? topScorer[1].goals : 0} buts</div>
-        </div>
-        <div class="card" style="margin-bottom:0">
-            <div class="hof-label">Gants d'Or All-Time</div>
-            <div class="hof-stat" style="font-size:1rem; color:var(--purple)">${topCSAll ? topCSAll[0] : '-'}</div>
-            <div style="font-size:0.7rem; color:var(--muted)">${topCSAll ? topCSAll[1].cs : 0} CS</div>
-        </div>
-    </div>`;
-}
-
-if (tab === "archives") {
-    app.innerHTML = `<h3>🏆 Historique des Saisons</h3>
-    <button class="btn-primary" style="background:var(--purple); margin-bottom:15px;" onclick="exportFullHistoryPDF()"><i class="fas fa-file-pdf"></i> GÉNÉRER RAPPORT PDF HISTORIQUE</button>`;
-    
-    if(!state.archives) return;
-    const grouped = {}; 
-    state.archives.forEach((d, globalIdx) => {
-        const sRef = d[0].seasonRef;
-        if(!grouped[sRef]) grouped[sRef] = [];
-        grouped[sRef].push({day: d, idx: globalIdx});
-    });
-    Object.keys(grouped).sort((a,b) => b-a).forEach(s => {
-        const sWinner = getSeasonWinner(s);
-        app.innerHTML += `<div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-        <div>
-            <div style="color:var(--gold); font-weight:bold">SAISON ${s}</div>
-            <div style="font-size:0.7rem; color:var(--accent)">Vainqueur : <b>${sWinner}</b> 🏆</div>
-        </div>
-        ${isAdmin() ? `<button onclick="deleteSeason(${s})" style="background:none; border:none; color:var(--danger); cursor:pointer"><i class="fas fa-trash-alt"></i></button>` : ''}
-        </div>
-        ${grouped[s].map((item, di) => `
-        <details style="margin-bottom:8px">
-        <summary style="color:var(--blue); font-size:0.75rem">Journée ${di+1} (${item.day[0].date})</summary>
-        <div style="font-size:0.75rem; padding:10px">
-        ${item.day.map((m, mIdx) => `
-        <div style="display:flex; flex-direction:column; gap:2px; margin-bottom:12px; border-bottom:1px solid #333; padding-bottom:8px">
-        <div style="display:flex; justify-content:space-between; align-items:center">
-        <span style="font-weight:bold">${m.p1} <span style="color:var(--muted); font-size:0.6rem; font-weight:normal">(${m.team1 || '?'})</span></span>
-        <b style="font-size:1rem; color:var(--blue)">${m.s1} - ${m.s2}</b>
-        <span style="font-weight:bold; text-align:right"><span style="color:var(--muted); font-size:0.6rem; font-weight:normal">(${m.team2 || '?'})</span> ${m.p2}</span>
-        </div>
-        ${isAdmin() ? `<div style="text-align:center; margin-top:5px"><button class="btn-edit" onclick="editOldMatch(${item.idx}, ${mIdx})">Modifier Score</button></div>` : ''}
-        </div>
-        <div id="edit_${item.idx}_${mIdx}"></div>
-        `).join('')}
-        </div>
-        </details>`).join('')}
-        </div>`;
-    });
-}
-}
-
-function startWinnerStays() {
-if(isAdmin() && state.players.length === 3) {
-const names = state.players.map(p => p.name);
-state.rotationQueue = [names[2]];
-state.currentDay = [{
-p1: names[0], p2: names[1], s1: null, s2: null, done: false,
-seasonRef: state.season, date: new Date().toLocaleDateString('fr-FR'),
-team1: "Real Madrid", team2: "Man City"
-}];
-save();
-}
-}
-
-function handleRotation(lastMatch) {
-let winner, loser;
-if (lastMatch.s1 === lastMatch.s2) {
-    const d1 = parseInt(qs("#d1_" + (state.currentDay.length - 1))?.value);
-    const d2 = parseInt(qs("#d2_" + (state.currentDay.length - 1))?.value);
-    if (d1 > d2) { winner = lastMatch.p1; loser = lastMatch.p2; }
-    else if (d2 > d1) { winner = lastMatch.p2; loser = lastMatch.p1; }
-    else { alert("Égalité parfaite des dés ! Relancez."); return; }
-} else {
-    winner = lastMatch.s1 > lastMatch.s2 ? lastMatch.p1 : lastMatch.p2;
-    loser = winner === lastMatch.p1 ? lastMatch.p2 : lastMatch.p1;
-}
-
-const waiting = state.rotationQueue.shift();
-state.rotationQueue.push(loser);
-state.currentDay.push({
-p1: winner, p2: waiting, s1: null, s2: null, done: false,
-seasonRef: state.season, date: new Date().toLocaleDateString('fr-FR'),
-team1: "Real Madrid", team2: "Man City"
-});
-}
-
-function editOldMatch(dayIdx, mIdx) {
-isInteracting = true;
-const m = state.archives[dayIdx][mIdx];
-qs(`#edit_${dayIdx}_${mIdx}`).innerHTML = `
-<div class="edit-box">
-<input type="number" id="ns1" class="score-input" value="${m.s1}" style="width:50px"> -
-<input type="number" id="ns2" class="score-input" value="${m.s2}" style="width:50px">
-<div style="margin-top:10px; display:flex; gap:10px; justify-content:center">
-<button class="btn-primary" style="padding:5px 15px; font-size:0.7rem" onclick="saveOldMatch(${dayIdx}, ${mIdx})">CONFIRMER ✅</button>
-<button class="btn-primary" style="background:var(--danger); padding:5px 15px; font-size:0.7rem" onclick="render()">ANNULER</button>
-</div>
-</div>`;
-}
-
-function saveOldMatch(dayIdx, mIdx) {
-const s1 = parseInt(qs("#ns1").value), s2 = parseInt(qs("#ns2").value);
-if(confirm(`Modifier ce score en ${s1}-${s2} ? Les points des joueurs seront recalculés.`)) {
-const m = state.archives[dayIdx][mIdx];
-const p1 = state.players.find(p => p.name === m.p1), p2 = state.players.find(p => p.name === m.p2);
-if(p1 && p2) {
-p1.gf -= m.s1; p1.ga -= m.s2; p2.gf -= m.s2; p2.ga -= m.s1;
-if(m.s2 === 0) p1.cs = (p1.cs || 1) - 1;
-if(m.s1 === 0) p2.cs = (p2.cs || 1) - 1;
-if(m.s1 > m.s2) p1.points -= 3; else if(m.s2 > m.s1) p2.points -= 3; else {p1.points -= 1; p2.points -= 1;}
-p1.gf += s1; p1.ga += s2; p2.gf += s2; p2.ga += s1;
-if(s2 === 0) p1.cs = (p1.cs || 0) + 1;
-if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
-if(s1 > s2) p1.points += 3; else if(s2 > s1) p2.points += 3; else {p1.points += 1; p2.points += 1;}
-}
-m.s1 = s1; m.s2 = s2;
-isInteracting = false; save();
-}
-}
-
-function rewardPlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points ajouter à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points += parseInt(pts); save(); } } }
-function penalizePlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points retirer à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points -= parseInt(pts); save(); } } }
-function deleteSeason(sNum) { if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} ?`)) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
-function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.rotationQueue = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0; p.cs=0;}); save(); } }
-function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value, res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; }
-
-function renderDuelAnalysis() {
-    isInteracting = true;
-    const p1 = qs("#duel1").value, p2 = qs("#duel2").value;
-    const stats = getAllTimeStats();
-    if(!p1 || !p2 || p1 === p2) return;
-    const s1 = stats[p1] || {gf:0, ga:0, pts:0, cs:0, games:1}, s2 = stats[p2] || {gf:0, ga:0, pts:0, cs:0, games:1};
-    qs("#duelResult").innerHTML = `<div style="margin-top:20px; background:rgba(255,255,255,0.03); border-radius:15px; padding:15px; border: 1px solid var(--border);"><canvas id="duelChart" width="300" height="300"></canvas></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button>`;
-    if(duelChartInstance) duelChartInstance.destroy();
-    duelChartInstance = new Chart(document.getElementById('duelChart'), {
-        type: 'radar',
-        data: {
-            labels: ['Attaque', 'Défense', 'Points/Match', 'Clean Sheets'],
-            datasets: [
-                { label: p1, data: [(s1.gf/s1.games)*2, 10-(s1.ga/s1.games)*2, (s1.pts/s1.games)*3, (s1.cs/s1.games)*10], borderColor: '#58a6ff', backgroundColor: 'rgba(88, 166, 255, 0.2)', borderWidth: 2 },
-                { label: p2, data: [(s2.gf/s2.games)*2, 10-(s2.ga/s2.games)*2, (s2.pts/s2.games)*3, (s2.cs/s2.games)*10], borderColor: '#8957e5', backgroundColor: 'rgba(137, 87, 229, 0.2)', borderWidth: 2 }
-            ]
-        },
-        options: { 
-            scales: { r: { angleLines: { color: '#30363d' }, grid: { color: '#30363d' }, pointLabels: { color: '#8b949e' }, ticks: { display: false, max: 10 } } },
-            plugins: { legend: { labels: { color: '#fff', font: { family: 'Poppins', size: 10 } } } }
+            `).join('')}</div>`;
         }
-    });
-}
+    }
 
-function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0, cs:0}); save();}} }
-function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
-function startDay(){ if(isAdmin() && state.players.length >= 2){ state.rotationQueue = []; state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
-
-function validateMatch(i){
-if(isAdmin()){
-const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value);
-if(isNaN(s1)||isNaN(s2)) return;
-
-// VÉRIFICATION DÉS SI WINNER STAYS ET MATCH NUL
-if (state.rotationQueue && state.rotationQueue.length > 0 && s1 === s2) {
-    const d1 = parseInt(qs(`#d1_${i}`)?.value), d2 = parseInt(qs(`#d2_${i}`)?.value);
-    if (isNaN(d1) || isNaN(d2)) { alert("Saisissez les dés pour le départage."); return; }
-    if (d1 === d2) { alert("Les scores de dés doivent être différents."); return; }
-    state.currentDay[i].d1 = d1; state.currentDay[i].d2 = d2;
-}
-
-const m=state.currentDay[i];
-const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
-p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
-if(s2 === 0) p1.cs = (p1.cs || 0) + 1;
-if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
-if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
-m.s1=s1; m.s2=s2; m.done=true;
-m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
-
-if(state.rotationQueue && state.rotationQueue.length > 0) {
-    handleRotation(m);
-} else if(state.currentDay.every(x=>x.done)){
-    if(!state.archives) state.archives=[];
-    state.archives.push([...state.currentDay]);
-    state.currentDay=[]; state.rotationQueue = [];
-}
-isInteracting = false; save();
-}
-}
-
-function finishSeason(){
-if(isAdmin()){
-if(state.currentDay && state.currentDay.some(m => m.done)) {
-if(!state.archives) state.archives = [];
-const completed = state.currentDay.filter(m => m.done);
-if(completed.length > 0) state.archives.push([...completed]);
-}
-const s=[...state.players].sort((a,b)=>b.points-a.points);
-if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";}
-save();
-}
-}
-
-function addSpecificSeason() {
-    if(isAdmin()){
-        const newSeasonNum = prompt("Quel numéro de saison souhaitez-vous créer ?", state.season + 1);
-        if (newSeasonNum !== null && !isNaN(newSeasonNum)) {
-            state.season = parseInt(newSeasonNum);
-            state.players.forEach(p => { p.points = 0; p.gf = 0; p.ga = 0; p.cs = 0; });
-            state.currentDay = []; state.rotationQueue = [];
-            save();
-        }
+    if (tab === "players") {
+        app.innerHTML = `<h3>Effectif</h3>
+        ${isAdmin() ? `<div class="card"><input id="pName" placeholder="Nom..." style="background:#000; border:1px solid var(--border); color:white; padding:10px; border-radius:8px"><button class="btn-primary" style="width:auto; margin-left:10px" onclick="addPlayer()">Ajouter</button></div>` : ''}
+        ${state.players.map(p => `<div class="card">${p.name} - ${p.points} pts</div>`).join('')}`;
     }
 }
 
-function closeWinner(){
-state.season++;
-state.players.forEach(p=>{p.points=0; p.gf=0; p.ga=0; p.cs=0;});
-state.currentDay=[]; state.rotationQueue=[];
-qs("#winnerModal").style.display="none";
-save();
+function startDay(){
+    if(isAdmin() && state.players.length >= 2){
+        state.currentDay = [];
+        for(let i=0; i<state.players.length; i++) {
+            for(let j=i+1; j<state.players.length; j++) {
+                state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false});
+            }
+        }
+        pushData(); render();
+    }
 }
-function exportPDF(){ html2pdf().from(qs('#pdf-area')).set({filename:`FC26_S${state.season}.pdf`, html2canvas:{scale:2, backgroundColor:'#05070a'}}).save(); }
 
-document.querySelectorAll("nav button").forEach(btn => { btn.onclick = () => { isInteracting = false; document.querySelectorAll("nav button").forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }; });
+function validateMatch(i){
+    const s1 = parseInt(qs(`#s1_${i}`).value);
+    const s2 = parseInt(qs(`#s2_${i}`).value);
+    if(isNaN(s1) || isNaN(s2)) return;
+
+    const m = state.currentDay[i];
+    const p1 = state.players.find(p => p.name === m.p1);
+    const p2 = state.players.find(p => p.name === m.p2);
+
+    p1.gf += s1; p1.ga += s2; p2.gf += s2; p2.ga += s1;
+    if(s1 > s2) p1.points += 3; else if(s2 > s1) p2.points += 3; else { p1.points += 1; p2.points += 1; }
+    
+    m.s1 = s1; m.s2 = s2; m.done = true;
+    
+    if(state.currentDay.every(x => x.done)) {
+        if(!state.archives) state.archives = [];
+        state.archives.push([...state.currentDay]);
+        state.currentDay = [];
+    }
+    isInteracting = false; pushData(); render();
+}
+
+function addPlayer(){
+    const n = qs("#pName").value;
+    if(n) { state.players.push({id: Date.now(), name: n, points: 0, gf:0, ga:0, cs:0}); pushData(); render(); }
+}
+
+function finishSeason() {
+    const s = [...state.players].sort((a,b)=>b.points-a.points);
+    if(s.length) { qs("#winnerName").innerText = s[0].name; qs("#winnerModal").style.display = "flex"; }
+}
+
+function closeWinner() {
+    state.season++;
+    state.players.forEach(p => { p.points = 0; p.gf = 0; p.ga = 0; p.cs = 0; });
+    qs("#winnerModal").style.display = "none";
+    pushData(); render();
+}
+
+document.querySelectorAll("nav button").forEach(btn => {
+    btn.onclick = () => {
+        document.querySelectorAll("nav button").forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        render();
+    };
+});
+
 pullData();
 </script>
 </body>
