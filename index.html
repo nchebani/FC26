@@ -947,8 +947,29 @@ isInteracting = false; save();
 }
 }
 
-function rewardPlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points ajouter à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points += parseInt(pts); save(); } } }
-function penalizePlayer(id) { if(isAdmin()) { const p = state.players.find(x => x.id === id); const pts = prompt(`Combien de points retirer à ${p.name} ?`); if(pts !== null && !isNaN(pts) && pts > 0) { p.points -= parseInt(pts); save(); } } }
+// CORRECTION DES FONCTIONS DE POINTS
+function rewardPlayer(id) { 
+    if(isAdmin()) { 
+        const p = state.players.find(x => x.id === id); 
+        const pts = prompt(`Combien de points AJOUTER à ${p.name} ?`, "1"); 
+        if(pts !== null && pts !== "" && !isNaN(pts)) { 
+            p.points = parseInt(p.points || 0) + parseInt(pts); 
+            save(); 
+        } 
+    } 
+}
+
+function penalizePlayer(id) { 
+    if(isAdmin()) { 
+        const p = state.players.find(x => x.id === id); 
+        const pts = prompt(`Combien de points RETIRER à ${p.name} ?`, "1"); 
+        if(pts !== null && pts !== "" && !isNaN(pts)) { 
+            p.points = parseInt(p.points || 0) - parseInt(pts); 
+            save(); 
+        } 
+    } 
+}
+
 function deleteSeason(sNum) { if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} ?`)) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
 function initSystem() { if(isAdmin() && confirm("Voulez-vous réinitialiser toutes les saisons ?")){ state.season = 1; state.archives = []; state.currentDay = []; state.rotationQueue = []; state.players.forEach(p => {p.points=0; p.gf=0; p.ga=0; p.cs=0;}); save(); } }
 function renderTacticAdvice() { isInteracting = true; const p = qs("#tacticPlayer").value, res = qs("#tacticResult"); if(!p) return; const t = getTactic(p); res.innerHTML = `<div style="margin-top:15px"><div class="tactic-badge">FORMATION : ${t.form}</div><div class="tactic-grid"><div class="tactic-item">Style: <b>${t.style}</b></div><div class="tactic-item">Déf: <b>${t.def}</b></div><div class="tactic-item">Width: <b>${t.width}</b></div><div class="tactic-item">Rôle: <b>${t.role}</b></div></div><button class="btn-primary" style="margin-top:10px; font-size:0.6rem" onclick="isInteracting=false; render()">TERMINER L'ANALYSE</button></div>`; }
