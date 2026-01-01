@@ -609,7 +609,6 @@ if (tab === "dashboard") {
     const pichichi = [...state.players].sort((a,b) => b.gf - a.gf)[0];
     const defense = [...state.players].sort((a,b) => (a.ga/Math.max(1,a.points)) - (b.ga/Math.max(1,b.points)))[0];
     const topCS = [...state.players].sort((a,b) => (b.cs || 0) - (a.cs || 0))[0];
-    const topVal = sorted.length ? [...state.players].sort((a,b) => calculateValue(b) - calculateValue(a))[0] : null;
 
     app.innerHTML = `
     <div class="awards-scroll">
@@ -722,10 +721,7 @@ if (tab === "matches") {
             ${state.currentDay.map((m, idx) => {
                 if(m.done) return '';
                 const brief = getMatchBriefing(m.p1, m.p2);
-                
-                // MODIF : On vérifie si c'est un nul pour afficher les dés
                 const isDraw = (m.s1 !== "" && m.s2 !== "" && parseInt(m.s1) === parseInt(m.s2));
-
                 return `
                 <div class="match-card">
                     <div class="team-row">
@@ -738,9 +734,7 @@ if (tab === "matches") {
                         </div>
                         <input type="number" class="score-input" value="${m.s1}" onchange="state.currentDay[${idx}].s1 = this.value; render()">
                     </div>
-                    
                     <div style="text-align:center; color:var(--muted); font-size:0.7rem; margin:5px 0">VS</div>
-                    
                     <div class="team-row">
                         <div style="text-align:left">
                             <div style="font-weight:bold; font-size:0.9rem">${m.p2}</div>
@@ -754,7 +748,7 @@ if (tab === "matches") {
 
                     ${isDraw ? `
                     <div style="background:#1e1b4b; padding:10px; border-radius:10px; margin:10px 0; border:1px solid var(--gold); text-align:center">
-                        <div style="font-size:0.6rem; color:var(--gold); font-weight:bold; margin-bottom:8px">MATCH NUL : LANCER DE DÉS</div>
+                        <div style="font-size:0.6rem; color:var(--gold); font-weight:bold; margin-bottom:8px">MATCH NUL : DÉPARTAGE DÉS</div>
                         <div style="display:flex; justify-content:center; align-items:center; gap:10px">
                             <input type="number" placeholder="Dé ${m.p1}" class="score-input" style="width:60px; border-color:var(--gold)" 
                                    onchange="state.currentDay[${idx}].d1 = parseInt(this.value)" value="${m.d1 || ''}">
@@ -762,24 +756,19 @@ if (tab === "matches") {
                             <input type="number" placeholder="Dé ${m.p2}" class="score-input" style="width:60px; border-color:var(--gold)" 
                                    onchange="state.currentDay[${idx}].d2 = parseInt(this.value)" value="${m.d2 || ''}">
                         </div>
-                    </div>
-                    ` : ''}
+                    </div>` : ''}
 
                     <div class="brief-box">
                         <div class="brief-title"><i class="fas fa-bolt"></i> BRIEFING</div>
                         <div style="opacity:0.9">${brief.analysis}</div>
                         <div class="brief-advice">${brief.advice}</div>
                     </div>
-
                     <button class="btn-primary" onclick="validateMatch(${idx})" style="margin-top:15px">VALIDER LE MATCH</button>
                 </div>`;
             }).join('')}
-            
             <button class="btn-primary btn-rotation" onclick="rotateDay()">NOUVELLE ROTATION DES MATCHS</button>
         </div>
-
         <div class="card" style="border-style: dashed; opacity: 0.6">
-             <h4 style="margin:0 0 10px 0; font-size:0.7rem"><i class="fas fa-tools"></i> ZONE ADMIN</h4>
              <button class="btn-primary" style="background:var(--danger); font-size:0.7rem; padding:8px" onclick="if(confirm('Finir la saison et archiver ?')) finishSeason()">FINIR LA SAISON</button>
         </div>`;
     }
@@ -803,7 +792,6 @@ if (tab === "players") {
 if (tab === "hof") {
     const { medals, highestScore } = getHOFStats();
     const sortedMedals = Object.entries(medals).sort((a,b) => b[1].gold - a[1].gold || b[1].silver - a[1].silver);
-
     app.innerHTML = `
     <div class="card" style="background: linear-gradient(135deg, #1a1a1a 0%, #000 100%); border-color: var(--gold);">
         <h3 style="color:var(--gold); text-align:center; margin-top:0"><i class="fas fa-trophy"></i> MUR DES LÉGENDES</h3>
@@ -820,24 +808,7 @@ if (tab === "hof") {
                 </div>
             </div>
         `).join('')}
-    </div>
-
-    <div class="card">
-        <h3 style="margin-top:0; font-size:0.8rem"><i class="fas fa-star"></i> RECORDS HISTORIQUES</h3>
-        <div class="stat-row">
-            <span class="stat-label">Match le plus prolifique</span>
-            <span class="stat-value" style="font-size:0.7rem">${highestScore.p1} ${highestScore.s1}-${highestScore.s2} ${highestScore.p2} (${highestScore.total} buts)</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">Meilleure attaque all-time</span>
-            <span class="stat-value">${Object.entries(medals).sort((a,b) => b[1].goals - a[1].goals)[0][0]} (${Object.entries(medals).sort((a,b) => b[1].goals - a[1].goals)[0][1].goals} buts)</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">Meilleur gardien all-time</span>
-            <span class="stat-value">${Object.entries(medals).sort((a,b) => b[1].cs - a[1].cs)[0][0]} (${Object.entries(medals).sort((a,b) => b[1].cs - a[1].cs)[0][1].cs} Clean Sheets)</span>
-        </div>
-    </div>
-    `;
+    </div>`;
 }
 
 if (tab === "archives") {
@@ -848,8 +819,7 @@ if (tab === "archives") {
             <i class="fas fa-file-pdf"></i> EXPORT COMPLET
         </button>
     </div>
-    ${state.archives && state.archives.length > 0 ? 
-        [...state.archives].reverse().map((day, dIdx) => `
+    ${state.archives && state.archives.length > 0 ? [...state.archives].reverse().map((day, dIdx) => `
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px">
                 <span style="font-size:0.7rem; font-weight:bold; color:var(--gold)">JOURNÉE ${state.archives.length - dIdx}</span>
@@ -860,10 +830,8 @@ if (tab === "archives") {
                     <span style="width:35%">${m.p1}</span>
                     <span style="width:30%; text-align:center; font-weight:bold; color:var(--blue)">${m.s1} - ${m.s2}</span>
                     <span style="width:35%; text-align:right">${m.p2}</span>
-                </div>
-            `).join('')}
-        </div>
-    `).join('') : '<div class="card">Aucun historique disponible</div>'}`;
+                </div>`).join('')}
+        </div>`).join('') : '<div class="card">Aucun historique disponible</div>'}`;
 }
 
 qs("nav").querySelectorAll("button").forEach(b => {
@@ -883,7 +851,7 @@ function rotateDay() {
     const newDay = [];
     const players = [...state.rotationQueue];
     while(players.length >= 2) {
-        newDay.push({ p1: players.shift(), p2: players.shift(), s1: "", s2: "", team1: "", team2: "", done: false, seasonRef: state.season, date: new Date().toLocaleDateString() });
+        newDay.push({ p1: players.shift(), p2: players.shift(), s1: "", s2: "", team1: "", team2: "", done: false, seasonRef: state.season, date: new Date().toLocaleDateString(), d1:"", d2:"" });
     }
     state.rotationQueue = players;
     state.currentDay = newDay;
@@ -893,18 +861,17 @@ function rotateDay() {
 function validateMatch(idx) {
     const m = state.currentDay[idx];
     if(m.s1 === "" || m.s2 === "") return alert("Scores incomplets");
-
-    // MODIF : Sécurité pour le match nul
+    
+    // Modification Dés
     const s1 = parseInt(m.s1);
     const s2 = parseInt(m.s2);
     if(s1 === s2) {
-        if(!m.d1 || !m.d2) return alert("Veuillez entrer les résultats des dés pour départager le gagnant.");
-        if(m.d1 === m.d2) return alert("Les dés ne peuvent pas être égaux.");
+        if(!m.d1 || !m.d2) return alert("Veuillez saisir les dés.");
+        if(m.d1 === m.d2) return alert("Les dés doivent être différents.");
     }
 
     const p1 = state.players.find(p => p.name === m.p1);
     const p2 = state.players.find(p => p.name === m.p2);
-
     p1.gf += s1; p1.ga += s2;
     p2.gf += s2; p2.ga += s1;
 
@@ -916,9 +883,7 @@ function validateMatch(idx) {
     if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
 
     m.done = true;
-    if(state.currentDay.every(match => match.done)) {
-        state.archives.push([...state.currentDay]);
-    }
+    if(state.currentDay.every(match => match.done)) state.archives.push([...state.currentDay]);
     save();
 }
 
@@ -931,18 +896,14 @@ function finishSeason() {
 function closeWinner() {
     state.season++;
     state.players.forEach(p => { p.points = 0; p.v = 0; p.n = 0; p.d = 0; p.gf = 0; p.ga = 0; p.cs = 0; });
-    state.currentDay = [];
-    state.rotationQueue = [];
+    state.currentDay = []; state.rotationQueue = [];
     qs('#winnerModal').style.display = 'none';
     save();
 }
 
 function addPlayer() {
     const name = prompt("Nom du manager:");
-    if(name) {
-        state.players.push({ name, points: 0, v:0, n:0, d:0, gf:0, ga:0, cs:0 });
-        save();
-    }
+    if(name) { state.players.push({ name, points: 0, v:0, n:0, d:0, gf:0, ga:0, cs:0 }); save(); }
 }
 
 function editPlayerName(idx) {
@@ -950,10 +911,7 @@ function editPlayerName(idx) {
     if(newName) {
         const oldName = state.players[idx].name;
         state.players[idx].name = newName;
-        state.archives.flat().forEach(m => {
-            if(m.p1 === oldName) m.p1 = newName;
-            if(m.p2 === oldName) m.p2 = newName;
-        });
+        state.archives.flat().forEach(m => { if(m.p1 === oldName) m.p1 = newName; if(m.p2 === oldName) m.p2 = newName; });
         save();
     }
 }
@@ -962,7 +920,6 @@ if(state.players.length === 0 && isAdmin()) {
     ["BVI", "NAD", "WIL", "BROOK"].forEach(n => state.players.push({ name: n, points: 0, v:0, n:0, d:0, gf:0, ga:0, cs:0 }));
     save();
 }
-
 render();
 </script>
 </body>
