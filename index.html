@@ -998,7 +998,19 @@ function renderDuelAnalysis() {
 }
 
 function addPlayer(){ if(isAdmin()){ const n=qs("#pName").value.trim(); if(n){state.players.push({id:crypto.randomUUID(), name:n, points:0, gf:0, ga:0, cs:0}); save();}} }
-function removePlayer(id){ if(isAdmin() && confirm("Supprimer ?")){ state.players=state.players.filter(p=>p.id!==id); save(); } }
+function removePlayer(id) { 
+    if(isAdmin() && confirm("Supprimer définitivement ce joueur ?")) { 
+        const index = state.players.findIndex(p => p.id === id);
+        if (index !== -1) {
+            state.players.splice(index, 1);
+        } else {
+            // Secours par nom
+            const nameFromUI = event.currentTarget.closest('.card').querySelector('strong').innerText;
+            state.players = state.players.filter(p => p.name !== nameFromUI);
+        }
+        save(); 
+    } 
+}
 function startDay(){ if(isAdmin() && state.players.length >= 2){ state.rotationQueue = []; state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
 
 // MODIFICATION : Validation avec contrôle des dés
