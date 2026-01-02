@@ -948,27 +948,25 @@ isInteracting = false; save();
 }
 function rewardPlayer(id) { 
     if(isAdmin()) { 
-        isInteracting = true; // Empêche la synchronisation de tout écraser pendant la saisie
-        const p = state.players.find(x => x.id === id);
-        const pts = prompt(`Combien de points ajouter à ${p.name} ?`, "1"); 
+        const p = state.players.find(x => x.id === id); 
+        if(!p) return alert("Joueur non trouvé !"); // Sécurité
+        const pts = prompt(`Ajouter des points à ${p.name} :`, "1"); 
         if(pts !== null && !isNaN(pts)) { 
             p.points = Number(p.points) + Number(pts); 
             save(); 
-        }
-        isInteracting = false;
+        } 
     } 
 }
 
 function penalizePlayer(id) { 
     if(isAdmin()) { 
-        isInteracting = true;
-        const p = state.players.find(x => x.id === id);
-        const pts = prompt(`Combien de points retirer à ${p.name} ?`, "1"); 
+        const p = state.players.find(x => x.id === id); 
+        if(!p) return alert("Joueur non trouvé !");
+        const pts = prompt(`Retirer des points à ${p.name} :`, "1"); 
         if(pts !== null && !isNaN(pts)) { 
             p.points = Number(p.points) - Number(pts); 
             save(); 
-        }
-        isInteracting = false;
+        } 
     } 
 }
 function deleteSeason(sNum) { if(isAdmin() && confirm(`Supprimer définitivement la Saison ${sNum} ?`)) { state.archives = state.archives.filter(day => day[0].seasonRef != sNum); save(); } }
