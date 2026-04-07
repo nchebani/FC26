@@ -1058,11 +1058,21 @@ isInteracting = false; save();
 
 function finishSeason(){
 if(isAdmin()){
-// 1. On sécurise les derniers matchs joués dans les archives
 if(state.currentDay && state.currentDay.some(m => m.done)) {
 if(!state.archives) state.archives = [];
 const completed = state.currentDay.filter(m => m.done);
 if(completed.length > 0) state.archives.push([...completed]);
+}
+
+// TRI IDENTIQUE : Points puis Différence de buts
+const s = [...state.players].sort((a,b) => b.points - a.points || (b.gf - b.ga) - (a.gf - a.ga));
+
+if(s.length){
+qs("#winnerName").innerText = s[0].name;
+qs("#winnerModal").style.display = "flex";
+}
+save();
+}
 }
 
 // 2. LOGIQUE DE TRI IDENTIQUE AU TABLEAU DE BORD
