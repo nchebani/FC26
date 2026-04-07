@@ -341,18 +341,27 @@ function getStreak(playerName) {
 }
 
 function getSeasonWinner(sNum) {
-    if(!state.archives) return "Inconnu";
-    let pts = {};
-    const matches = state.archives.flat().filter(m => m.seasonRef == sNum);
-    if(matches.length === 0) return "-";
-    matches.forEach(m => {
-        if(!pts[m.p1]) pts[m.p1] = 0;
-        if(!pts[m.p2]) pts[m.p2] = 0;
-        if(m.s1 > m.s2) pts[m.p1] += 3;
-        else if(m.s2 > m.s1) pts[m.p2] += 3;
-        else { pts[m.p1] += 1; pts[m.p2] += 1; }
-    });
-    return Object.keys(pts).reduce((a, b) => pts[a] > pts[b] ? a : b);
+if(!state.archives) return "Inconnu";
+let stats = {};
+const matches = state.archives.flat().filter(m => m.seasonRef == sNum);
+if(matches.length === 0) return "-";
+
+matches.forEach(m => {
+if(!stats[m.p1]) stats[m.p1] = { pts: 0, gd: 0 };
+if(!stats[m.p2]) stats[m.p2] = { pts: 0, gd: 0 };
+if(m.s1 > m.s2) stats[m.p1].pts += 3;
+else if(m.s2 > m.s1) stats[m.p2].pts += 3;
+else { stats[m.p1].pts += 1; stats[m.p2].pts += 1; }
+stats[m.p1].gd += (m.s1 - m.s2);
+stats[m.p2].gd += (m.s2 - m.s1);
+});
+
+// On trie les noms des joueurs selon les stats calculées
+const sortedNames = Object.keys(stats).sort((a, b) => {
+return stats[b].pts - stats[a].pts || stats[b].gd - stats[a].gd;
+});
+
+return sortedNames[0];
 }
 
 function getHOFStats() {
