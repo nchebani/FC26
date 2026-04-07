@@ -1068,35 +1068,26 @@ isInteracting = false; save();
 
 function finishSeason(){
 if(isAdmin()){
+// 1. On archive les matchs de la saison actuelle s'il y en a
 if(state.currentDay && state.currentDay.some(m => m.done)) {
 if(!state.archives) state.archives = [];
 const completed = state.currentDay.filter(m => m.done);
-if(completed.length > 0) state.archives.push([...completed]);
+state.archives.push([...completed]);
 }
 
-// TRI IDENTIQUE : Points puis Différence de buts
-const s = [...state.players].sort((a,b) => b.points - a.points || (b.gf - b.ga) - (a.gf - a.ga));
-
-if(s.length){
-qs("#winnerName").innerText = s[0].name;
-qs("#winnerModal").style.display = "flex";
-}
-save();
-}
-}
-
-// 2. LOGIQUE DE TRI IDENTIQUE AU TABLEAU DE BORD
+// 2. On trie par Points, PUIS par Différence de Buts
 const sorted = [...state.players].sort((a, b) => {
 if (b.points !== a.points) {
-return b.points - a.points; // Priorité aux points
+return b.points - a.points;
 }
-return (b.gf - b.ga) - (a.gf - a.ga); // Départage à la différence de buts
+return (b.gf - b.ga) - (a.gf - a.ga);
 });
 
-// 3. Affichage du vrai vainqueur
+// 3. On affiche le vainqueur précis
 if(sorted.length > 0){
 qs("#winnerName").innerText = sorted[0].name;
 qs("#winnerModal").style.display = "flex";
+// Note: Le reset des points se fera au clic sur "Nouvelle Saison" (closeWinner)
 }
 save();
 }
