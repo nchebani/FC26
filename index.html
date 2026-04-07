@@ -256,7 +256,11 @@ function validatePin() { if(qs('#pinCode').value === ADMIN_PIN) { qs('#pinOverla
 function login(user) { currentUser = user; localStorage.setItem("fc26_user", user); qs('#loginOverlay').style.display = 'none'; qs('#userDisplay').innerText = user; pullData(); }
 function logout() { localStorage.removeItem("fc26_user"); location.reload(); }
 if(currentUser) login(currentUser);
-function save() { if(isAdmin()) pushData(); render(); }
+function save() {
+// On appelle pushData() qui a déjà sa propre sécurité (currentUser != null)
+pushData();
+render();
+}
 
 // --- CALCULS ---
 function calculateValue(p) { 
