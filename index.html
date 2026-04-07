@@ -210,7 +210,16 @@ const notifySound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/
 const qs = (s) => document.querySelector(s);
 const isAdmin = () => currentUser === 'ADMIN';
 
-async function pushData() { if (isAdmin()) { try { await fetch(FB_URL, { method: 'PUT', body: JSON.stringify(state) }); } catch (e) {} } }
+async function pushData() {
+// On autorise l'envoi si quelqu'un est connecté (Admin ou Joueur)
+if (currentUser) {
+try {
+await fetch(FB_URL, { method: 'PUT', body: JSON.stringify(state) });
+} catch (e) {
+console.error("Erreur de synchronisation Firebase");
+}
+}
+}
 async function pullData() {
 if (isInteracting) return;
 try {
