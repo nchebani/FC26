@@ -1058,13 +1058,26 @@ isInteracting = false; save();
 
 function finishSeason(){
 if(isAdmin()){
+// 1. On sécurise les derniers matchs joués dans les archives
 if(state.currentDay && state.currentDay.some(m => m.done)) {
 if(!state.archives) state.archives = [];
 const completed = state.currentDay.filter(m => m.done);
 if(completed.length > 0) state.archives.push([...completed]);
 }
-const s=[...state.players].sort((a,b)=>b.points-a.points);
-if(s.length){qs("#winnerName").innerText=s[0].name; qs("#winnerModal").style.display="flex";}
+
+// 2. LOGIQUE DE TRI IDENTIQUE AU TABLEAU DE BORD
+const sorted = [...state.players].sort((a, b) => {
+if (b.points !== a.points) {
+return b.points - a.points; // Priorité aux points
+}
+return (b.gf - b.ga) - (a.gf - a.ga); // Départage à la différence de buts
+});
+
+// 3. Affichage du vrai vainqueur
+if(sorted.length > 0){
+qs("#winnerName").innerText = sorted[0].name;
+qs("#winnerModal").style.display = "flex";
+}
 save();
 }
 }
