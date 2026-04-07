@@ -617,7 +617,8 @@ const tab = qs("nav button.active").dataset.tab;
 const app = qs("#app"); app.innerHTML = "";
 
 if (tab === "dashboard") {
-const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf-b.ga)-(a.gf-a.ga));
+// On trie par points, puis par différence de buts (GF - GA)
+const sorted = [...state.players].sort((a,b) => b.points - a.points || (b.gf - b.ga) - (a.gf - a.ga));
 const pichichi = [...state.players].sort((a,b) => b.gf - a.gf)[0];
 const defense = [...state.players].sort((a,b) => (a.ga/Math.max(1,a.points)) - (b.ga/Math.max(1,b.points)))[0];
 const topCS = [...state.players].sort((a,b) => (b.cs || 0) - (a.cs || 0))[0];
