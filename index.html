@@ -186,18 +186,18 @@ function isAdmin() { return currentUser === 'ADMIN'; }
 const qs = (s) => document.querySelector(s);
 function save() { if(isAdmin()) pushData(); render(); }
 
-// --- CALCULS ET TRI (LA MODIFICATION PRINCIPALE) ---
+// --- LOGIQUE DE TRI ET CALCULS (CORE ENGINE) ---
 function getSortedStandings() {
     return [...state.players].sort((a, b) => {
-        // 1. Points
+        // 1. Points (Priorité absolue)
         if (b.points !== a.points) return b.points - a.points;
-        // 2. Différence de buts (GD)
+        // 2. Différence de buts (GF - GA)
         const diffA = a.gf - a.ga;
         const diffB = b.gf - b.ga;
         if (diffB !== diffA) return diffB - diffA;
-        // 3. Meilleure Attaque (GF)
+        // 3. Meilleure Attaque (Buts marqués)
         if (b.gf !== a.gf) return b.gf - a.gf;
-        // 4. Valeur calculée (Valeur marchande)
+        // 4. Valeur Marchande (Calculée)
         return calculateValue(b) - calculateValue(a);
     });
 }
@@ -222,6 +222,7 @@ function getForm(name) {
     return history;
 }
 
+// --- RENDU DASHBOARD ---
 function render() {
     const tab = qs("nav button.active").dataset.tab;
     const app = qs("#app"); app.innerHTML = "";
@@ -274,22 +275,14 @@ function render() {
     if (tab === "players") {
         app.innerHTML = `<h3>Effectif 👥</h3>
         ${isAdmin() ? `<div class="card"><div style="display:flex; gap:10px"><input id="pName" placeholder="Nom..." style="flex:1; background:#000; border:1px solid var(--border); color:white; padding:12px; border-radius:10px"><button class="btn-primary" style="width:auto" onclick="addPlayer()">+</button></div></div>` : ''}
-        ${state.players.map(p => `<div class="card"><strong>${p.name}</strong> - Pts: ${p.points}</div>`).join('')}`;
+        ${state.players.map(p => `<div class="card" style="display:flex; justify-content:space-between; align-items:center">
+            <div><strong>${p.name}</strong> - Pts: ${p.points}</div>
+            ${isAdmin() ? `<div><button onclick="rewardPlayer('${p.id}')" style="background:none; border:none; color:var(--accent);">+</button><button onclick="penalizePlayer('${p.id}')" style="background:none; border:none; color:var(--danger);">-</button></div>` : ''}
+        </div>`).join('')}`;
     }
 }
 
-function startDay(){ 
-    if(isAdmin() && state.players.length >= 2){ 
-        state.currentDay=[]; 
-        for(let i=0; i<state.players.length; i++) {
-            for(let j=i+1; j<state.players.length; j++) {
-                state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false});
-            }
-        }
-        save(); 
-    } 
-}
-
+// --- GESTION DES SCORES ET SAISON ---
 function validateMatch(i){
     if(isAdmin()){
         const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value);
@@ -298,7 +291,7 @@ function validateMatch(i){
         const m=state.currentDay[i];
         const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
         
-        // Mise à jour des stats
+        // Attribution des points
         p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
         if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
         
@@ -315,6 +308,7 @@ function validateMatch(i){
 
 function finishSeason(){
     if(isAdmin()){
+        // Tri final pour désigner le vainqueur sans erreur
         const sorted = getSortedStandings();
         if(sorted.length > 0) {
             const winner = sorted[0];
@@ -331,6 +325,28 @@ function closeWinner(){
     state.currentDay=[];
     qs("#winnerModal").style.display="none";
     save();
+}
+
+function startDay(){ 
+    if(isAdmin() && state.players.length >= 2){ 
+        state.currentDay=[]; 
+        for(let i=0; i<state.players.length; i++) {
+            for(let j=i+1; j<state.players.length; j++) {
+                state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false});
+            }
+        }
+        save(); 
+    } 
+}
+
+function rewardPlayer(id){ 
+    const p = state.players.find(x => x.id === id);
+    if(p) { p.points += 1; save(); }
+}
+
+function penalizePlayer(id){
+    const p = state.players.find(x => x.id === id);
+    if(p) { p.points -= 1; save(); }
 }
 
 function addPlayer(){ 
