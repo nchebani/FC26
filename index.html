@@ -737,24 +737,37 @@ let rotationBtn = (isAdmin() && state.players.length === 3) ? `<button class="bt
 app.innerHTML = `<div class="card" style="text-align:center; padding:40px">${isAdmin() ? `<button class="btn-primary" onclick="startDay()">LANCER LA JOURNÉE CLASSIQUE ⚽</button> ${rotationBtn}` : `<p>Attente de l'Admin...</p>`}</div>`;
 } else {
 app.innerHTML = `<h3>Matchs S${state.season}</h3><div class="card">${state.currentDay.map((m, i) => {
-// MODIFICATION : Détection du nul pour afficher les dés
+// CONDITION DE VERROUILLAGE : Admin ou l'un des deux joueurs du match
+const canEdit = isAdmin() || currentUser === m.p1 || currentUser === m.p2;
 const isRotationMode = state.rotationQueue && state.rotationQueue.length > 0;
+
 return `
 <div class="match-card">
-    <div class="team-row">
-        <span>${m.p1}</span>
-        <select class="team-select" id="t1_${i}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}</select>
-        <input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false" oninput="toggleDice(${i})">
-        ${isRotationMode && isAdmin() ? `<input type="number" id="d1_${i}" class="dice-input" placeholder="🎲" onfocus="isInteracting=true" onblur="isInteracting=false">` : ''}
-    </div>
-    <div class="team-row">
-        <span>${m.p2}</span>
-        <select class="team-select" id="t2_${i}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false">${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}</select>
-        <input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}" ${m.done || !isAdmin() ?'disabled':''} onfocus="isInteracting=true" onblur="isInteracting=false" oninput="toggleDice(${i})">
-        ${isRotationMode && isAdmin() ? `<input type="number" id="d2_${i}" class="dice-input" placeholder="🎲" onfocus="isInteracting=true" onblur="isInteracting=false">` : ''}
-    </div>
-    ${!m.done && isAdmin() ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` : m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div><div class="match-commentary"><i class="fas fa-quote-left" style="font-size:0.5rem; vertical-align:top; margin-right:5px"></i>${generateMatchCommentary(m)}</div>` : ''}
+<div class="team-row">
+<span>${m.p1}</span>
+<select class="team-select" id="t1_${i}" ${m.done || !canEdit ? 'disabled' : ''} onfocus="isInteracting=true" onblur="isInteracting=false">
+${TEAMS.map(t => `<option value="${t}" ${m.team1==t?'selected':''}>${t}</option>`).join('')}
+</select>
+<input type="number" id="s1_${i}" class="score-input" value="${m.s1??''}"
+${m.done || !canEdit ? 'disabled' : ''}
+onfocus="isInteracting=true" onblur="isInteracting=false" oninput="toggleDice(${i})">
+${isRotationMode && canEdit ? `<input type="number" id="d1_${i}" class="dice-input" placeholder="🎲" onfocus="isInteracting=true" onblur="isInteracting=false">` : ''}
+</div>
+<div class="team-row">
+<span>${m.p2}</span>
+<select class="team-select" id="t2_${i}" ${m.done || !canEdit ? 'disabled' : ''} onfocus="isInteracting=true" onblur="isInteracting=false">
+${TEAMS.map(t => `<option value="${t}" ${m.team2==t?'selected':''}>${t}</option>`).join('')}
+</select>
+<input type="number" id="s2_${i}" class="score-input" value="${m.s2??''}"
+${m.done || !canEdit ? 'disabled' : ''}
+onfocus="isInteracting=true" onblur="isInteracting=false" oninput="toggleDice(${i})">
+${isRotationMode && canEdit ? `<input type="number" id="d2_${i}" class="dice-input" placeholder="🎲" onfocus="isInteracting=true" onblur="isInteracting=false">` : ''}
+</div>
+${!m.done && canEdit ? `<button class="btn-primary" onclick="validateMatch(${i})">VALIDER ✅</button>` :
+m.done ? `<div style="text-align:center; color:var(--accent); font-weight:bold">LOCK 🔒</div><div class="match-commentary">${generateMatchCommentary(m)}</div>` :
+`<div style="text-align:center; color:var(--muted); font-size:0.7rem italic">En attente des joueurs...</div>`}
 </div>`}).join('')}</div>`;
+
 if(state.rotationQueue && state.rotationQueue.length > 0) {
 app.innerHTML += `<div class="card" style="border: 1px dashed var(--purple); text-align:center"><small style="color:var(--muted)">PROCHAIN MATCH : LE GAGNANT CONTRE</small><br><strong>${state.rotationQueue[0]}</strong></div>`;
 }
