@@ -211,7 +211,7 @@ const qs = (s) => document.querySelector(s);
 const isAdmin = () => currentUser === 'ADMIN';
 
 async function pushData() {
-// On autorise l'envoi si quelqu'un est connecté (Admin ou Joueur)
+// Autorise l'envoi si quelqu'un est connecté (Admin ou Joueur)
 if (currentUser) {
 try {
 await fetch(FB_URL, { method: 'PUT', body: JSON.stringify(state) });
@@ -220,6 +220,7 @@ console.error("Erreur de synchronisation Firebase");
 }
 }
 }
+
 async function pullData() {
 if (isInteracting) return;
 try {
