@@ -1045,49 +1045,77 @@ function removePlayer(id) {
 }
 function startDay(){ if(isAdmin() && state.players.length >= 2){ state.rotationQueue = []; state.currentDay=[]; for(let i=0; i<state.players.length; i++) for(let j=i+1; j<state.players.length; j++) state.currentDay.push({p1:state.players[i].name, p2:state.players[j].name, s1:null, s2:null, done:false, seasonRef:state.season, date:new Date().toLocaleDateString('fr-FR'), team1:"Real Madrid", team2:"Man City"}); save(); } }
 
-// MODIFICATION : Validation avec contrôle des dés
-function validateMatch(i){
-if(isAdmin()){
-const s1=parseInt(qs(`#s1_${i}`).value), s2=parseInt(qs(`#s2_${i}`).value);
-if(isNaN(s1)||isNaN(s2)) return;
+function validateMatch(i) {
+const m = state.currentDay[i];
+
+// NOUVELLE CONDITION : L'utilisateur doit être Admin OU l'un des participants du match
+const isPlayerInMatch = (currentUser === m.p1 || currentUser === m.p2);
+
+if (isAdmin() || isPlayerInMatch) {
+const s1 = parseInt(qs(`#s1_${i}`).value);
+const s2 = parseInt(qs(`#s2_${i}`).value);
+
+if (isNaN(s1) || isNaN(s2)) {
+alert("Veuillez entrer les deux scores.");
+return;
+}
 
 const isRotationMode = state.rotationQueue && state.rotationQueue.length > 0;
 let diceScores = null;
 
+// Gestion des dés pour le mode rotation (Winner Stays) en cas de nul
 if (isRotationMode && s1 === s2) {
-    const d1 = parseInt(qs(`#d1_${i}`).value);
-    const d2 = parseInt(qs(`#d2_${i}`).value);
-    if (isNaN(d1) || isNaN(d2)) {
-        alert("Veuillez saisir les scores des dés pour départager le nul !");
-        return;
-    }
-    if (d1 === d2) {
-        alert("Égalité parfaite aux dés ! Veuillez relancer.");
-        return;
-    }
-    diceScores = { d1, d2 };
+const d1 = parseInt(qs(`#d1_${i}`).value);
+const d2 = parseInt(qs(`#d2_${i}`).value);
+if (isNaN(d1) || isNaN(d2)) {
+alert("Match nul ! Veuillez saisir les scores des dés pour départager.");
+return;
+}
+if (d1 === d2) {
+alert("Égalité aux dés ! Relancez.");
+return;
+}
+diceScores = { d1, d2 };
 }
 
-const m=state.currentDay[i];
-const p1=state.players.find(p=>p.name===m.p1), p2=state.players.find(p=>p.name===m.p2);
-p1.gf+=s1; p1.ga+=s2; p2.gf+=s2; p2.ga+=s1;
-if(s2 === 0) p1.cs = (p1.cs || 0) + 1;
-if(s1 === 0) p2.cs = (p2.cs || 0) + 1;
-if(s1>s2) p1.points+=3; else if(s2>s1) p2.points+=3; else {p1.points+=1; p2.points+=1;}
-m.s1=s1; m.s2=s2; m.done=true;
-m.team1=qs(`#t1_${i}`).value; m.team2=qs(`#t2_${i}`).value;
+// Mise à jour des statistiques des joueurs
+const p1 = state.players.find(p => p.name === m.p1);
+const p2 = state.players.find(p => p.name === m.p2);
 
-if(isRotationMode) handleRotation(m, diceScores);
+p1.gf += s1; p1.ga += s2;
+p2.gf += s2; p2.ga += s1;
 
-if(state.currentDay.every(x=>x.done)){
-if(!state.archives) state.archives=[];
+if (s2 === 0) p1.cs = (p1.cs || 0) + 1;
+if (s1 === 0) p2.cs = (p2.cs || 0) + 1;
+
+if (s1 > s2) p1.points += 3;
+else if (s2 > s1) p2.points += 3;
+else { p1.points += 1; p2.points += 1; }
+
+// Enregistrement des données du match
+m.s1 = s1;
+m.s2 = s2;
+m.done = true;
+m.team1 = qs(`#t1_${i}`).value;
+m.team2 = qs(`#t2_${i}`).value;
+
+// Si mode rotation, on gère l'entrée du prochain joueur
+if (isRotationMode) handleRotation(m, diceScores);
+
+// Si tous les matchs de la session sont finis, on archive la journée
+if (state.currentDay.every(x => x.done)) {
+if (!state.archives) state.archives = [];
 state.archives.push([...state.currentDay]);
-state.currentDay=[]; state.rotationQueue = [];
-}
-isInteracting = false; save();
-}
+state.currentDay = [];
+state.rotationQueue = [];
 }
 
+isInteracting = false;
+save(); // La fonction save() appellera pushData()
+} else {
+alert("Action refusée : Vous n'êtes pas l'un des joueurs de ce match.");
+}
+}
 function finishSeason(){
 if(isAdmin()){
 // 1. On archive les matchs de la saison actuelle s'il y en a
